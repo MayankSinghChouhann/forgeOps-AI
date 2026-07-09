@@ -112,19 +112,7 @@ These go beyond a standard AI DevOps assistant:
 
 ForgeOps AI follows a layered architecture. A request flows top to bottom, and each layer has exactly one responsibility:
 
-```
-Client layer            React + TypeScript UI
-      ↓
-API layer                Spring Boot REST controllers + JWT filter
-      ↓
-Service layer             Business logic & orchestration
-      ↓              ↓
-AI integration layer   Data layer
-LangChain4j + Gemini    PostgreSQL + Redis
-      ↓              ↓
-Infrastructure & DevOps
-Docker, Kubernetes, CI/CD, Terraform, AWS
-```
+<img width="2720" height="2080" alt="forgeops_ai_high_level_architecture" src="https://github.com/user-attachments/assets/d2dac27f-63db-4ba0-bcb6-2a017dd266ab" />
 
 **Why it's shaped this way:**
 
