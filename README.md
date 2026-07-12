@@ -1,6 +1,10 @@
 # ForgeOps AI
 
+[![CI Pipeline](https://github.com/MayankSinghChouhann/forgeOps-AI/actions/workflows/ci.yml/badge.svg)](https://github.com/MayankSinghChouhann/forgeOps-AI/actions/workflows/ci.yml)
+
 **AI-Powered DevOps Intelligence Platform**
+
+🔗 **Live Demo (AWS Hosted):** *[Coming Soon in Deployment Phase]*
 
 ForgeOps AI is a production-grade platform that helps developers and DevOps engineers troubleshoot infrastructure, analyze CI/CD failures, debug Docker and Kubernetes issues, generate Infrastructure as Code, and learn DevOps through AI-powered mentorship — not just another CRUD project, but a real SaaS-style engineering build.
 
@@ -63,6 +67,19 @@ These go beyond a standard AI DevOps assistant:
 - **Vector Database Integration**
 - **Enterprise Monitoring**
 - **Complete Production Deployment**
+
+## Core Differentiators & Production Targets
+
+To stand out as a highly technical, production-grade engineering build, the platform is designed with the following differentiators:
+
+1. 🌐 **Live AWS Deployment**: A fully deployed public instance rather than just local repository code, showcasing live operation on AWS.
+2. 🤖 **End-to-End Functional AI**: The "Root Cause Analysis Engine" is verified against real, dirty log files (Jenkins failures, Kubernetes crash loops, etc.) to ensure genuine utility, not just generic LLM prompts.
+3. 📊 **Public Observability Dashboards**: Transparent Grafana dashboard links showing live performance metrics (uptime, request latencies, and system error rates).
+4. 🧪 **Strict Quality Gates**: Target of **>80% automated test coverage** integrated as a pipeline blocker.
+5. 📈 **Load & Stress Testing**: Performance validated through k6/JMeter stress tests to baseline target limits (e.g., handling 500 concurrent users).
+6. 📝 **Architecture Decision Records (ADRs)**: Documented ADRs explaining technical trade-offs (e.g., JWT selection vs. session-based state management).
+7. 🚦 **Visible CI/CD Pipeline**: GitHub Actions status badge showing building, scanning, and testing status on every code push.
+8. 🎖️ **AWS Certified Best Practices**: Architecture aligned with AWS Well-Architected Framework guidelines (enhancing resume weight alongside AWS certifications).
 
 ## Tech Stack
 
