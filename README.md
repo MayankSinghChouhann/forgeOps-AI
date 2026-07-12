@@ -172,6 +172,41 @@ Requirement Analysis · Architecture Diagram · Database Design · Folder Struct
 - [ ] Advanced features (Mentor Mode, Root Cause Engine, Interview Simulator, RAG search, etc.)
 - [ ] Full production deployment (Docker → Kubernetes → AWS → Monitoring)
 
+## Advanced Engineering Standards (Phases)
+
+As we transition from building features to scaling and deploying them, we will adhere to the following senior-level DevOps and engineering standards:
+
+### 🐳 Docker Phase
+- **Multi-stage builds**: Separate build and runtime environments to ensure small, secure, and production-optimized final images.
+- **Non-root user containerization**: Run container processes as non-root users for enhanced security.
+- **Actuator Health Checks**: Hook `HEALTHCHECK` instructions directly to the Spring Boot Actuator `/health` endpoint.
+
+### ☸️ Kubernetes Phase
+- **Helm Charts**: Package and template application manifests via Helm charts instead of maintaining raw YAML.
+- **Liveness + Readiness Probes**: Ensure proper traffic routing and container recovery with health probes.
+- **ConfigMaps & Secrets**: Keep configurations and sensitive credentials strictly separated from code.
+- **Horizontal Pod Autoscaling (HPA)**: Automate scaling based on CPU/Memory load.
+
+### 🚀 CI/CD Phase
+- **Multi-stage Pipelines**: Define comprehensive pipelines covering linting, testing, security scanning, building, pushing, and deploying.
+- **Security Vulnerability Scans**: Integrate Trivy (container image scans) and OWASP Dependency-Check (dependency vulnerabilities).
+- **Quality Gates**: Fail the pipeline automatically if test coverage falls below the set threshold.
+- **GitOps (ArgoCD)**: Maintain declarative state synchronization between Git repository and Kubernetes.
+
+### 🏗️ IaC Phase
+- **Terraform Remote State**: Manage infrastructure safely using remote state backends (S3 + DynamoDB state locking).
+- **Terraform Modules**: Modularize infrastructure code into reusable modules.
+
+### 📊 Monitoring & Observability Phase
+- **Custom Grafana Dashboards**: Create dashboards tracking application-specific business metrics (e.g., login success rates, API latency) alongside default system metrics.
+- **Alertmanager Routing**: Set specific rules (e.g., alert when error rate > 5%).
+- **Structured JSON Logging**: Incorporate correlation/trace IDs for queryable logs inside log management systems.
+
+### 🏆 Bonus Differentiators
+- **Deployment Strategies**: Blue-Green or Canary deployment flows.
+- **Chaos Experiments**: Verify self-healing capabilities of Kubernetes by intentionally terminating pods.
+- **Load Testing**: Integrate k6 load tests into the CI workflow and publish reports to the README.
+
 ## Learning Goals
 
 By the end of this project, the target is confident, interview-ready understanding of:
