@@ -41,36 +41,37 @@ export function LoginForm() {
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.25 }}
     >
-      <Card>
-        <CardHeader>
-          <CardTitle>Authenticate</CardTitle>
-          <CardDescription>
-            Enter your credentials to access your deployment environment.
+      <Card className="border-border/50 shadow-2xl shadow-brand-blue/5">
+        <CardHeader className="pb-4">
+          <CardTitle className="text-2xl font-semibold tracking-tight">Authenticate</CardTitle>
+          <CardDescription className="text-sm">
+            Enter your credentials to access the deployment environment.
           </CardDescription>
         </CardHeader>
         <CardContent>
-          <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
-            <div className="space-y-2">
-              <label className="text-xs font-mono text-text-muted uppercase tracking-wider" htmlFor="email">
+          <form onSubmit={handleSubmit(onSubmit)} className="space-y-5">
+            <div className="space-y-1.5">
+              <label className="text-[11px] font-mono text-text-muted uppercase tracking-wider font-semibold" htmlFor="email">
                 Email
               </label>
               <Input
                 id="email"
                 type="email"
                 placeholder="engineer@forgeops.ai"
+                className="bg-page border-border/50 focus:border-brand-blue focus:ring-1 focus:ring-brand-blue transition-all"
                 {...register("email")}
               />
               {errors.email && (
-                <p className="text-xs text-status-failed mt-1">{errors.email.message}</p>
+                <p className="text-xs text-status-failed mt-1 font-medium">{errors.email.message}</p>
               )}
             </div>
             
-            <div className="space-y-2">
+            <div className="space-y-1.5">
               <div className="flex items-center justify-between">
-                <label className="text-xs font-mono text-text-muted uppercase tracking-wider" htmlFor="password">
+                <label className="text-[11px] font-mono text-text-muted uppercase tracking-wider font-semibold" htmlFor="password">
                   Password
                 </label>
-                <Link to="/forgot-password" className="text-xs text-brand-blue hover:text-brand-cyan transition-colors">
+                <Link to="/forgot-password" className="text-xs text-text-muted hover:text-brand-cyan transition-colors">
                   Forgot password?
                 </Link>
               </div>
@@ -78,22 +79,23 @@ export function LoginForm() {
                 id="password"
                 type="password"
                 placeholder="••••••••"
+                className="bg-page border-border/50 focus:border-brand-blue focus:ring-1 focus:ring-brand-blue transition-all"
                 {...register("password")}
               />
               {errors.password && (
-                <p className="text-xs text-status-failed mt-1">{errors.password.message}</p>
+                <p className="text-xs text-status-failed mt-1 font-medium">{errors.password.message}</p>
               )}
             </div>
 
-            <Button type="submit" className="w-full mt-6" disabled={isSubmitting}>
+            <Button type="submit" className="w-full mt-2" disabled={isSubmitting}>
               {isSubmitting ? "Authenticating..." : "Sign In"}
             </Button>
           </form>
         </CardContent>
-        <CardFooter className="justify-center border-t border-border mt-2 pt-6">
-          <p className="text-sm text-text-muted">
+        <CardFooter className="justify-center border-t border-border/50 mt-2 pt-5 pb-5 bg-elevated/50">
+          <p className="text-xs text-text-muted font-medium">
             Don't have an account?{" "}
-            <Link to="/register" className="text-brand-teal hover:text-brand-cyan transition-colors font-medium">
+            <Link to="/register" className="text-text-primary hover:text-brand-cyan transition-colors">
               Request Access
             </Link>
           </p>
