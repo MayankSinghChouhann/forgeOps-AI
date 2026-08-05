@@ -165,6 +165,45 @@ ForgeOps AI follows a layered architecture. A request flows top to bottom, and e
 - **AI integration layer and data layer sit side by side** because to the service layer, both are just dependencies it calls — the same idea behind dependency injection.
 - **Infrastructure & DevOps sits below, not inside, the request path** — it's what runs and ships the system above it, not part of runtime request handling. Runtime architecture and deployment architecture are kept as separate mental models.
 
+## Project Structure
+
+ForgeOps AI deliberately avoids flat, outdated folder structures. Instead, both the frontend and backend are structured for maximum scalability and maintainability.
+
+### Backend: Package-by-Feature
+Instead of grouping files by their technical role (all controllers in one folder, all services in another), we group them by **domain feature** (e.g., `auth`, `dashboard`).
+
+```text
+backend/src/main/java/com/forgeops/backend/
+└── auth/
+    ├── controller/  # API endpoints for auth
+    ├── dto/         # Request/Response data transfer objects
+    ├── entity/      # Database models (User, RefreshToken)
+    ├── repository/  # Database access interfaces
+    ├── security/    # JWT filters and configs
+    └── service/     # Business logic
+```
+**Why?** This approach aligns with **Domain-Driven Design (DDD)**. If we need to extract the `auth` module into a separate microservice later, we simply copy the `auth` folder. If we used a flat structure, we'd have to disentangle code from 6 different global folders.
+
+### Frontend: Feature-Sliced Design
+Similar to the backend, the React application uses a **Feature-Sliced Design**. Global folders only contain truly shared code, while domain-specific code lives in `src/features/`.
+
+```text
+frontend/src/
+├── components/      # Global shared UI components (Button, Card, Header)
+├── features/        # Feature-specific domains
+│   ├── auth/        # Auth domain
+│   │   ├── api/     # API calls for auth
+│   │   ├── components/# UI components specific to auth
+│   │   ├── context/ # State management for auth
+│   │   ├── hooks/   # Custom hooks (useAuth)
+│   │   └── types/   # TypeScript interfaces for auth
+│   └── dashboard/   # Dashboard domain
+├── layouts/         # Page layout wrappers (AuthLayout, DashboardLayout)
+├── lib/             # Third-party library configs (axios instance)
+└── pages/           # Route entry components
+```
+**Why?** In standard React apps, updating a single feature (like "login") requires jumping between `src/api`, `src/components`, `src/hooks`, and `src/types`. By grouping by feature, a developer has everything they need for a specific domain in one folder. This prevents the codebase from becoming an unmaintainable "spaghetti bowl" as it scales.
+
 ## Development Philosophy
 
 > We are NOT building a project. We are becoming software engineers.
