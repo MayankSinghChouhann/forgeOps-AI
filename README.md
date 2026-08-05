@@ -87,28 +87,7 @@ The Vite development server will start on `http://localhost:5173`.
 - Git Troubleshooter
 - Dashboard
 
-## Features That Set It Apart
 
-These go beyond a standard AI DevOps assistant:
-
-- **AI Mentor Mode** — explains root cause like a senior engineer, not just an answer engine
-- **Root Cause Analysis Engine**
-- **Learning Mode**
-- **Production Readiness Score**
-- **DevOps Interview Simulator**
-- **GitHub Repository Analyzer**
-- **Resume Analyzer**
-- **AI Roadmap Generator**
-- **Interactive DevOps Playground**
-- **AWS Architecture Generator**
-- **Spring Boot Error Analyzer**
-- **Personalized Learning Dashboard**
-- **Analytics Dashboard**
-- **RAG-based Documentation Search**
-- **Multi-LLM Support**
-- **Vector Database Integration**
-- **Enterprise Monitoring**
-- **Complete Production Deployment**
 
 ## Core Differentiators & Production Targets
 
@@ -143,6 +122,11 @@ To stand out as a highly technical, production-grade engineering build, the plat
 
 **Frontend**
 - React + TypeScript
+- Vite
+- Tailwind CSS
+- Framer Motion
+- Zod + React Hook Form
+- Axios
 
 **DevOps**
 - Docker
