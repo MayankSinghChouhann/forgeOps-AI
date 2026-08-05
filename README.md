@@ -31,6 +31,48 @@ When a Jenkins build fails, a Docker container refuses to start, or a Kubernetes
 
 ForgeOps AI closes that gap. Feed it a Jenkins log, a `kubectl describe pod` output, or a Terraform plan, and instead of a generic answer, it walks through root cause the way a senior engineer or mentor would — explaining *why*, not just *what to paste next*.
 
+## Getting Started
+
+### Prerequisites
+- Java 21
+- Node.js 18+
+- PostgreSQL
+- Maven
+
+### Local Setup
+
+**1. Database Configuration**
+Ensure PostgreSQL is running and execute:
+```sql
+CREATE DATABASE forgeops_db;
+CREATE USER forgeops_user WITH ENCRYPTED PASSWORD 'forgeops_password';
+GRANT ALL PRIVILEGES ON DATABASE forgeops_db TO forgeops_user;
+```
+
+**2. Backend Setup**
+```bash
+cd backend
+mvn clean install
+mvn spring-boot:run
+```
+The Spring Boot server will start on `http://localhost:8080`.
+
+**3. Frontend Setup**
+```bash
+cd frontend
+npm install
+npm run dev
+```
+The Vite development server will start on `http://localhost:5173`.
+
+## API Reference (Authentication)
+
+| Method | Endpoint | Description | Payload |
+|--------|----------|-------------|---------|
+| `POST` | `/api/auth/register` | Register a new user | `{ "email": "...", "password": "..." }` |
+| `POST` | `/api/auth/login` | Authenticate user | `{ "email": "...", "password": "..." }` |
+| `POST` | `/api/auth/refresh` | Refresh access token | `{ "refreshToken": "..." }` |
+
 ## Core Features
 
 - Authentication & User Management
