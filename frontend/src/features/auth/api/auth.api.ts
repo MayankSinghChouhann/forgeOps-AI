@@ -1,36 +1,44 @@
-import { LoginRequest, RegisterRequest, AuthResponse, User } from '../types/auth.types'
+import apiClient from '@/lib/axios'
+import type { LoginRequest, RegisterRequest, AuthResponse, TokenRefreshRequest } from '../types/auth.types'
 
-const delay = (ms: number) => new Promise(resolve => setTimeout(resolve, ms))
-
-const mockUser: User = {
-  id: 1,
-  email: 'dev@forgeops.ai',
-  createdAt: new Date().toISOString(),
-  updatedAt: new Date().toISOString()
-}
-
+/**
+ * Auth API module — all calls to the Spring Boot /api/auth/* endpoints.
+ *
+ * Uses the shared apiClient (src/lib/axios.ts) which handles:
+ * - Base URL configuration
+ * - JWT token attachment
+ * - 401 response handling
+ *
+ * Endpoints map to AuthController.java:
+ *   POST /api/auth/login    → authenticateUser()
+ *   POST /api/auth/register → registerUser()
+ *   POST /api/auth/refresh  → refreshToken()
+ */
 export const authApi = {
+  /**
+   * Authenticate a user with email and password.
+   * Returns JWT access token, refresh token, and user email on success.
+   */
   login: async (data: LoginRequest): Promise<AuthResponse> => {
-    await delay(1000)
-    if (data.email === 'error@forgeops.ai') {
-      throw new Error('Invalid credentials')
-    }
-    return {
-      user: { ...mockUser, email: data.email },
-      accessToken: 'mock_access_token',
-      refreshToken: 'mock_refresh_token'
-    }
+    const response = await apiClient.post<AuthResponse>('/api/auth/login', data)
+    return response.data
   },
-  
-  register: async (data: RegisterRequest): Promise<AuthResponse> => {
-    await delay(1000)
-    if (data.email === 'error@forgeops.ai') {
-      throw new Error('Email already registered')
-    }
-    return {
-      user: { ...mockUser, email: data.email },
-      accessToken: 'mock_access_token',
-      refreshToken: 'mock_refresh_token'
-    }
-  }
+
+  /**
+   * Register a new user account.
+   * Backend returns a plain success message string (not an AuthResponse),
+   * so we login immediately after registration to get tokens.
+   */
+  register: async (data: RegisterRequest): Promise<void> => {
+    await apiClient.post('/api/auth/register', data)
+  },
+
+  /**
+   * Exchange a valid refresh token for a new access token.
+   * Used to silently refresh sessions before the access token expires.
+   */
+  refreshToken: async (data: TokenRefreshRequest): Promise<AuthResponse> => {
+    const response = await apiClient.post<AuthResponse>('/api/auth/refresh', data)
+    return response.data
+  },
 }
