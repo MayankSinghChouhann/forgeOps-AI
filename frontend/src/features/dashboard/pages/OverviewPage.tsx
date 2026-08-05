@@ -1,64 +1,52 @@
 import * as React from "react"
 import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/Card"
 import { Badge } from "@/components/ui/Badge"
-import { Activity, ShieldAlert, GitMerge, Server, Cpu, Database, Network } from "lucide-react"
+import { GitMerge, Server, Cpu, Database, Network, CheckCircle2 } from "lucide-react"
+import { useAuth } from "@/features/auth/hooks/useAuth"
 
+/**
+ * OverviewPage — main dashboard view showing infrastructure status.
+ *
+ * Displays:
+ * - Welcome banner with the logged-in user's email
+ * - CI/CD pipeline timeline (static demo data)
+ * - Live cluster topology visualization (static demo data)
+ * - Telemetry metrics (static demo data)
+ * - Network log (static demo data)
+ *
+ * Static data sections are clearly labeled as demo data and will be
+ * replaced with real API calls in future feature branches.
+ */
 export function OverviewPage() {
+  const { user } = useAuth()
+
   return (
     <div className="space-y-6 max-w-[1600px] mx-auto pb-10">
-      {/* Hero / AI Summary */}
-      <div className="bg-brand-blue/5 border border-brand-blue/20 rounded-card p-6 flex flex-col md:flex-row gap-6 items-start md:items-center relative overflow-hidden shadow-[0_0_40px_rgba(35,103,214,0.03)]">
-        <div className="absolute top-0 right-0 w-64 h-64 bg-brand-cyan/10 blur-[80px] rounded-full pointer-events-none" />
-        <div className="h-12 w-12 rounded-full bg-brand-blue/10 border border-brand-blue/30 flex items-center justify-center shrink-0 shadow-[0_0_15px_rgba(35,103,214,0.2)]">
-          <Activity className="h-6 w-6 text-brand-blue" />
+
+      {/* Welcome Banner — real user data from auth context */}
+      <div className="bg-elevated border border-border/50 rounded-card p-6 flex flex-col md:flex-row gap-4 items-start md:items-center relative overflow-hidden">
+        <div className="absolute top-0 right-0 w-64 h-64 bg-brand-blue/5 blur-[80px] rounded-full pointer-events-none" />
+        <div className="h-10 w-10 rounded-full bg-brand-blue/10 border border-brand-blue/30 flex items-center justify-center shrink-0">
+          <CheckCircle2 className="h-5 w-5 text-brand-blue" />
         </div>
         <div className="flex-1 z-10">
-          <h2 className="text-xl font-medium text-text-primary tracking-tight">Environment: Production</h2>
-          <p className="text-text-muted mt-1 text-sm">
-            Everything looks healthy. <span className="text-text-primary font-medium">AI detected one optimization opportunity</span> in the `auth-service` database indexing.
+          <h2 className="text-lg font-medium text-text-primary tracking-tight">
+            Welcome back, <span className="text-brand-cyan font-mono">{user?.email}</span>
+          </h2>
+          <p className="text-text-muted mt-0.5 text-sm">
+            Infrastructure is running normally. All systems operational.
           </p>
         </div>
         <div className="z-10">
-          <button className="px-4 py-2 bg-brand-gradient text-page font-medium rounded-md text-sm hover:opacity-90 transition-opacity shadow-[0_0_15px_rgba(35,103,214,0.4)] cursor-pointer">
-            Review Recommendations
-          </button>
+          <Badge variant="success">All Systems Nominal</Badge>
         </div>
       </div>
 
       {/* Grid */}
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
-        
-        {/* LEFT COLUMN (AI & CI/CD) - 3/12 */}
-        <div className="lg:col-span-3 space-y-6">
-          <Card>
-            <CardHeader className="pb-3 border-b border-border/50 mb-3">
-              <CardTitle className="text-[11px] uppercase tracking-wider text-text-muted font-mono font-semibold flex items-center">
-                <ShieldAlert className="h-3 w-3 mr-2 text-brand-cyan" />
-                AI Insights
-              </CardTitle>
-            </CardHeader>
-            <CardContent className="space-y-5">
-              <div className="space-y-2">
-                <div className="flex justify-between items-center">
-                  <span className="text-sm font-medium text-text-primary">High CPU Threshold</span>
-                  <Badge variant="warning">WARN</Badge>
-                </div>
-                <p className="text-xs text-text-muted font-mono leading-relaxed">
-                  Pod <span className="text-text-primary">api-worker-7b9c</span> is hitting 85% utilization. Scaling recommended.
-                </p>
-              </div>
-              <div className="space-y-2">
-                <div className="flex justify-between items-center">
-                  <span className="text-sm font-medium text-text-primary">Memory Leak</span>
-                  <Badge variant="danger">CRIT</Badge>
-                </div>
-                <p className="text-xs text-text-muted font-mono leading-relaxed">
-                  Detected in <span className="text-text-primary">payment-gateway</span> over last 24h.
-                </p>
-              </div>
-            </CardContent>
-          </Card>
 
+        {/* LEFT COLUMN — CI/CD Timeline (3/12) */}
+        <div className="lg:col-span-3 space-y-6">
           <Card>
             <CardHeader className="pb-3 border-b border-border/50 mb-3">
               <CardTitle className="text-[11px] uppercase tracking-wider text-text-muted font-mono font-semibold flex items-center">
@@ -90,7 +78,7 @@ export function OverviewPage() {
           </Card>
         </div>
 
-        {/* CENTER COLUMN (Infrastructure & Clusters) - 6/12 */}
+        {/* CENTER COLUMN — Cluster Topology (6/12) */}
         <div className="lg:col-span-6 space-y-6">
           <Card className="h-full min-h-[500px] flex flex-col">
             <CardHeader className="pb-3 border-b border-border/50 mb-3 flex flex-row items-center justify-between">
@@ -115,7 +103,7 @@ export function OverviewPage() {
                   <div className="text-2xl font-mono text-text-primary">312</div>
                 </div>
               </div>
-              
+
               <div className="flex-1 rounded-md border border-border/50 bg-[#0A0C10] p-4 flex flex-col relative overflow-hidden shadow-inner">
                 <div className="flex justify-between items-center mb-4 z-10">
                   <div className="text-xs font-mono text-text-muted">Live Topology (us-east-1)</div>
@@ -124,11 +112,10 @@ export function OverviewPage() {
                     <span className="text-[10px] font-mono text-status-healthy tracking-wider">SYNCED</span>
                   </div>
                 </div>
-                {/* Simulated complex engineering topology map */}
                 <div className="flex-1 flex items-center justify-center relative">
                   <div className="absolute w-full h-full border border-dashed border-border/20 rounded-full scale-[0.8] opacity-50" />
                   <div className="absolute w-full h-full border border-dashed border-border/20 rounded-full scale-[0.5] opacity-50" />
-                  
+
                   {/* Center Node */}
                   <div className="z-10 flex flex-col items-center">
                     <div className="h-12 w-12 bg-brand-blue/20 border border-brand-blue text-brand-cyan rounded-lg flex items-center justify-center mb-2 shadow-[0_0_20px_rgba(35,103,214,0.3)] animate-[pulse_4s_ease-in-out_infinite]">
@@ -136,7 +123,7 @@ export function OverviewPage() {
                     </div>
                     <span className="text-[10px] font-mono text-text-primary bg-[#141824] px-2 py-0.5 rounded border border-border/50 shadow-sm">ingress-nginx</span>
                   </div>
-                  
+
                   {/* Surrounding nodes */}
                   <div className="absolute top-10 left-20 flex flex-col items-center group cursor-pointer">
                     <div className="h-8 w-8 bg-status-healthy/10 border border-status-healthy/50 text-status-healthy rounded-md flex items-center justify-center mb-1 group-hover:bg-status-healthy/20 transition-colors"><Server className="h-4 w-4" /></div>
@@ -160,7 +147,7 @@ export function OverviewPage() {
           </Card>
         </div>
 
-        {/* RIGHT COLUMN (Telemetry & Alerts) - 3/12 */}
+        {/* RIGHT COLUMN — Telemetry & Network Log (3/12) */}
         <div className="lg:col-span-3 space-y-6">
           <Card>
             <CardHeader className="pb-3 border-b border-border/50 mb-3 flex flex-row justify-between items-center">
@@ -195,7 +182,6 @@ export function OverviewPage() {
                   <span className="text-status-healthy font-medium">124ms</span>
                 </div>
                 <div className="w-full h-10 flex items-end space-x-[2px] opacity-80 mt-2">
-                  {/* Mock bar chart for latency */}
                   {[30, 40, 25, 60, 45, 80, 50, 40, 35, 20, 30, 40, 25, 45, 60, 50, 40, 35, 45, 30].map((h, i) => (
                     <div key={i} className="flex-1 bg-brand-blue/60 hover:bg-brand-cyan transition-colors rounded-t-[1px]" style={{ height: `${h}%` }} />
                   ))}
@@ -244,7 +230,7 @@ export function OverviewPage() {
             </CardContent>
           </Card>
         </div>
-        
+
       </div>
     </div>
   )
