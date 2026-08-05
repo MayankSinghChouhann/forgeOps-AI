@@ -178,7 +178,7 @@ Requirement Analysis · Architecture Diagram · Database Design · Folder Struct
 
 - [x] **Phase 0 — Understand the problem** (whole platform): why ForgeOps AI exists, what it actually solves
 - [x] **Phase 0 — High-level architecture**: layered system design finalized
-- [ ] **Phase 1 — Feature 1: Authentication** *(starting next)* — Spring Boot fundamentals, project skeleton, Spring Security, JWT
+- [x] **Phase 1 — Feature 1: Authentication** — Spring Boot fundamentals, project skeleton, Spring Security, JWT
 - [ ] Feature 2: AI DevOps Assistant + Chat History
 - [ ] Feature 3: Jenkins Log Analyzer
 - [ ] Feature 4: Docker Error Analyzer
