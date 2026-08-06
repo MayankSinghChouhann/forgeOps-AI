@@ -81,7 +81,10 @@ public class GeminiAiService {
         }
 
         try {
-            String url = baseUrl + "/" + model + ":generateContent?key=" + apiKey;
+            // Build full model path: normalize to always have 'models/' prefix
+            // API Key format AQ.Ab requires v1beta endpoint with full model path
+            String modelPath = model.startsWith("models/") ? model : "models/" + model;
+            String url = baseUrl.replace("/models", "") + "/" + modelPath + ":generateContent?key=" + apiKey;
 
             // Build the Gemini API request payload (REST JSON format)
             // Structure: { contents: [ {role, parts: [{text}]} ] }
@@ -114,6 +117,10 @@ public class GeminiAiService {
 
             return extractTextFromGeminiResponse(responseJson);
 
+        } catch (org.springframework.web.client.HttpClientErrorException.TooManyRequests rateLimitEx) {
+            log.warn("[GeminiAI] Rate limit exceeded (429). Free tier quota exhausted. " +
+                     "Falling back to local knowledge engine. Retry after a few minutes or upgrade your plan.");
+            return null; // Graceful fallback
         } catch (Exception e) {
             log.error("[GeminiAI] API call failed: {}. Falling back to local knowledge engine.", e.getMessage());
             return null; // Graceful fallback — never crash the application
