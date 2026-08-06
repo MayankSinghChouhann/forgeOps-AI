@@ -1,53 +1,141 @@
-# Define the stages of our pipeline. 
-# GitLab will run these stages strictly in this order.
+# ==============================================================================
+# ForgeOps AI - Enterprise GitLab CI/CD Pipeline
+# ==============================================================================
+# This pipeline automates the complete Software Development Lifecycle (SDLC):
+# 1. Build: Compile Java 21 & React code with dependency caching.
+# 2. Test: Execute unit tests with JUnit report generation.
+# 3. Security: Scan project dependencies and filesystem with Trivy.
+# 4. Package: Build multi-stage Docker images & push to GitLab Container Registry.
+# ==============================================================================
+
+# Global Variables
+variables:
+  # Instruct Maven to store dependencies inside the project folder so GitLab can cache it
+  MAVEN_OPTS: "-Dmaven.repo.local=$CI_PROJECT_DIR/.m2/repository -Dorg.slf4j.simpleLogger.log.org.apache.maven.cli.transfer.Slf4jMavenTransferListener=WARN"
+  DOCKER_DRIVER: overlay2
+  DOCKER_TLS_CERTDIR: ""
+  BACKEND_IMAGE: "$CI_REGISTRY_IMAGE/backend"
+  FRONTEND_IMAGE: "$CI_REGISTRY_IMAGE/frontend"
+
+# Define strictly ordered stages
 stages:
   - build
   - test
+  - security
+  - package
 
-# ==========================================
-# BACKEND JOBS
-# ==========================================
+# Global Cache Strategy for performance optimization
+cache:
+  key: "$CI_COMMIT_REF_SLUG"
+  paths:
+    - .m2/repository/
+    - frontend/.npm/
 
-# Job 1: Compile the Java Backend
+# ==============================================================================
+# STAGE 1: BUILD
+# ==============================================================================
+
 build-backend:
   stage: build
-  # We need a Docker image that has Java 21 and Maven pre-installed
-  image: maven:3.9.6-eclipse-temurin-21
+  image: maven:3.9.6-eclipse-temurin-21-alpine
   script:
-    - echo "Compiling the Spring Boot application..."
+    - echo "==> [Backend] Compiling Spring Boot Application..."
     - cd backend
     - mvn clean compile
-  # Save the compiled classes so the next stage (test) can use them
   artifacts:
+    name: "backend-build-$CI_COMMIT_SHORT_SHA"
     paths:
-      - backend/target/
+      - backend/target/classes/
+    expire_in: 1 day
 
-# Job 2: Run Backend Tests
-test-backend:
-  stage: test
-  image: maven:3.9.6-eclipse-temurin-21
-  script:
-    - echo "Running unit tests for backend..."
-    - cd backend
-    - mvn test
-  # This job depends on build-backend finishing successfully
-  dependencies:
-    - build-backend
-
-# ==========================================
-# FRONTEND JOBS
-# ==========================================
-
-# Job 3: Build the React Frontend
 build-frontend:
   stage: build
-  # We need a Docker image with Node.js
-  image: node:18-alpine
+  image: node:20-alpine
   script:
-    - echo "Installing dependencies and building the frontend..."
+    - echo "==> [Frontend] Installing dependencies and building production bundle..."
     - cd frontend
-    - npm ci
+    - npm ci --cache .npm --prefer-offline
     - npm run build
   artifacts:
+    name: "frontend-dist-$CI_COMMIT_SHORT_SHA"
     paths:
       - frontend/dist/
+    expire_in: 1 day
+
+# ==============================================================================
+# STAGE 2: TEST
+# ==============================================================================
+
+test-backend:
+  stage: test
+  image: maven:3.9.6-eclipse-temurin-21-alpine
+  dependencies:
+    - build-backend
+  script:
+    - echo "==> [Backend] Running Unit Tests..."
+    - cd backend
+    - mvn test
+  artifacts:
+    when: always
+    reports:
+      junit: backend/target/surefire-reports/*.xml
+    paths:
+      - backend/target/surefire-reports/
+    expire_in: 1 week
+
+# ==============================================================================
+# STAGE 3: SECURITY (SAST & Vulnerability Scanning)
+# ==============================================================================
+
+trivy-security-scan:
+  stage: security
+  image:
+    name: aquasec/trivy:latest
+    entrypoint: [""]
+  allow_failure: true
+  script:
+    - echo "==> [Security] Scanning codebase for known vulnerabilities..."
+    - trivy fs --exit-code 0 --severity HIGH,CRITICAL --format table .
+  artifacts:
+    when: always
+    expire_in: 1 week
+
+# ==============================================================================
+# STAGE 4: PACKAGE (Docker Build & Push to GitLab Container Registry)
+# ==============================================================================
+
+docker-build-backend:
+  stage: package
+  image: docker:26.1.1
+  services:
+    - docker:26.1.1-dind
+  before_script:
+    - echo "==> Logging into GitLab Container Registry..."
+    - echo "$CI_REGISTRY_PASSWORD" | docker login -u "$CI_REGISTRY_USER" --password-stdin "$CI_REGISTRY"
+  script:
+    - echo "==> [Docker] Building Backend Image..."
+    - cd backend
+    - docker build -t "$BACKEND_IMAGE:$CI_COMMIT_SHORT_SHA" -t "$BACKEND_IMAGE:latest" .
+    - echo "==> [Docker] Pushing Backend Image to Registry..."
+    - docker push "$BACKEND_IMAGE:$CI_COMMIT_SHORT_SHA"
+    - docker push "$BACKEND_IMAGE:latest"
+  rules:
+    - if: '$CI_COMMIT_BRANCH == "main" || $CI_COMMIT_BRANCH == "feature/devops"'
+
+docker-build-frontend:
+  stage: package
+  image: docker:26.1.1
+  services:
+    - docker:26.1.1-dind
+  before_script:
+    - echo "==> Logging into GitLab Container Registry..."
+    - echo "$CI_REGISTRY_PASSWORD" | docker login -u "$CI_REGISTRY_USER" --password-stdin "$CI_REGISTRY"
+  script:
+    - echo "==> [Docker] Building Frontend Image..."
+    - cd frontend
+    - docker build -t "$FRONTEND_IMAGE:$CI_COMMIT_SHORT_SHA" -t "$FRONTEND_IMAGE:latest" .
+    - echo "==> [Docker] Pushing Frontend Image to Registry..."
+    - docker push "$FRONTEND_IMAGE:$CI_COMMIT_SHORT_SHA"
+    - docker push "$FRONTEND_IMAGE:latest"
+  rules:
+    - if: '$CI_COMMIT_BRANCH == "main" || $CI_COMMIT_BRANCH == "feature/devops"'
