@@ -35,7 +35,8 @@ apiClient.interceptors.request.use(
 apiClient.interceptors.response.use(
   (response) => response,
   (error) => {
-    if (error.response?.status === 401) {
+    const isAuthEndpoint = error.config?.url?.includes('/api/auth/login') || error.config?.url?.includes('/api/auth/register')
+    if (error.response?.status === 401 && !isAuthEndpoint) {
       // Clear all stored auth data on token expiry or invalid token
       localStorage.removeItem('accessToken')
       localStorage.removeItem('refreshToken')
