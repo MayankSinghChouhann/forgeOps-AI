@@ -6,6 +6,7 @@ import { RegisterPage } from "@/pages/RegisterPage"
 import { AuthLayout } from "@/layouts/AuthLayout"
 import { DashboardLayout } from "@/layouts/DashboardLayout"
 import { OverviewPage } from "@/features/dashboard/pages/OverviewPage"
+import { AssistantPage } from "@/features/assistant/pages/AssistantPage"
 
 /**
  * Root application component.
@@ -34,6 +35,7 @@ function App() {
             <Route path="/dashboard" element={<DashboardLayout />}>
               <Route index element={<Navigate to="/dashboard/overview" replace />} />
               <Route path="overview" element={<OverviewPage />} />
+              <Route path="assistant" element={<AssistantPage />} />
               <Route path="log-analyzer" element={<div className="text-text-primary p-6">Log Analyzer — Coming Soon</div>} />
               <Route path="docker" element={<div className="text-text-primary p-6">Docker Analyzer — Coming Soon</div>} />
               <Route path="kubernetes" element={<div className="text-text-primary p-6">Kubernetes Troubleshooter — Coming Soon</div>} />

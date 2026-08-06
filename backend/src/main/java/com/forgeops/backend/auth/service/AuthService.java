@@ -43,6 +43,7 @@ public class AuthService {
         this.jwtUtil = jwtUtil;
     }
 
+    @Transactional
     public void registerUser(RegisterRequest registerRequest) {
         if (userRepository.existsByEmail(registerRequest.email())) {
             throw new RuntimeException("Error: Email is already in use!");
@@ -52,6 +53,7 @@ public class AuthService {
         userRepository.save(user);
     }
 
+    @Transactional
     public AuthResponse authenticateUser(LoginRequest loginRequest) {
         Authentication authentication = authenticationManager.authenticate(
                 new UsernamePasswordAuthenticationToken(loginRequest.email(), loginRequest.password())

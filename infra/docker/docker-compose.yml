@@ -50,11 +50,15 @@ services:
       context: ../../backend
       dockerfile: Dockerfile
     container_name: forgeops-backend
+    env_file:
+      - .env
     environment:
       SPRING_DATASOURCE_URL: jdbc:postgresql://postgres:5432/forgeops_db
       SPRING_DATASOURCE_USERNAME: forgeops_user
       SPRING_DATASOURCE_PASSWORD: forgeops_password
       FORGEOPS_JWT_SECRET: 404E635266556A586E3272357538782F413F4428472B4B6250645367566B5970
+      GEMINI_API_KEY: ${GEMINI_API_KEY}
+      GEMINI_MODEL: ${GEMINI_MODEL:-gemini-1.5-flash}
     ports:
       - "8080:8080"
     depends_on:

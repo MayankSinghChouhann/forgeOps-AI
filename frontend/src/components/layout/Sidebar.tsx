@@ -1,12 +1,13 @@
 import * as React from "react"
 import { NavLink } from "react-router-dom"
-import { LayoutDashboard, FileText, Box, Server, GitMerge, Hexagon, Code2, Settings, ChevronsUpDown, Keyboard } from "lucide-react"
+import { LayoutDashboard, Bot, FileText, Box, Server, GitMerge, Hexagon, Code2, Settings, ChevronsUpDown, Keyboard } from "lucide-react"
 import logoImage from "@/assets/logo.png"
 import { cn } from "@/lib/utils"
 import { Badge } from "@/components/ui/Badge"
 
 const navItems = [
   { name: "Overview", href: "/dashboard/overview", icon: LayoutDashboard },
+  { name: "AI Assistant", href: "/dashboard/assistant", icon: Bot },
   { name: "Log Analyzer", href: "/dashboard/log-analyzer", icon: FileText },
   { name: "Docker", href: "/dashboard/docker", icon: Box },
   { name: "Kubernetes", href: "/dashboard/kubernetes", icon: Server },
