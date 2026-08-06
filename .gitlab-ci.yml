@@ -1,0 +1,53 @@
+# Define the stages of our pipeline. 
+# GitLab will run these stages strictly in this order.
+stages:
+  - build
+  - test
+
+# ==========================================
+# BACKEND JOBS
+# ==========================================
+
+# Job 1: Compile the Java Backend
+build-backend:
+  stage: build
+  # We need a Docker image that has Java 21 and Maven pre-installed
+  image: maven:3.9.6-eclipse-temurin-21
+  script:
+    - echo "Compiling the Spring Boot application..."
+    - cd backend
+    - mvn clean compile
+  # Save the compiled classes so the next stage (test) can use them
+  artifacts:
+    paths:
+      - backend/target/
+
+# Job 2: Run Backend Tests
+test-backend:
+  stage: test
+  image: maven:3.9.6-eclipse-temurin-21
+  script:
+    - echo "Running unit tests for backend..."
+    - cd backend
+    - mvn test
+  # This job depends on build-backend finishing successfully
+  dependencies:
+    - build-backend
+
+# ==========================================
+# FRONTEND JOBS
+# ==========================================
+
+# Job 3: Build the React Frontend
+build-frontend:
+  stage: build
+  # We need a Docker image with Node.js
+  image: node:18-alpine
+  script:
+    - echo "Installing dependencies and building the frontend..."
+    - cd frontend
+    - npm ci
+    - npm run build
+  artifacts:
+    paths:
+      - frontend/dist/

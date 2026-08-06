@@ -31,6 +31,48 @@ When a Jenkins build fails, a Docker container refuses to start, or a Kubernetes
 
 ForgeOps AI closes that gap. Feed it a Jenkins log, a `kubectl describe pod` output, or a Terraform plan, and instead of a generic answer, it walks through root cause the way a senior engineer or mentor would — explaining *why*, not just *what to paste next*.
 
+## Getting Started
+
+### Prerequisites
+- Java 21
+- Node.js 18+
+- PostgreSQL
+- Maven
+
+### Local Setup
+
+**1. Database Configuration**
+Ensure PostgreSQL is running and execute:
+```sql
+CREATE DATABASE forgeops_db;
+CREATE USER forgeops_user WITH ENCRYPTED PASSWORD 'forgeops_password';
+GRANT ALL PRIVILEGES ON DATABASE forgeops_db TO forgeops_user;
+```
+
+**2. Backend Setup**
+```bash
+cd backend
+mvn clean install
+mvn spring-boot:run
+```
+The Spring Boot server will start on `http://localhost:8080`.
+
+**3. Frontend Setup**
+```bash
+cd frontend
+npm install
+npm run dev
+```
+The Vite development server will start on `http://localhost:5173`.
+
+## API Reference (Authentication)
+
+| Method | Endpoint | Description | Payload |
+|--------|----------|-------------|---------|
+| `POST` | `/api/auth/register` | Register a new user | `{ "email": "...", "password": "..." }` |
+| `POST` | `/api/auth/login` | Authenticate user | `{ "email": "...", "password": "..." }` |
+| `POST` | `/api/auth/refresh` | Refresh access token | `{ "refreshToken": "..." }` |
+
 ## Core Features
 
 - Authentication & User Management
@@ -45,28 +87,7 @@ ForgeOps AI closes that gap. Feed it a Jenkins log, a `kubectl describe pod` out
 - Git Troubleshooter
 - Dashboard
 
-## Features That Set It Apart
 
-These go beyond a standard AI DevOps assistant:
-
-- **AI Mentor Mode** — explains root cause like a senior engineer, not just an answer engine
-- **Root Cause Analysis Engine**
-- **Learning Mode**
-- **Production Readiness Score**
-- **DevOps Interview Simulator**
-- **GitHub Repository Analyzer**
-- **Resume Analyzer**
-- **AI Roadmap Generator**
-- **Interactive DevOps Playground**
-- **AWS Architecture Generator**
-- **Spring Boot Error Analyzer**
-- **Personalized Learning Dashboard**
-- **Analytics Dashboard**
-- **RAG-based Documentation Search**
-- **Multi-LLM Support**
-- **Vector Database Integration**
-- **Enterprise Monitoring**
-- **Complete Production Deployment**
 
 ## Core Differentiators & Production Targets
 
@@ -101,6 +122,11 @@ To stand out as a highly technical, production-grade engineering build, the plat
 
 **Frontend**
 - React + TypeScript
+- Vite
+- Tailwind CSS
+- Framer Motion
+- Zod + React Hook Form
+- Axios
 
 **DevOps**
 - Docker
@@ -138,6 +164,45 @@ ForgeOps AI follows a layered architecture. A request flows top to bottom, and e
 - **Service layer** holds the actual decision-making. Controllers stay thin; the service layer decides what to do — a separation that shows up constantly in backend interviews.
 - **AI integration layer and data layer sit side by side** because to the service layer, both are just dependencies it calls — the same idea behind dependency injection.
 - **Infrastructure & DevOps sits below, not inside, the request path** — it's what runs and ships the system above it, not part of runtime request handling. Runtime architecture and deployment architecture are kept as separate mental models.
+
+## Project Structure
+
+ForgeOps AI deliberately avoids flat, outdated folder structures. Instead, both the frontend and backend are structured for maximum scalability and maintainability.
+
+### Backend: Package-by-Feature
+Instead of grouping files by their technical role (all controllers in one folder, all services in another), we group them by **domain feature** (e.g., `auth`, `dashboard`).
+
+```text
+backend/src/main/java/com/forgeops/backend/
+└── auth/
+    ├── controller/  # API endpoints for auth
+    ├── dto/         # Request/Response data transfer objects
+    ├── entity/      # Database models (User, RefreshToken)
+    ├── repository/  # Database access interfaces
+    ├── security/    # JWT filters and configs
+    └── service/     # Business logic
+```
+**Why?** This approach aligns with **Domain-Driven Design (DDD)**. If we need to extract the `auth` module into a separate microservice later, we simply copy the `auth` folder. If we used a flat structure, we'd have to disentangle code from 6 different global folders.
+
+### Frontend: Feature-Sliced Design
+Similar to the backend, the React application uses a **Feature-Sliced Design**. Global folders only contain truly shared code, while domain-specific code lives in `src/features/`.
+
+```text
+frontend/src/
+├── components/      # Global shared UI components (Button, Card, Header)
+├── features/        # Feature-specific domains
+│   ├── auth/        # Auth domain
+│   │   ├── api/     # API calls for auth
+│   │   ├── components/# UI components specific to auth
+│   │   ├── context/ # State management for auth
+│   │   ├── hooks/   # Custom hooks (useAuth)
+│   │   └── types/   # TypeScript interfaces for auth
+│   └── dashboard/   # Dashboard domain
+├── layouts/         # Page layout wrappers (AuthLayout, DashboardLayout)
+├── lib/             # Third-party library configs (axios instance)
+└── pages/           # Route entry components
+```
+**Why?** In standard React apps, updating a single feature (like "login") requires jumping between `src/api`, `src/components`, `src/hooks`, and `src/types`. By grouping by feature, a developer has everything they need for a specific domain in one folder. This prevents the codebase from becoming an unmaintainable "spaghetti bowl" as it scales.
 
 ## Development Philosophy
 
@@ -178,7 +243,7 @@ Requirement Analysis · Architecture Diagram · Database Design · Folder Struct
 
 - [x] **Phase 0 — Understand the problem** (whole platform): why ForgeOps AI exists, what it actually solves
 - [x] **Phase 0 — High-level architecture**: layered system design finalized
-- [ ] **Phase 1 — Feature 1: Authentication** *(starting next)* — Spring Boot fundamentals, project skeleton, Spring Security, JWT
+- [x] **Phase 1 — Feature 1: Authentication** — Spring Boot fundamentals, project skeleton, Spring Security, JWT
 - [ ] Feature 2: AI DevOps Assistant + Chat History
 - [ ] Feature 3: Jenkins Log Analyzer
 - [ ] Feature 4: Docker Error Analyzer
