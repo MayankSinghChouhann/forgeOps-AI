@@ -13,7 +13,7 @@ import axios from 'axios'
  *   redirects the user to the login page, clearing stale credentials.
  */
 const apiClient = axios.create({
-  baseURL: import.meta.env.VITE_API_URL || 'http://localhost:8080',
+  baseURL: import.meta.env.VITE_API_URL !== undefined ? import.meta.env.VITE_API_URL : '',
   headers: {
     'Content-Type': 'application/json',
   },
