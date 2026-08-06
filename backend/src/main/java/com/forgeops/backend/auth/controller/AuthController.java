@@ -30,9 +30,15 @@ public class AuthController {
     }
 
     @PostMapping("/login")
-    public ResponseEntity<AuthResponse> authenticateUser(@Valid @RequestBody LoginRequest loginRequest) {
-        AuthResponse authResponse = authService.authenticateUser(loginRequest);
-        return ResponseEntity.ok(authResponse);
+    public ResponseEntity<?> authenticateUser(@Valid @RequestBody LoginRequest loginRequest) {
+        try {
+            AuthResponse authResponse = authService.authenticateUser(loginRequest);
+            return ResponseEntity.ok(authResponse);
+        } catch (org.springframework.security.core.AuthenticationException e) {
+            return ResponseEntity.status(401).body("Invalid email or password.");
+        } catch (RuntimeException e) {
+            return ResponseEntity.badRequest().body(e.getMessage());
+        }
     }
 
     @PostMapping("/refresh")
