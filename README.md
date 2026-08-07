@@ -1,25 +1,33 @@
 # ForgeOps AI
 
 [![CI Pipeline](https://github.com/MayankSinghChouhann/forgeOps-AI/actions/workflows/ci.yml/badge.svg)](https://github.com/MayankSinghChouhann/forgeOps-AI/actions/workflows/ci.yml)
+![Java](https://img.shields.io/badge/Java-21-orange?logo=openjdk)
+![Spring Boot](https://img.shields.io/badge/Spring_Boot-3.3-green?logo=springboot)
+![React](https://img.shields.io/badge/React-18-blue?logo=react)
+![Docker](https://img.shields.io/badge/Docker-Containerized-blue?logo=docker)
+![Gemini AI](https://img.shields.io/badge/AI-Gemini_2.0_Flash-purple?logo=google)
 
 **AI-Powered DevOps Intelligence Platform**
 
-🔗 **Live Demo (AWS Hosted):** *[Coming Soon in Deployment Phase]*
+> A production-grade, enterprise-ready SaaS platform engineered as a flagship portfolio project — not a tutorial CRUD app, but a real-world engineering build designed to be discussed in interviews at Google, Amazon, Microsoft, Atlassian, Razorpay, and Flipkart.
 
-ForgeOps AI is a production-grade platform that helps developers and DevOps engineers troubleshoot infrastructure, analyze CI/CD failures, debug Docker and Kubernetes issues, generate Infrastructure as Code, and learn DevOps through AI-powered mentorship — not just another CRUD project, but a real SaaS-style engineering build.
+🔗 **Live Demo (AWS Hosted):** *[Coming in DevOps Deployment Phase]*
 
 ---
 
 ## Table of Contents
 
 - [Why ForgeOps AI Exists](#why-forgeops-ai-exists)
-- [Core Features](#core-features)
-- [Features That Set It Apart](#features-that-set-it-apart)
-- [Tech Stack](#tech-stack)
+- [Features Implemented](#features-implemented)
 - [Architecture](#architecture)
-- [Development Philosophy](#development-philosophy)
-- [Development Process](#development-process)
+- [Tech Stack](#tech-stack)
+- [Project Structure](#project-structure)
+- [Quick Start with Docker](#quick-start-with-docker)
+- [Local Development Setup](#local-development-setup)
+- [API Reference](#api-reference)
+- [Default Credentials](#default-credentials)
 - [Roadmap / Project Status](#roadmap--project-status)
+- [Advanced Engineering Standards](#advanced-engineering-standards)
 - [Learning Goals](#learning-goals)
 - [Author](#author)
 
@@ -27,281 +35,477 @@ ForgeOps AI is a production-grade platform that helps developers and DevOps engi
 
 ## Why ForgeOps AI Exists
 
-When a Jenkins build fails, a Docker container refuses to start, or a Kubernetes pod sits in `CrashLoopBackOff`, most developers face the same routine: scroll through hundreds of lines of logs, copy the scariest-looking line into Google, and dig through Stack Overflow threads hoping one applies. This isn't a knowledge gap — it's a tooling gap. There's no fast, structured way to go from "here's my error" to "here's the actual root cause and here's why it happened."
+When a Jenkins build fails, a Docker container refuses to start, or a Kubernetes pod enters `CrashLoopBackOff`, most engineers face the same friction: scroll through hundreds of log lines, paste the scariest error into Google, and dig through stale Stack Overflow threads hoping one applies.
 
-ForgeOps AI closes that gap. Feed it a Jenkins log, a `kubectl describe pod` output, or a Terraform plan, and instead of a generic answer, it walks through root cause the way a senior engineer or mentor would — explaining *why*, not just *what to paste next*.
+**ForgeOps AI eliminates that friction.** Feed it a Jenkins build log, a `kubectl describe pod` output, or a Dockerfile error — it gives you Root Cause Analysis (RCA) the way a Senior SRE would: structured, specific, and immediately actionable.
 
-## Getting Started
+---
+
+## Features Implemented
+
+### ✅ Feature 1 — JWT Authentication & User Management
+- Spring Security 6 with stateless JWT access + refresh token rotation
+- BCrypt password hashing, explicit `ProviderManager` configuration
+- PostgreSQL persistence: `users` and `refresh_tokens` tables
+- React login/register UI with Zod form validation
+- Seeded default admin account on startup via `DatabaseInitializer`
+
+### ✅ Feature 2 — AI DevOps Assistant with Chat History
+- Real-time conversation with Google **Gemini 2.0 Flash** AI
+- Persistent chat sessions stored in PostgreSQL (`chat_sessions`, `chat_messages`)
+- Intelligent local `DevOpsKnowledgeEngine` fallback when Gemini is rate-limited
+- Glassmorphic chat UI with Markdown rendering, syntax-highlighted code blocks, and 1-click copy
+- Session sidebar with chat history, delete, and new session controls
+
+### ✅ Feature 3 — Jenkins / GitLab CI Log Analyzer
+- Pastes raw CI/CD failure logs → returns structured Root Cause Analysis
+- Expert rule engine classifies: Maven Compilation Failure, NPM ERESOLVE conflict, Git SCM auth failures, generic runner errors
+- Gemini AI augments analysis with detailed contextual RCA
+- Results stored in PostgreSQL with full analysis history
+
+### ✅ Feature 4 — Docker Container Error Analyzer
+- Diagnoses Docker container errors: OOMKilled (Exit 137), Host Port Conflicts (EADDRINUSE), Docker socket permission errors
+- Generates production-grade bash remediation scripts ready to run
+- Container-specific RCA with cgroup and kernel-level explanations
+- 1-click preset loading with real dirty log samples
+
+### ✅ Feature 5 — Kubernetes Cluster Troubleshooter
+- Analyzes `kubectl describe pod` / event stream outputs
+- Classifies: `CrashLoopBackOff`, `ImagePullBackOff`, scheduling failures (0/N nodes available)
+- Generates exact `kubectl` remediation commands and manifest patches
+- Preloaded real K8s incident scenarios for instant testing
+
+### ✅ Feature 6 — IaC & CI/CD Pipeline Generator
+**Supports generation of:**
+| Format | Description |
+|--------|-------------|
+| **Terraform (AWS)** | Production VPC, EKS Cluster, S3 remote state backend, DynamoDB locking |
+| **Kubernetes Manifests** | Deployment, Service, HPA, Ingress with TLS via cert-manager |
+| **Helm Values YAML** | Production-ready `values.yaml` with autoscaling and resource limits |
+| **GitLab CI/CD** | Multi-stage pipeline: test → docker build → Trivy scan → K8s rollout |
+| **GitHub Actions** | GHCR image build/push + zero-downtime K8s deployment workflow |
+| **Dockerfile** | Multi-stage builds for Java 21 (Spring Boot) and Node.js (React/Vite) |
+
+Features: interactive provider/environment/runtime selectors, AI custom prompt override, syntax-highlighted code editor, 1-click copy, file download.
+
+### ✅ Feature 7 — Linux Shell Assistant & Destructive Guard
+- **Command Audit Mode**: Analyzes any Linux/Docker/K8s command for safety
+  - `DANGEROUS`: `rm -rf /`, `dd if=/dev/zero`, `kill -9 1`, `DROP DATABASE`
+  - `CAUTION`: `docker system prune -a`, `git push --force`, `reboot`
+  - `SAFE`: Standard read-only/informational commands
+- Breaks down every flag/modifier with semantic explanations
+- Suggests safe alternatives for destructive commands
+- **CLI Synthesizer Mode**: Describe your goal in plain English → get the exact one-liner
+- AI-enhanced via Gemini with local rule-based expert engine fallback
+
+### ✅ Feature 8 — Live System Telemetry Dashboard
+Real-time platform health metrics sourced from actual runtime data:
+| Metric | Source |
+|--------|--------|
+| JVM Heap Memory (used/max/%) | `Runtime.getRuntime()` |
+| CPU Cores & Load Average | `ManagementFactory.getOperatingSystemMXBean()` |
+| Database Connection Pool | `HikariPoolMXBean` (active/idle/total) |
+| Platform Counters | JPA repository `.count()` queries |
+| Live Activity Feed | Chronological merge of DB analyzer + generator + chat records |
+| System Uptime | `RuntimeMXBean.getUptime()` |
+
+Auto-refreshes every 10 seconds. Zero static or hardcoded values.
+
+---
+
+## Architecture
+
+ForgeOps AI follows a strict **layered architecture** with **package-by-feature** domain organization:
+
+```
+Client (React/Vite)
+     │  JWT Bearer Token
+     ▼
+Spring Boot 3 REST API (port 8080)
+     │  JwtAuthenticationFilter
+     ▼
+┌─────────────────────────────────────────┐
+│  Controllers (thin — route + validate)  │
+│  /api/auth  /api/assistant  /api/analyzer│
+│  /api/generator  /api/terminal          │
+│  /api/dashboard/metrics                 │
+└─────────────────────────────────────────┘
+     │
+     ▼
+┌─────────────────────────────────────────┐
+│  Services (all business logic lives here)│
+│  LogAnalyzerService (RCA Engine)        │
+│  TemplateGeneratorService (IaC Synth)   │
+│  ShellSafetyService (Guard Engine)      │
+│  DashboardService (JVM Telemetry)       │
+│  AssistantService (Chat Orchestration)  │
+└─────────────────────────────────────────┘
+     │                    │
+     ▼                    ▼
+PostgreSQL           GeminiAiService
+(JPA/Hibernate)      (Google Gemini 2.0 Flash)
+                     + Local Expert Fallback
+```
+
+**Architecture decisions:**
+- **Package-by-Feature (DDD)**: `auth/`, `assistant/`, `analyzer/`, `generator/`, `terminal/`, `dashboard/` — each domain is self-contained and can be extracted to a microservice without touching other modules
+- **JWT Stateless Security**: No server-side session state — horizontally scalable by default
+- **AI with Graceful Degradation**: Never hard-fails when Gemini is rate-limited; expert rule engine ensures production availability
+- **Container-First**: Every service designed to run inside Docker from day one
+
+---
+
+## Tech Stack
+
+### Backend
+| Technology | Version | Purpose |
+|-----------|---------|---------|
+| Java | 21 | Runtime (LTS) |
+| Spring Boot | 3.x | Framework |
+| Spring Security 6 | — | JWT stateless auth |
+| Spring Data JPA | — | ORM / database access |
+| Hibernate | — | JPA implementation |
+| PostgreSQL | 16 | Primary relational database |
+| Redis | 7 | Session cache (planned rate limiting) |
+| HikariCP | — | JDBC connection pooling |
+| Maven | 3.9 | Build tool |
+
+### AI
+| Technology | Purpose |
+|-----------|---------|
+| Google Gemini 2.0 Flash | Primary AI model |
+| Local Expert Rule Engine | Fallback when AI unavailable |
+
+### Frontend
+| Technology | Version | Purpose |
+|-----------|---------|---------|
+| React | 18 | UI framework |
+| TypeScript | 5 | Type safety |
+| Vite | 5 | Build tool / dev server |
+| Tailwind CSS | 4 | Utility-first styling |
+| Framer Motion | 11 | Animations |
+| Zod + React Hook Form | — | Validation |
+| Axios | — | HTTP client |
+| Lucide React | — | Icon library |
+
+### DevOps & Infrastructure
+| Technology | Purpose |
+|-----------|---------|
+| Docker | Containerization |
+| Docker Compose | Multi-container orchestration |
+| Nginx 1.27 | Frontend reverse proxy + SPA routing |
+| Multi-stage Dockerfiles | Minimal production images |
+| GitHub Actions | CI/CD pipeline |
+| GitLab CI | Alternative pipeline |
+
+### Planned (DevOps Phase)
+- Kubernetes + Helm Charts
+- Terraform (AWS EKS, VPC, RDS)
+- Prometheus + Grafana
+- ELK Stack (Elasticsearch, Logstash, Kibana)
+- AWS (EC2, EKS, RDS, S3, ALB)
+
+---
+
+## Project Structure
+
+### Backend — Package-by-Feature (Domain-Driven Design)
+
+```
+backend/src/main/java/com/forgeops/backend/
+├── auth/
+│   ├── controller/        # AuthController (register, login, refresh)
+│   ├── dto/               # LoginRequest, RegisterRequest, AuthResponse
+│   ├── entity/            # User, RefreshToken
+│   ├── repository/        # UserRepository, RefreshTokenRepository
+│   ├── security/          # JwtUtil, JwtAuthenticationFilter, SecurityConfig
+│   └── service/           # AuthService
+├── assistant/
+│   ├── controller/        # AssistantController (sessions + chat)
+│   ├── dto/               # SendMessageRequest, ChatMessageResponse
+│   ├── entity/            # ChatSession, ChatMessage, MessageRole
+│   ├── repository/        # ChatSessionRepository, ChatMessageRepository
+│   └── service/           # AssistantService, GeminiAiService, DevOpsKnowledgeEngine
+├── analyzer/
+│   ├── controller/        # AnalyzerController (analyze, history)
+│   ├── dto/               # AnalyzeLogRequest, AnalysisResponse
+│   ├── entity/            # AnalysisRecord
+│   ├── repository/        # AnalysisRepository
+│   └── service/           # LogAnalyzerService (Jenkins + Docker + K8s)
+├── generator/
+│   ├── controller/        # GeneratorController (generate, history)
+│   ├── dto/               # GenerateTemplateRequest, TemplateResponse
+│   ├── entity/            # GeneratedTemplate
+│   ├── repository/        # TemplateRepository
+│   └── service/           # TemplateGeneratorService (Terraform, K8s, CI/CD)
+├── terminal/
+│   ├── controller/        # TerminalController (explain, generate)
+│   ├── dto/               # ExplainCommandRequest, CommandExplanationResponse
+│   └── service/           # ShellSafetyService (safety guard + CLI synth)
+├── dashboard/
+│   ├── controller/        # DashboardController (metrics)
+│   ├── dto/               # DashboardMetricsResponse (nested DTOs)
+│   └── service/           # DashboardService (JVM + HikariCP telemetry)
+└── config/
+    └── DatabaseInitializer.java  # Seeds admin account on startup
+```
+
+### Frontend — Feature-Sliced Design
+
+```
+frontend/src/
+├── features/
+│   ├── auth/              # Login, Register, JWT token management
+│   ├── assistant/         # AI Chat UI + session sidebar
+│   ├── analyzer/          # Jenkins / Docker / Kubernetes RCA pages
+│   ├── generator/         # IaC + CI/CD pipeline generator pages
+│   ├── terminal/          # Shell assistant + destructive guard
+│   └── dashboard/         # Live telemetry overview page
+├── components/ui/         # Badge, Card (global shared components)
+├── layouts/               # AuthLayout, DashboardLayout (with sidebar)
+├── pages/                 # LoginPage, RegisterPage (route entrypoints)
+├── lib/
+│   └── axios.ts           # Axios instance with JWT interceptor
+└── App.tsx                # Root router — all 8 features fully wired
+```
+
+---
+
+## Quick Start with Docker
+
+**Requires**: Docker Desktop
+
+```bash
+# 1. Clone the repository
+git clone https://github.com/MayankSinghChouhann/forgeOps-AI.git
+cd forgeOps-AI
+
+# 2. Set your Gemini API key
+echo "GEMINI_API_KEY=your_gemini_api_key_here" >> infra/docker/.env
+
+# 3. Start all services (PostgreSQL + Redis + Backend + Frontend)
+docker compose -f infra/docker/docker-compose.yml up -d --build
+
+# 4. Open the application
+# Frontend: http://localhost:3000
+# Backend API: http://localhost:8080
+```
+
+All 4 containers (`forgeops-postgres`, `forgeops-redis`, `forgeops-backend`, `forgeops-frontend`) start with health checks and dependency ordering.
+
+---
+
+## Local Development Setup
 
 ### Prerequisites
-- Java 21
-- Node.js 18+
-- PostgreSQL
-- Maven
+- Java 21 (Eclipse Temurin / Azul Zulu)
+- Node.js 20+
+- PostgreSQL 16
+- Maven 3.9+
 
-### Local Setup
-
-**1. Database Configuration**
-Ensure PostgreSQL is running and execute:
+### Database Setup
 ```sql
 CREATE DATABASE forgeops_db;
 CREATE USER forgeops_user WITH ENCRYPTED PASSWORD 'forgeops_password';
 GRANT ALL PRIVILEGES ON DATABASE forgeops_db TO forgeops_user;
 ```
 
-**2. Backend Setup**
+### Backend
 ```bash
 cd backend
-mvn clean install
+export GEMINI_API_KEY=your_gemini_api_key_here
+mvn clean install -DskipTests
 mvn spring-boot:run
+# API available at http://localhost:8080
 ```
-The Spring Boot server will start on `http://localhost:8080`.
 
-**3. Frontend Setup**
+### Frontend
 ```bash
 cd frontend
 npm install
 npm run dev
-```
-The Vite development server will start on `http://localhost:5173`.
-
-## API Reference (Authentication)
-
-| Method | Endpoint | Description | Payload |
-|--------|----------|-------------|---------|
-| `POST` | `/api/auth/register` | Register a new user | `{ "email": "...", "password": "..." }` |
-| `POST` | `/api/auth/login` | Authenticate user | `{ "email": "...", "password": "..." }` |
-| `POST` | `/api/auth/refresh` | Refresh access token | `{ "refreshToken": "..." }` |
-
-## Core Features
-
-- Authentication & User Management
-- AI DevOps Assistant with Chat History
-- Jenkins Log Analyzer
-- Docker Error Analyzer
-- Kubernetes Troubleshooter
-- Terraform Generator
-- YAML Generator
-- GitHub Actions Generator
-- Linux Command Assistant
-- Git Troubleshooter
-- Dashboard
-
-
-
-## Core Differentiators & Production Targets
-
-To stand out as a highly technical, production-grade engineering build, the platform is designed with the following differentiators:
-
-1. 🌐 **Live AWS Deployment**: A fully deployed public instance rather than just local repository code, showcasing live operation on AWS.
-2. 🤖 **End-to-End Functional AI**: The "Root Cause Analysis Engine" is verified against real, dirty log files (Jenkins failures, Kubernetes crash loops, etc.) to ensure genuine utility, not just generic LLM prompts.
-3. 📊 **Public Observability Dashboards**: Transparent Grafana dashboard links showing live performance metrics (uptime, request latencies, and system error rates).
-4. 🧪 **Strict Quality Gates**: Target of **>80% automated test coverage** integrated as a pipeline blocker.
-5. 📈 **Load & Stress Testing**: Performance validated through k6/JMeter stress tests to baseline target limits (e.g., handling 500 concurrent users).
-6. 📝 **Architecture Decision Records (ADRs)**: Documented ADRs explaining technical trade-offs (e.g., JWT selection vs. session-based state management).
-7. 🚦 **Visible CI/CD Pipeline**: GitHub Actions status badge showing building, scanning, and testing status on every code push.
-8. 🎖️ **AWS Certified Best Practices**: Architecture aligned with AWS Well-Architected Framework guidelines (enhancing resume weight alongside AWS certifications).
-
-## Tech Stack
-
-**Backend**
-- Java 21
-- Spring Boot
-- Spring Security
-- Spring Data JPA
-- PostgreSQL
-- Redis
-- JWT
-- Maven
-
-**AI**
-- LangChain4j
-- Gemini API
-- OpenAI (planned)
-- Ollama (planned)
-
-**Frontend**
-- React + TypeScript
-- Vite
-- Tailwind CSS
-- Framer Motion
-- Zod + React Hook Form
-- Axios
-
-**DevOps**
-- Docker
-- Docker Compose
-- Jenkins
-- GitHub Actions
-- Kubernetes
-- Terraform
-
-**Cloud**
-- AWS
-
-**Monitoring**
-- Prometheus
-- Grafana
-
-**Logging**
-- ELK Stack
-
-**Testing**
-- JUnit
-- Mockito
-- Testcontainers
-
-## Architecture
-
-ForgeOps AI follows a layered architecture. A request flows top to bottom, and each layer has exactly one responsibility:
-
-<img width="2720" height="2080" alt="forgeops_ai_high_level_architecture" src="https://github.com/user-attachments/assets/d2dac27f-63db-4ba0-bcb6-2a017dd266ab" />
-
-**Why it's shaped this way:**
-
-- **Client layer** never talks to the database or the AI model directly — only to the API. This keeps the frontend swappable without touching backend logic.
-- **API layer** is the front door — authentication (JWT) happens here before anything else, keeping security at the edge instead of scattered through business logic.
-- **Service layer** holds the actual decision-making. Controllers stay thin; the service layer decides what to do — a separation that shows up constantly in backend interviews.
-- **AI integration layer and data layer sit side by side** because to the service layer, both are just dependencies it calls — the same idea behind dependency injection.
-- **Infrastructure & DevOps sits below, not inside, the request path** — it's what runs and ships the system above it, not part of runtime request handling. Runtime architecture and deployment architecture are kept as separate mental models.
-
-## Project Structure
-
-ForgeOps AI deliberately avoids flat, outdated folder structures. Instead, both the frontend and backend are structured for maximum scalability and maintainability.
-
-### Backend: Package-by-Feature
-Instead of grouping files by their technical role (all controllers in one folder, all services in another), we group them by **domain feature** (e.g., `auth`, `dashboard`).
-
-```text
-backend/src/main/java/com/forgeops/backend/
-└── auth/
-    ├── controller/  # API endpoints for auth
-    ├── dto/         # Request/Response data transfer objects
-    ├── entity/      # Database models (User, RefreshToken)
-    ├── repository/  # Database access interfaces
-    ├── security/    # JWT filters and configs
-    └── service/     # Business logic
-```
-**Why?** This approach aligns with **Domain-Driven Design (DDD)**. If we need to extract the `auth` module into a separate microservice later, we simply copy the `auth` folder. If we used a flat structure, we'd have to disentangle code from 6 different global folders.
-
-### Frontend: Feature-Sliced Design
-Similar to the backend, the React application uses a **Feature-Sliced Design**. Global folders only contain truly shared code, while domain-specific code lives in `src/features/`.
-
-```text
-frontend/src/
-├── components/      # Global shared UI components (Button, Card, Header)
-├── features/        # Feature-specific domains
-│   ├── auth/        # Auth domain
-│   │   ├── api/     # API calls for auth
-│   │   ├── components/# UI components specific to auth
-│   │   ├── context/ # State management for auth
-│   │   ├── hooks/   # Custom hooks (useAuth)
-│   │   └── types/   # TypeScript interfaces for auth
-│   └── dashboard/   # Dashboard domain
-├── layouts/         # Page layout wrappers (AuthLayout, DashboardLayout)
-├── lib/             # Third-party library configs (axios instance)
-└── pages/           # Route entry components
-```
-**Why?** In standard React apps, updating a single feature (like "login") requires jumping between `src/api`, `src/components`, `src/hooks`, and `src/types`. By grouping by feature, a developer has everything they need for a specific domain in one folder. This prevents the codebase from becoming an unmaintainable "spaghetti bowl" as it scales.
-
-## Development Philosophy
-
-> We are NOT building a project. We are becoming software engineers.
-
-Every feature is built through a full engineering cycle, not just written and shipped:
-
-```
-Understand Problem → Architecture → Database Design → API Design →
-Implementation → Testing → Docker → Deployment → Optimization → Documentation
+# UI available at http://localhost:5173
 ```
 
-**Learning rules:**
-- Never jump straight to code — explain WHY before HOW
-- Every concept taught from scratch: annotations, dependencies, folders, packages, APIs, classes, commands, and design decisions
-- Compare approaches when multiple exist
-- Follow industry best practices, always
+---
 
-**Coding rules:**
-- Clean Code & SOLID Principles
-- Layered Architecture
-- REST Standards
-- DTO Pattern
-- Proper Exception Handling & Validation
-- Logging
-- Testing
-- Security
-- Scalability & Maintainability
-- No shortcuts, no unnecessary code, no copy-paste tutorials
+## API Reference
 
-## Development Process
+### Authentication
+| Method | Endpoint | Description |
+|--------|----------|-------------|
+| `POST` | `/api/auth/register` | Register new user |
+| `POST` | `/api/auth/login` | Login, returns JWT + refresh token |
+| `POST` | `/api/auth/refresh` | Rotate refresh token |
 
-Every phase of every feature includes:
+### AI Assistant
+| Method | Endpoint | Description |
+|--------|----------|-------------|
+| `POST` | `/api/assistant/sessions` | Create new chat session |
+| `GET` | `/api/assistant/sessions` | List user sessions |
+| `POST` | `/api/assistant/sessions/{id}/messages` | Send message |
+| `GET` | `/api/assistant/sessions/{id}/messages` | Get message history |
+| `DELETE` | `/api/assistant/sessions/{id}` | Delete session |
 
-Requirement Analysis · Architecture Diagram · Database Design · Folder Structure · API Design · Implementation · Testing · Docker · Deployment · Documentation · Interview Questions · Assignments · Revision Notes · Common Mistakes · Best Practices
+### Log Analyzer (Features 3–5)
+| Method | Endpoint | Description |
+|--------|----------|-------------|
+| `POST` | `/api/analyzer/analyze` | Analyze log → RCA + Remediation |
+| `GET` | `/api/analyzer/history` | User analysis history |
+| `GET` | `/api/analyzer/{id}` | Get specific analysis |
+
+**Request body for `/analyze`:**
+```json
+{
+  "rawLog": "...paste full log output here...",
+  "targetType": "JENKINS | DOCKER | KUBERNETES",
+  "title": "Optional human-readable title"
+}
+```
+
+### IaC & Pipeline Generator (Feature 6)
+| Method | Endpoint | Description |
+|--------|----------|-------------|
+| `POST` | `/api/generator/generate` | Generate template |
+| `GET` | `/api/generator/history` | User template history |
+
+**Request body for `/generate`:**
+```json
+{
+  "templateType": "TERRAFORM | KUBERNETES | GITLAB_CI | GITHUB_ACTIONS | DOCKERFILE | HELM",
+  "targetProvider": "AWS | GCP | AZURE | K8S | GENERIC",
+  "serviceName": "my-service",
+  "environment": "production",
+  "runtime": "java | node | go | python",
+  "customPrompt": "Optional AI customization instructions"
+}
+```
+
+### Shell Assistant (Feature 7)
+| Method | Endpoint | Description |
+|--------|----------|-------------|
+| `POST` | `/api/terminal/explain` | Audit command safety |
+| `POST` | `/api/terminal/generate` | Generate CLI command |
+
+### Dashboard Telemetry (Feature 8)
+| Method | Endpoint | Description |
+|--------|----------|-------------|
+| `GET` | `/api/dashboard/metrics` | Live JVM + DB + platform metrics |
+
+> All endpoints except `/api/auth/**` require `Authorization: Bearer <jwt_token>` header.
+
+---
+
+## Default Credentials
+
+| Role | Email | Password |
+|------|-------|----------|
+| Admin | `admin@forgeops.ai` | `root123` |
+| User | `mayank@forgeops.ai` | `root123` |
+
+Credentials are seeded automatically via `DatabaseInitializer` on every startup.
+
+---
 
 ## Roadmap / Project Status
 
-- [x] **Phase 0 — Understand the problem** (whole platform): why ForgeOps AI exists, what it actually solves
-- [x] **Phase 0 — High-level architecture**: layered system design finalized
-- [x] **Phase 1 — Feature 1: Authentication** — Spring Boot fundamentals, project skeleton, Spring Security, JWT
-- [ ] Feature 2: AI DevOps Assistant + Chat History
-- [ ] Feature 3: Jenkins Log Analyzer
-- [ ] Feature 4: Docker Error Analyzer
-- [ ] Feature 5: Kubernetes Troubleshooter
-- [ ] Feature 6: Terraform / YAML / GitHub Actions Generators
-- [ ] Feature 7: Linux Command Assistant & Git Troubleshooter
-- [ ] Feature 8: Dashboard
-- [ ] Advanced features (Mentor Mode, Root Cause Engine, Interview Simulator, RAG search, etc.)
-- [ ] Full production deployment (Docker → Kubernetes → AWS → Monitoring)
+### Phase 1 & 2 — Feature Development ✅ COMPLETE
 
-## Advanced Engineering Standards (Phases)
+| Feature | Status | Description |
+|---------|--------|-------------|
+| Feature 1 — Auth | ✅ Done | JWT authentication, registration, refresh tokens |
+| Feature 2 — AI Assistant | ✅ Done | Gemini AI chat with persistent history |
+| Feature 3 — Jenkins Analyzer | ✅ Done | CI/CD log RCA engine |
+| Feature 4 — Docker Analyzer | ✅ Done | Container error diagnosis |
+| Feature 5 — K8s Troubleshooter | ✅ Done | Pod event stream analysis |
+| Feature 6 — IaC Generator | ✅ Done | Terraform + K8s + CI/CD generator |
+| Feature 7 — Shell Assistant | ✅ Done | Destructive guard + CLI synthesizer |
+| Feature 8 — Live Dashboard | ✅ Done | Real JVM/DB/platform telemetry |
 
-As we transition from building features to scaling and deploying them, we will adhere to the following senior-level DevOps and engineering standards:
+### Phase 3 — System Hardening 🔄 In Progress
 
-### 🐳 Docker Phase
-- **Multi-stage builds**: Separate build and runtime environments to ensure small, secure, and production-optimized final images.
-- **Non-root user containerization**: Run container processes as non-root users for enhanced security.
-- **Actuator Health Checks**: Hook `HEALTHCHECK` instructions directly to the Spring Boot Actuator `/health` endpoint.
+- [ ] RFC 7807 standardized error responses across all controllers
+- [ ] JUnit 5 + Mockito unit test suites (target: >80% coverage)
+- [ ] Integration tests with Testcontainers (real PostgreSQL)
 
-### ☸️ Kubernetes Phase
-- **Helm Charts**: Package and template application manifests via Helm charts instead of maintaining raw YAML.
-- **Liveness + Readiness Probes**: Ensure proper traffic routing and container recovery with health probes.
-- **ConfigMaps & Secrets**: Keep configurations and sensitive credentials strictly separated from code.
-- **Horizontal Pod Autoscaling (HPA)**: Automate scaling based on CPU/Memory load.
+### Phase 4 — Production Optimization 📋 Planned
 
-### 🚀 CI/CD Phase
-- **Multi-stage Pipelines**: Define comprehensive pipelines covering linting, testing, security scanning, building, pushing, and deploying.
-- **Security Vulnerability Scans**: Integrate Trivy (container image scans) and OWASP Dependency-Check (dependency vulnerabilities).
-- **Quality Gates**: Fail the pipeline automatically if test coverage falls below the set threshold.
-- **GitOps (ArgoCD)**: Maintain declarative state synchronization between Git repository and Kubernetes.
+- [ ] Code-splitting and lazy loading (Vite dynamic imports)
+- [ ] Response pagination for history endpoints
+- [ ] Redis caching for AI responses
 
-### 🏗️ IaC Phase
-- **Terraform Remote State**: Manage infrastructure safely using remote state backends (S3 + DynamoDB state locking).
-- **Terraform Modules**: Modularize infrastructure code into reusable modules.
+### Phase 5 & 6 — DevOps Implementation 📋 Planned
 
-### 📊 Monitoring & Observability Phase
-- **Custom Grafana Dashboards**: Create dashboards tracking application-specific business metrics (e.g., login success rates, API latency) alongside default system metrics.
-- **Alertmanager Routing**: Set specific rules (e.g., alert when error rate > 5%).
-- **Structured JSON Logging**: Incorporate correlation/trace IDs for queryable logs inside log management systems.
+| Topic | Area |
+|-------|------|
+| Linux process & system management | Foundation |
+| Docker multi-stage builds & non-root hardening | Docker |
+| Docker Compose health checks & networking | Docker |
+| Nginx reverse proxy & SSL/TLS | Networking |
+| GitLab CI/CD: build → test → scan → push → deploy | CI/CD |
+| Kubernetes: Deployments, Services, Probes, HPA | K8s |
+| Helm chart packaging & release management | K8s |
+| Terraform AWS (EKS, VPC, RDS, S3 remote state) | IaC |
+| Prometheus + Grafana observability | Monitoring |
+| AWS production deployment & Well-Architected Review | Cloud |
 
-### 🏆 Bonus Differentiators
-- **Deployment Strategies**: Blue-Green or Canary deployment flows.
-- **Chaos Experiments**: Verify self-healing capabilities of Kubernetes by intentionally terminating pods.
-- **Load Testing**: Integrate k6 load tests into the CI workflow and publish reports to the README.
+---
+
+## Advanced Engineering Standards
+
+### 🐳 Docker
+- **Multi-stage builds**: Maven builder → JRE 21 runtime (84% smaller image)
+- **Non-root user**: `spring:spring` group for container security hardening
+- **HEALTHCHECK**: Wired to Spring Boot Actuator `/actuator/health`
+- **Memory-optimized JVM**: `-XX:InitialRAMPercentage=40.0 -XX:MaxRAMPercentage=75.0`
+
+### ☸️ Kubernetes (Planned)
+- Helm Charts for application templating
+- Liveness + Readiness probes for traffic management
+- Horizontal Pod Autoscaler (CPU-based, 75% threshold)
+- ConfigMaps + Secrets for config/credential separation
+
+### 🚀 CI/CD (Planned)
+- Multi-stage pipelines: lint → test → build → security scan → deploy
+- Trivy container vulnerability scanning
+- OWASP dependency check
+- Quality gate: fail if test coverage < 80%
+- GitOps with ArgoCD
+
+### 🏗️ IaC (Planned)
+- Terraform S3 remote state + DynamoDB locking
+- Reusable module architecture (VPC, EKS, RDS)
+
+### 📊 Observability (Planned)
+- Custom Grafana dashboards for business metrics
+- Alertmanager rules (error rate > 5%)
+- Structured JSON logging with trace IDs
+
+---
 
 ## Learning Goals
 
-By the end of this project, the target is confident, interview-ready understanding of:
+By the end of this project, the goal is production-ready understanding of:
 
-Advanced Java · Spring Boot · Spring Security · REST APIs · PostgreSQL · SQL · Redis · JWT · Docker · Docker Compose · Kubernetes · Jenkins · GitHub Actions · Terraform · AWS · AI Integration · LangChain4j · Gemini API · RAG · Vector Databases · Clean Architecture · Design Patterns · Production Deployment · Monitoring · Logging · Software Engineering Best Practices
+> **Backend**: Java 21 · Spring Boot 3 · Spring Security · REST API Design · PostgreSQL · JPA/Hibernate · Redis · JWT · HikariCP · Maven
+>
+> **AI Integration**: Gemini API · Prompt Engineering · Fallback Architecture · Rate Limit Handling
+>
+> **Frontend**: React 18 · TypeScript · Vite · Tailwind CSS · React Hook Form · Zod · Axios · Feature-Sliced Architecture
+>
+> **DevOps**: Linux · Docker · Docker Compose · Nginx · GitLab CI · GitHub Actions · Kubernetes · Helm · Terraform · AWS · Prometheus · Grafana
+>
+> **Engineering**: Clean Code · SOLID Principles · DDD · Layered Architecture · DTO Pattern · REST Standards · Security Best Practices · Observability
 
-The goal: final-year-project quality, resume-project quality, internship-ready, product-company-ready, production-ready, open-source quality — the strongest project on the profile.
+---
 
 ## Author
 
 **Mayank Singh Chouhan**
 B.Tech Computer Science Engineering, UPES Dehradun
 
+> *"We are NOT building a project. We are becoming software engineers."*
+
 ---
 
-*This README will be updated as each feature is completed, following the project's own documentation-as-you-go philosophy.*
+*README reflects the state of all implemented features. Updated as each phase completes.*

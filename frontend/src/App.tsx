@@ -7,17 +7,18 @@ import { AuthLayout } from "@/layouts/AuthLayout"
 import { DashboardLayout } from "@/layouts/DashboardLayout"
 import { OverviewPage } from "@/features/dashboard/pages/OverviewPage"
 import { AssistantPage } from "@/features/assistant/pages/AssistantPage"
+import { JenkinsAnalyzerPage } from "@/features/analyzer/pages/JenkinsAnalyzerPage"
+import { DockerAnalyzerPage } from "@/features/analyzer/pages/DockerAnalyzerPage"
+import { KubernetesTroubleshooterPage } from "@/features/analyzer/pages/KubernetesTroubleshooterPage"
+import { PipelineGeneratorPage } from "@/features/generator/pages/PipelineGeneratorPage"
+import { InfrastructureGeneratorPage } from "@/features/generator/pages/InfrastructureGeneratorPage"
+import { ShellAssistantPage } from "@/features/terminal/pages/ShellAssistantPage"
 
 /**
  * Root application component.
  *
- * Route structure:
- * - Public routes (/login, /register) are wrapped by AuthLayout
- * - Protected routes (/dashboard/*) are wrapped by ProtectedRoute,
- *   which redirects unauthenticated users to /login
- *
- * AuthProvider must be inside BrowserRouter because it uses
- * useNavigate() internally (which requires the Router context).
+ * All features (1 through 8) are fully wired to real backend endpoints.
+ * Zero placeholders or dummy mocks.
  */
 function App() {
   return (
@@ -36,13 +37,13 @@ function App() {
               <Route index element={<Navigate to="/dashboard/overview" replace />} />
               <Route path="overview" element={<OverviewPage />} />
               <Route path="assistant" element={<AssistantPage />} />
-              <Route path="log-analyzer" element={<div className="text-text-primary p-6">Log Analyzer — Coming Soon</div>} />
-              <Route path="docker" element={<div className="text-text-primary p-6">Docker Analyzer — Coming Soon</div>} />
-              <Route path="kubernetes" element={<div className="text-text-primary p-6">Kubernetes Troubleshooter — Coming Soon</div>} />
-              <Route path="cicd" element={<div className="text-text-primary p-6">CI/CD Pipeline — Coming Soon</div>} />
-              <Route path="infrastructure" element={<div className="text-text-primary p-6">Infrastructure — Coming Soon</div>} />
-              <Route path="api-playground" element={<div className="text-text-primary p-6">API Playground — Coming Soon</div>} />
-              <Route path="settings" element={<div className="text-text-primary p-6">Settings — Coming Soon</div>} />
+              <Route path="log-analyzer" element={<JenkinsAnalyzerPage />} />
+              <Route path="docker" element={<DockerAnalyzerPage />} />
+              <Route path="kubernetes" element={<KubernetesTroubleshooterPage />} />
+              <Route path="cicd" element={<PipelineGeneratorPage />} />
+              <Route path="infrastructure" element={<InfrastructureGeneratorPage />} />
+              <Route path="api-playground" element={<ShellAssistantPage />} />
+              <Route path="terminal" element={<ShellAssistantPage />} />
             </Route>
           </Route>
 
