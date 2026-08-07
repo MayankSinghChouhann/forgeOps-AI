@@ -9,6 +9,8 @@ import com.forgeops.backend.auth.entity.User;
 import com.forgeops.backend.auth.repository.RefreshTokenRepository;
 import com.forgeops.backend.auth.repository.UserRepository;
 import com.forgeops.backend.auth.security.JwtUtil;
+import com.forgeops.backend.common.exception.BusinessRuleViolationException;
+import com.forgeops.backend.common.exception.ResourceNotFoundException;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
@@ -46,7 +48,7 @@ public class AuthService {
     @Transactional
     public void registerUser(RegisterRequest registerRequest) {
         if (userRepository.existsByEmail(registerRequest.email())) {
-            throw new RuntimeException("Error: Email is already in use!");
+            throw new BusinessRuleViolationException("Email address is already registered: " + registerRequest.email());
         }
 
         User user = new User(registerRequest.email(), passwordEncoder.encode(registerRequest.password()));
@@ -63,7 +65,8 @@ public class AuthService {
         String jwt = jwtUtil.generateJwtToken(authentication);
 
         org.springframework.security.core.userdetails.User userDetails = (org.springframework.security.core.userdetails.User) authentication.getPrincipal();
-        User user = userRepository.findByEmail(userDetails.getUsername()).orElseThrow(() -> new RuntimeException("User not found"));
+        User user = userRepository.findByEmail(userDetails.getUsername())
+                .orElseThrow(() -> new ResourceNotFoundException("User", "email", userDetails.getUsername()));
 
         RefreshToken refreshToken = createRefreshToken(user);
 
@@ -93,13 +96,13 @@ public class AuthService {
                     String token = jwtUtil.generateTokenFromUsername(user.getEmail());
                     return new AuthResponse(token, requestRefreshToken, user.getEmail());
                 })
-                .orElseThrow(() -> new RuntimeException("Refresh token is not in database!"));
+                .orElseThrow(() -> new ResourceNotFoundException("Refresh token", "tokenHash", "[redacted]"));
     }
 
     private RefreshToken verifyExpiration(RefreshToken token) {
         if (token.getExpiresAt().isBefore(LocalDateTime.now())) {
             refreshTokenRepository.delete(token);
-            throw new RuntimeException("Refresh token was expired. Please make a new signin request");
+            throw new BusinessRuleViolationException("Refresh token has expired. Please sign in again.");
         }
         return token;
     }

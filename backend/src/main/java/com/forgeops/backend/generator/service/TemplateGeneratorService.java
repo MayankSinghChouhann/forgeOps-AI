@@ -1,6 +1,7 @@
 package com.forgeops.backend.generator.service;
 
 import com.forgeops.backend.assistant.service.GeminiAiService;
+import com.forgeops.backend.common.exception.ResourceNotFoundException;
 import com.forgeops.backend.generator.dto.GenerateTemplateRequest;
 import com.forgeops.backend.generator.dto.TemplateResponse;
 import com.forgeops.backend.generator.entity.GeneratedTemplate;
@@ -79,7 +80,7 @@ public class TemplateGeneratorService {
     public TemplateResponse getTemplateById(UUID id) {
         return templateRepository.findById(id)
                 .map(TemplateResponse::fromEntity)
-                .orElseThrow(() -> new IllegalArgumentException("Template not found: " + id));
+                .orElseThrow(() -> new ResourceNotFoundException("GeneratedTemplate", "id", id));
     }
 
     private String buildStandardTemplate(String type, String provider, String serviceName, String env, GenerateTemplateRequest req) {

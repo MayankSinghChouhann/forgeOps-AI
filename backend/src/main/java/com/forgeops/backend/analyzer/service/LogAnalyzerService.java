@@ -5,6 +5,7 @@ import com.forgeops.backend.analyzer.dto.AnalyzeLogRequest;
 import com.forgeops.backend.analyzer.entity.AnalysisRecord;
 import com.forgeops.backend.analyzer.repository.AnalysisRepository;
 import com.forgeops.backend.assistant.service.GeminiAiService;
+import com.forgeops.backend.common.exception.ResourceNotFoundException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
@@ -88,7 +89,7 @@ public class LogAnalyzerService {
     public AnalysisResponse getAnalysisById(UUID id) {
         return analysisRepository.findById(id)
                 .map(AnalysisResponse::fromEntity)
-                .orElseThrow(() -> new IllegalArgumentException("Analysis record not found: " + id));
+                .orElseThrow(() -> new ResourceNotFoundException("AnalysisRecord", "id", id));
     }
 
     private String sanitizeLog(String raw) {

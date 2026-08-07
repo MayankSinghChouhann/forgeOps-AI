@@ -65,8 +65,14 @@ public class SecurityConfig {
                 .csrf(AbstractHttpConfigurer::disable)
                 .exceptionHandling(exception -> exception.authenticationEntryPoint(unauthorizedHandler))
                 .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
-                .authorizeHttpRequests(auth -> 
-                    auth.requestMatchers("/api/auth/**", "/actuator/**").permitAll()
+                .authorizeHttpRequests(auth ->
+                    auth
+                        // Auth endpoints are public — needed for login/register
+                        .requestMatchers("/api/auth/**").permitAll()
+                        // Only /health and /info are public — metrics require authentication
+                        // SECURITY: /actuator/prometheus and /actuator/metrics expose JVM internals
+                        .requestMatchers("/actuator/health", "/actuator/info").permitAll()
+                        // All other requests require a valid JWT token
                         .anyRequest().authenticated()
                 );
 
