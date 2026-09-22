@@ -1,6 +1,7 @@
 package com.forgeops.backend.config;
 
 import com.forgeops.backend.auth.entity.User;
+import com.forgeops.backend.auth.entity.UserRole;
 import com.forgeops.backend.auth.repository.UserRepository;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -50,6 +51,7 @@ public class DatabaseInitializer {
             user -> log.info("[DatabaseInitializer] Bootstrap user already exists; no changes applied"),
             () -> {
                 User newUser = new User(email, passwordEncoder.encode(rawPassword));
+                newUser.setRole(UserRole.ADMIN);
                 userRepository.save(newUser);
                 log.info("[DatabaseInitializer] Created bootstrap administrator account");
             }
