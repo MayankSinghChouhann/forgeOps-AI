@@ -1,0 +1,15 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: forgeops-config
+  namespace: forgeops
+data:
+  SPRING_PROFILES_ACTIVE: prod
+  SPRING_DATASOURCE_URL: jdbc:postgresql://postgres:5432/forgeops_db
+  SPRING_DATASOURCE_USERNAME: forgeops_user
+  FORGEOPS_ALLOWED_ORIGINS: https://forgeops.example.com
+  FORGEOPS_BOOTSTRAP_ENABLED: "false"
+  FORGEOPS_REDIS_CACHE_ENABLED: "true"
+  REDIS_HOST: redis
+  REDIS_PORT: "6379"
+  GEMINI_MODEL: gemini-1.5-flash
