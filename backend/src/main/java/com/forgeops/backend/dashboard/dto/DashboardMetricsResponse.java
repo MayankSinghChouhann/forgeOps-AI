@@ -12,12 +12,13 @@ public class DashboardMetricsResponse {
     private List<ActivityEvent> recentActivities;
     private String systemStatus;
     private long uptimeSeconds;
+    private List<ServiceHealth> services;
 
     public DashboardMetricsResponse() {}
 
     public DashboardMetricsResponse(MemoryStats memory, CpuStats cpu, DatabaseStats database,
                                     PlatformCounters counters, List<ActivityEvent> recentActivities,
-                                    String systemStatus, long uptimeSeconds) {
+                                    String systemStatus, long uptimeSeconds, List<ServiceHealth> services) {
         this.memory = memory;
         this.cpu = cpu;
         this.database = database;
@@ -25,6 +26,7 @@ public class DashboardMetricsResponse {
         this.recentActivities = recentActivities;
         this.systemStatus = systemStatus;
         this.uptimeSeconds = uptimeSeconds;
+        this.services = services;
     }
 
     public MemoryStats getMemory() { return memory; }
@@ -34,6 +36,27 @@ public class DashboardMetricsResponse {
     public List<ActivityEvent> getRecentActivities() { return recentActivities; }
     public String getSystemStatus() { return systemStatus; }
     public long getUptimeSeconds() { return uptimeSeconds; }
+    public List<ServiceHealth> getServices() { return services; }
+
+    public static class ServiceHealth {
+        private String name;
+        private String type;
+        private String status;
+        private String detail;
+
+        public ServiceHealth() {}
+        public ServiceHealth(String name, String type, String status, String detail) {
+            this.name = name;
+            this.type = type;
+            this.status = status;
+            this.detail = detail;
+        }
+
+        public String getName() { return name; }
+        public String getType() { return type; }
+        public String getStatus() { return status; }
+        public String getDetail() { return detail; }
+    }
 
     public static class MemoryStats {
         private long usedMB;

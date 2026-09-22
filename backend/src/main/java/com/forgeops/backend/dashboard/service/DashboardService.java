@@ -9,6 +9,7 @@ import com.forgeops.backend.dashboard.dto.DashboardMetricsResponse;
 import com.forgeops.backend.dashboard.dto.DashboardMetricsResponse.*;
 import com.forgeops.backend.generator.entity.GeneratedTemplate;
 import com.forgeops.backend.generator.repository.TemplateRepository;
+import com.forgeops.backend.assistant.service.GeminiAiService;
 import com.zaxxer.hikari.HikariDataSource;
 import com.zaxxer.hikari.HikariPoolMXBean;
 import org.springframework.stereotype.Service;
@@ -31,17 +32,20 @@ public class DashboardService {
     private final ChatSessionRepository sessionRepository;
     private final TemplateRepository templateRepository;
     private final DataSource dataSource;
+    private final GeminiAiService geminiAiService;
 
     public DashboardService(UserRepository userRepository,
                             AnalysisRepository analysisRepository,
                             ChatSessionRepository sessionRepository,
                             TemplateRepository templateRepository,
-                            DataSource dataSource) {
+                            DataSource dataSource,
+                            GeminiAiService geminiAiService) {
         this.userRepository = userRepository;
         this.analysisRepository = analysisRepository;
         this.sessionRepository = sessionRepository;
         this.templateRepository = templateRepository;
         this.dataSource = dataSource;
+        this.geminiAiService = geminiAiService;
     }
 
     @Transactional(readOnly = true)
@@ -132,6 +136,14 @@ public class DashboardService {
         RuntimeMXBean runtimeMXBean = ManagementFactory.getRuntimeMXBean();
         long uptimeSeconds = runtimeMXBean.getUptime() / 1000;
 
+        List<ServiceHealth> services = List.of(
+                new ServiceHealth("forgeops-backend", "Spring Boot / Java 21", "ONLINE", "HTTP :8080"),
+                new ServiceHealth("forgeops-postgres", "PostgreSQL", totalPool > 0 ? "ONLINE" : "DEGRADED",
+                        poolName + " (" + totalPool + " connections)"),
+                new ServiceHealth("gemini-ai", "Google Gemini", geminiAiService.isConfigured() ? "CONNECTED" : "FALLBACK",
+                        geminiAiService.isConfigured() ? "Remote provider configured" : "Local knowledge engine active")
+        );
+
         return new DashboardMetricsResponse(
                 memoryStats,
                 cpuStats,
@@ -139,7 +151,8 @@ public class DashboardService {
                 counters,
                 activities,
                 "HEALTHY",
-                uptimeSeconds
+                uptimeSeconds,
+                services
         );
     }
 }

@@ -13,10 +13,6 @@ export function PipelineGeneratorPage() {
   const [copied, setCopied] = React.useState(false)
   const [error, setError] = React.useState<string | null>(null)
 
-  React.useEffect(() => {
-    handleGenerate()
-  }, [pipelineType, runtime])
-
   const handleGenerate = async () => {
     setLoading(true)
     setError(null)
@@ -80,7 +76,7 @@ export function PipelineGeneratorPage() {
       </div>
 
       {/* Control Panel */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+      <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-6">
         {/* Pipeline Target */}
         <div className="bg-elevated border border-border/80 rounded-card p-5 shadow-sm space-y-3">
           <span className="text-xs font-mono font-semibold uppercase tracking-wider text-text-muted">
@@ -163,6 +159,26 @@ export function PipelineGeneratorPage() {
             </div>
           </div>
         </div>
+
+        <div className="bg-elevated border border-border/80 rounded-card p-5 shadow-sm space-y-3">
+          <span className="text-xs font-mono font-semibold uppercase tracking-wider text-text-muted">
+            4. Generate Once Ready
+          </span>
+          <input
+            value={serviceName}
+            onChange={(event) => setServiceName(event.target.value)}
+            aria-label="Service name"
+            className="w-full rounded-md bg-page/70 border border-border/70 px-3 py-2 text-xs font-mono text-text-primary focus:outline-none focus:border-brand-cyan"
+          />
+          <button
+            onClick={handleGenerate}
+            disabled={loading || !serviceName.trim()}
+            className="w-full flex items-center justify-center gap-2 px-4 py-2.5 rounded-md bg-brand-blue text-white text-xs font-mono font-medium hover:bg-brand-blue/90 disabled:opacity-50"
+          >
+            <Sparkles className="h-3.5 w-3.5" />
+            {loading ? "Generating..." : "Generate Pipeline"}
+          </button>
+        </div>
       </div>
 
       {/* Code Editor & Preview Card */}
@@ -200,7 +216,7 @@ export function PipelineGeneratorPage() {
 
         <div className="relative rounded-md overflow-hidden border border-border bg-[#06080D]">
           <pre className="p-5 text-xs font-mono text-text-primary overflow-x-auto leading-relaxed max-h-[500px]">
-            <code>{template?.codeContent || "# Generating pipeline specification..."}</code>
+            <code>{template?.codeContent || "# Configure the options above, then generate a pipeline."}</code>
           </pre>
         </div>
       </div>

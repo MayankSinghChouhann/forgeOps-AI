@@ -41,4 +41,12 @@ export interface DashboardMetricsResponse {
   recentActivities: ActivityEvent[]
   systemStatus: string
   uptimeSeconds: number
+  services: ServiceHealth[]
+}
+
+export interface ServiceHealth {
+  name: string
+  type: string
+  status: "ONLINE" | "CONNECTED" | "FALLBACK" | "DEGRADED" | "OFFLINE"
+  detail: string
 }
