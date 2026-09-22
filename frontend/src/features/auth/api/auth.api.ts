@@ -20,7 +20,7 @@ export const authApi = {
    * Returns JWT access token, refresh token, and user email on success.
    */
   login: async (data: LoginRequest): Promise<AuthResponse> => {
-    const response = await apiClient.post<AuthResponse>('/api/auth/login', data)
+    const response = await apiClient.post<AuthResponse>('/auth/login', data)
     return response.data
   },
 
@@ -30,7 +30,7 @@ export const authApi = {
    * so we login immediately after registration to get tokens.
    */
   register: async (data: RegisterRequest): Promise<void> => {
-    await apiClient.post('/api/auth/register', data)
+    await apiClient.post('/auth/register', data)
   },
 
   /**
@@ -38,7 +38,11 @@ export const authApi = {
    * Used to silently refresh sessions before the access token expires.
    */
   refreshToken: async (data: TokenRefreshRequest): Promise<AuthResponse> => {
-    const response = await apiClient.post<AuthResponse>('/api/auth/refresh', data)
+    const response = await apiClient.post<AuthResponse>('/auth/refresh', data)
     return response.data
+  },
+
+  logout: async (data: TokenRefreshRequest): Promise<void> => {
+    await apiClient.post('/auth/logout', data)
   },
 }

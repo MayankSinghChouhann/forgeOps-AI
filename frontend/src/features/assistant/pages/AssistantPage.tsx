@@ -91,7 +91,7 @@ export function AssistantPage() {
     setSending(true)
 
     try {
-      const assistantMsg = await assistantApi.sendMessage({
+      const assistantMsg = await assistantApi.sendMessageStream({
         sessionId: activeSessionId,
         prompt
       })
@@ -162,7 +162,7 @@ export function AssistantPage() {
             </span>
             <span className="px-2 py-0.5 rounded bg-page/60 border border-border/40 flex items-center space-x-1">
               <Cpu className="h-3 w-3 text-brand-cyan" />
-              <span>LangChain4j Ready</span>
+              <span>Gemini Context Ready</span>
             </span>
           </div>
         </div>

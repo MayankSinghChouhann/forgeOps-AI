@@ -5,6 +5,9 @@ FROM node:20-alpine AS builder
 
 WORKDIR /app
 
+ARG VITE_API_URL=/api
+ENV VITE_API_URL=$VITE_API_URL
+
 # Step 1: Copy package files for dependency caching
 COPY package.json package-lock.json ./
 RUN npm ci

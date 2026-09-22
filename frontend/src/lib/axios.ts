@@ -13,7 +13,7 @@ import axios from 'axios'
  *   redirects the user to the login page, clearing stale credentials.
  */
 const apiClient = axios.create({
-  baseURL: import.meta.env.VITE_API_URL !== undefined ? import.meta.env.VITE_API_URL : '',
+  baseURL: import.meta.env.VITE_API_URL || '/api',
   headers: {
     'Content-Type': 'application/json',
   },
@@ -35,7 +35,8 @@ apiClient.interceptors.request.use(
 apiClient.interceptors.response.use(
   (response) => response,
   (error) => {
-    const isAuthEndpoint = error.config?.url?.includes('/api/auth/login') || error.config?.url?.includes('/api/auth/register')
+    const isAuthEndpoint = ['/auth/login', '/auth/register', '/auth/refresh']
+      .some((path) => error.config?.url?.includes(path))
     if (error.response?.status === 401 && !isAuthEndpoint) {
       // Clear all stored auth data on token expiry or invalid token
       localStorage.removeItem('accessToken')

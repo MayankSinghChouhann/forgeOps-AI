@@ -11,7 +11,7 @@ interface AuthContextValue {
   isLoading: boolean
   login: (data: LoginRequest) => Promise<void>
   register: (data: RegisterRequest) => Promise<void>
-  logout: () => void
+  logout: () => Promise<void>
 }
 
 // ─── Context Creation ─────────────────────────────────────────────────────────
@@ -50,6 +50,18 @@ function getStoredUser(): AuthUser | null {
   return null
 }
 
+function getTokenExpiry(accessToken: string): number | null {
+  try {
+    const payload = accessToken.split('.')[1]
+    const normalized = payload.replace(/-/g, '+').replace(/_/g, '/')
+    const padded = normalized.padEnd(Math.ceil(normalized.length / 4) * 4, '=')
+    const decoded = JSON.parse(atob(padded)) as { exp?: number }
+    return decoded.exp ? decoded.exp * 1000 : null
+  } catch {
+    return null
+  }
+}
+
 // ─── Provider ─────────────────────────────────────────────────────────────────
 
 /**
@@ -74,6 +86,33 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     }
     setIsLoading(false)
   }, [])
+
+  const refreshSession = React.useCallback(async () => {
+    const refreshToken = localStorage.getItem(TOKEN_KEYS.REFRESH)
+    if (!refreshToken) throw new Error('Refresh token is unavailable')
+    const response = await authApi.refreshToken({ refreshToken })
+    saveSession(response.accessToken, response.refreshToken, response.email)
+    setUser({ email: response.email })
+    return response.accessToken
+  }, [])
+
+  React.useEffect(() => {
+    if (!user) return
+    const accessToken = localStorage.getItem(TOKEN_KEYS.ACCESS)
+    if (!accessToken) return
+    const expiresAt = getTokenExpiry(accessToken)
+    if (!expiresAt) return
+
+    const refreshIn = Math.max(0, expiresAt - Date.now() - 60_000)
+    const timer = window.setTimeout(() => {
+      refreshSession().catch(() => {
+        clearSession()
+        setUser(null)
+        navigate('/login')
+      })
+    }, refreshIn)
+    return () => window.clearTimeout(timer)
+  }, [user, refreshSession, navigate])
 
   /**
    * Authenticate with email + password.
@@ -101,7 +140,15 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   /**
    * Log the user out by clearing localStorage and redirecting to login.
    */
-  const logout = React.useCallback(() => {
+  const logout = React.useCallback(async () => {
+    const refreshToken = localStorage.getItem(TOKEN_KEYS.REFRESH)
+    if (refreshToken) {
+      try {
+        await authApi.logout({ refreshToken })
+      } catch {
+        // Local logout must still succeed if the token is already invalid.
+      }
+    }
     clearSession()
     setUser(null)
     navigate('/login')

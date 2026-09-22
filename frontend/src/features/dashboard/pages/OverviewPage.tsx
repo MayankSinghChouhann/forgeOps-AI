@@ -36,6 +36,9 @@ export function OverviewPage() {
     return `${d > 0 ? d + "d " : ""}${h}h ${m}m`
   }
 
+  const allServicesHealthy = metrics?.services?.every((service) =>
+    ["ONLINE", "CONNECTED", "FALLBACK"].includes(service.status)) ?? false
+
   return (
     <div className="space-y-6 max-w-[1600px] mx-auto pb-12">
       {/* Welcome Banner — live user and telemetry status */}
@@ -50,7 +53,7 @@ export function OverviewPage() {
               Welcome back, <span className="text-brand-cyan">{user?.email}</span>
             </h2>
             <p className="text-text-muted mt-0.5 text-xs">
-              Live Production Cluster & Telemetry: All microservices and AI engines operational.
+              Live backend telemetry from the services currently connected to ForgeOps.
             </p>
           </div>
         </div>
@@ -253,27 +256,31 @@ export function OverviewPage() {
                 <Network className="h-4 w-4 text-brand-cyan" />
                 <span>Microservice Health Check</span>
               </CardTitle>
-              <Badge variant="success">All Online</Badge>
+              <Badge variant={allServicesHealthy ? "success" : "warning"}>
+                {allServicesHealthy ? "Operational" : "Attention Required"}
+              </Badge>
             </CardHeader>
             <CardContent className="pt-4 space-y-3">
-              {[
-                { name: "forgeops-backend (Spring Boot 3 / JRE 21)", port: ":8080", status: "ONLINE" },
-                { name: "forgeops-postgres (PostgreSQL 16-alpine)", port: ":5432", status: "ONLINE" },
-                { name: "forgeops-redis (Redis 7.2-alpine)", port: ":6379", status: "ONLINE" },
-                { name: "forgeops-frontend (Nginx 1.27 / Vite React)", port: ":80", status: "ONLINE" },
-                { name: "gemini-2.0-flash (Google GenAI Gateway)", port: "HTTPS", status: "CONNECTED" },
-              ].map((s, i) => (
+              {(metrics?.services || []).map((s, i) => (
                 <div
                   key={i}
                   className="p-2.5 rounded-md bg-page/60 border border-border/40 flex items-center justify-between text-xs font-mono"
                 >
                   <div className="flex items-center space-x-2">
-                    <span className="h-2 w-2 rounded-full bg-status-healthy animate-pulse" />
-                    <span className="text-text-primary">{s.name}</span>
+                    <span className={`h-2 w-2 rounded-full ${
+                      ["ONLINE", "CONNECTED"].includes(s.status) ? "bg-status-healthy animate-pulse" :
+                      s.status === "FALLBACK" ? "bg-status-warning" : "bg-status-failed"
+                    }`} />
+                    <span className="text-text-primary">{s.name} ({s.type})</span>
                   </div>
-                  <span className="text-[10px] text-text-muted">{s.port}</span>
+                  <span className="text-[10px] text-text-muted">{s.status} · {s.detail}</span>
                 </div>
               ))}
+              {!metrics?.services?.length && (
+                <div className="p-4 text-center text-xs font-mono text-text-muted">
+                  Waiting for live health telemetry…
+                </div>
+              )}
             </CardContent>
           </Card>
         </div>
