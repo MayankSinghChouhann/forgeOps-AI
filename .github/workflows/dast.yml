@@ -45,7 +45,7 @@ jobs:
           GEMINI_API_KEY: ""
         run: |
           export FORGEOPS_JWT_SECRET="$(openssl rand -base64 48)"
-          ./mvnw --batch-mode --no-transfer-progress spring-boot:run > ../backend-dast.log 2>&1 &
+          mvn --batch-mode --no-transfer-progress spring-boot:run > ../backend-dast.log 2>&1 &
           for attempt in {1..60}; do
             if curl --fail --silent http://127.0.0.1:8080/actuator/health > /dev/null; then
               exit 0

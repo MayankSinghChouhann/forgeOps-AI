@@ -34,7 +34,7 @@ jobs:
           java-version: "21"
           cache: maven
       - name: Verify backend
-        run: ./mvnw --batch-mode --no-transfer-progress clean verify
+        run: mvn --batch-mode --no-transfer-progress clean verify
 
   frontend:
     name: Frontend checks
