@@ -69,6 +69,8 @@ services:
       REDIS_PASSWORD: ${REDIS_PASSWORD:?Set REDIS_PASSWORD in infra/docker/.env}
       GEMINI_API_KEY: ${GEMINI_API_KEY}
       GEMINI_MODEL: ${GEMINI_MODEL:-gemini-3.8-flash}
+      FORGEOPS_METRICS_USERNAME: forgeops-monitor
+      FORGEOPS_METRICS_PASSWORD: ${FORGEOPS_METRICS_PASSWORD:?Set FORGEOPS_METRICS_PASSWORD in infra/docker/.env}
     ports:
       - "8080:8080"
     depends_on:
@@ -108,9 +110,57 @@ services:
     networks:
       - forgeops-network
 
+  prometheus:
+    image: prom/prometheus:v3.13.3
+    container_name: forgeops-prometheus
+    profiles: ["observability"]
+    command:
+      - --config.file=/etc/prometheus/prometheus.yml
+      - --storage.tsdb.path=/prometheus
+      - --storage.tsdb.retention.time=15d
+    volumes:
+      - ../observability/prometheus.yml:/etc/prometheus/prometheus.yml:ro
+      - prometheus_data:/prometheus
+    secrets:
+      - metrics_password
+    ports:
+      - "9090:9090"
+    depends_on:
+      backend:
+        condition: service_healthy
+    restart: unless-stopped
+    networks:
+      - forgeops-network
+
+  grafana:
+    image: grafana/grafana:13.1.6
+    container_name: forgeops-grafana
+    profiles: ["observability"]
+    environment:
+      GF_SECURITY_ADMIN_USER: admin
+      GF_SECURITY_ADMIN_PASSWORD: ${GRAFANA_ADMIN_PASSWORD:?Set GRAFANA_ADMIN_PASSWORD in infra/docker/.env}
+      GF_USERS_ALLOW_SIGN_UP: "false"
+    volumes:
+      - grafana_data:/var/lib/grafana
+      - ../observability/grafana/provisioning:/etc/grafana/provisioning:ro
+      - ../observability/grafana/dashboards:/var/lib/grafana/dashboards:ro
+    ports:
+      - "3001:3000"
+    depends_on:
+      - prometheus
+    restart: unless-stopped
+    networks:
+      - forgeops-network
+
 volumes:
   postgres_data:
   redis_data:
+  prometheus_data:
+  grafana_data:
+
+secrets:
+  metrics_password:
+    environment: FORGEOPS_METRICS_PASSWORD
 
 networks:
   forgeops-network:

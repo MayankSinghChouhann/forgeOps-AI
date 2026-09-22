@@ -13,3 +13,4 @@ data:
   REDIS_HOST: redis
   REDIS_PORT: "6379"
   GEMINI_MODEL: gemini-3.8-flash
+  FORGEOPS_METRICS_USERNAME: forgeops-monitor

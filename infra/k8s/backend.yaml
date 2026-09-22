@@ -71,6 +71,11 @@ spec:
                   name: forgeops-secrets
                   key: gemini-api-key
                   optional: true
+            - name: FORGEOPS_METRICS_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: forgeops-secrets
+                  key: metrics-password
           startupProbe:
             httpGet:
               path: /actuator/health/liveness
