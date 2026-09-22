@@ -1,4 +1,3 @@
-import * as React from "react"
 import { NavLink } from "react-router-dom"
 import { LayoutDashboard, Bot, FileText, Box, Server, GitMerge, Hexagon, Code2, Settings, ChevronsUpDown, Keyboard } from "lucide-react"
 import logoImage from "@/assets/logo.png"

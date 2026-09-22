@@ -1,4 +1,3 @@
-import * as React from "react"
 import { Bell, Search, LogOut } from "lucide-react"
 import { useAuth } from "@/features/auth/hooks/useAuth"
 

@@ -1,0 +1,77 @@
+name: OWASP ZAP DAST
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  api-scan:
+    name: Scan ephemeral ForgeOps API
+    runs-on: ubuntu-latest
+    services:
+      postgres:
+        image: postgres:16-alpine
+        env:
+          POSTGRES_USER: forgeops
+          POSTGRES_PASSWORD: forgeops-ci-password
+          POSTGRES_DB: forgeops
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U forgeops -d forgeops"
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+    steps:
+      - name: Check out source
+        uses: actions/checkout@v7
+      - name: Set up Java 21
+        uses: actions/setup-java@v6
+        with:
+          distribution: temurin
+          java-version: "21"
+          cache: maven
+      - name: Start isolated backend
+        working-directory: backend
+        env:
+          SPRING_PROFILES_ACTIVE: prod
+          SPRING_DATASOURCE_URL: jdbc:postgresql://127.0.0.1:5432/forgeops
+          SPRING_DATASOURCE_USERNAME: forgeops
+          SPRING_DATASOURCE_PASSWORD: forgeops-ci-password
+          FORGEOPS_ALLOWED_ORIGINS: http://127.0.0.1:3000
+          FORGEOPS_REDIS_CACHE_ENABLED: "false"
+          GEMINI_API_KEY: ""
+        run: |
+          export FORGEOPS_JWT_SECRET="$(openssl rand -base64 48)"
+          mvn --batch-mode --no-transfer-progress spring-boot:run > ../backend-dast.log 2>&1 &
+          for attempt in {1..60}; do
+            if curl --fail --silent http://127.0.0.1:8080/actuator/health > /dev/null; then
+              exit 0
+            fi
+            sleep 2
+          done
+          cat ../backend-dast.log
+          exit 1
+      - name: Run OWASP ZAP API scan
+        run: |
+          mkdir -p zap-report
+          chmod 777 zap-report
+          docker run --rm --network host \
+            -v "$PWD/zap-report:/zap/wrk:rw" \
+            ghcr.io/zaproxy/zaproxy:stable \
+            zap-api-scan.py \
+            -t http://127.0.0.1:8080/v3/api-docs \
+            -f openapi \
+            -I \
+            -r zap-report.html \
+            -w zap-report.md
+      - name: Upload ZAP report
+        if: always()
+        uses: actions/upload-artifact@v7
+        with:
+          name: zap-api-report
+          path: zap-report/
+          if-no-files-found: error
+          retention-days: 14

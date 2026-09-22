@@ -1,5 +1,5 @@
 import * as React from "react"
-import { Cloud, Sparkles, Copy, Check, Download, Layers, ShieldCheck, Box, Server } from "lucide-react"
+import { Cloud, Sparkles, Copy, Check, Download } from "lucide-react"
 import { generatorApi } from "../api/generator.api"
 import { TemplateResponse } from "../types/generator.types"
 import { Badge } from "@/components/ui/Badge"

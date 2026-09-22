@@ -1,4 +1,3 @@
-import * as React from "react"
 import { Outlet } from "react-router-dom"
 import logoImage from "@/assets/logo.png"
 import { ShieldAlert, Server, GitMerge } from "lucide-react"

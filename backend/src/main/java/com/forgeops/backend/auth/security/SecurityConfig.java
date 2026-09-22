@@ -78,6 +78,8 @@ public class SecurityConfig {
                     auth
                         // Auth endpoints are public — needed for login/register
                         .requestMatchers("/api/auth/**").permitAll()
+                        // API documentation is public; operations still enforce their own JWT rules.
+                        .requestMatchers("/v3/api-docs/**", "/swagger-ui.html", "/swagger-ui/**").permitAll()
                         // Only /health and /info are public — metrics require authentication
                         // SECURITY: /actuator/prometheus and /actuator/metrics expose JVM internals
                         .requestMatchers("/actuator/health", "/actuator/info").permitAll()
