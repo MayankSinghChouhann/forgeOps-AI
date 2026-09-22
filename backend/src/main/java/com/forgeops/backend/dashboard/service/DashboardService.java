@@ -14,6 +14,7 @@ import com.zaxxer.hikari.HikariDataSource;
 import com.zaxxer.hikari.HikariPoolMXBean;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.beans.factory.ObjectProvider;
 
 import javax.sql.DataSource;
 import java.lang.management.ManagementFactory;
@@ -33,23 +34,41 @@ public class DashboardService {
     private final TemplateRepository templateRepository;
     private final DataSource dataSource;
     private final GeminiAiService geminiAiService;
+    private final ObjectProvider<DashboardCacheService> dashboardCacheProvider;
+    private final RedisStatusService redisStatusService;
 
     public DashboardService(UserRepository userRepository,
                             AnalysisRepository analysisRepository,
                             ChatSessionRepository sessionRepository,
                             TemplateRepository templateRepository,
                             DataSource dataSource,
-                            GeminiAiService geminiAiService) {
+                            GeminiAiService geminiAiService,
+                            ObjectProvider<DashboardCacheService> dashboardCacheProvider,
+                            RedisStatusService redisStatusService) {
         this.userRepository = userRepository;
         this.analysisRepository = analysisRepository;
         this.sessionRepository = sessionRepository;
         this.templateRepository = templateRepository;
         this.dataSource = dataSource;
         this.geminiAiService = geminiAiService;
+        this.dashboardCacheProvider = dashboardCacheProvider;
+        this.redisStatusService = redisStatusService;
     }
 
     @Transactional(readOnly = true)
     public DashboardMetricsResponse getLiveMetrics() {
+        DashboardCacheService cache = dashboardCacheProvider.getIfAvailable();
+        if (cache != null) {
+            DashboardMetricsResponse cached = cache.get().orElse(null);
+            if (cached != null) return cached;
+        }
+
+        DashboardMetricsResponse metrics = computeLiveMetrics();
+        if (cache != null) cache.put(metrics);
+        return metrics;
+    }
+
+    private DashboardMetricsResponse computeLiveMetrics() {
         // 1. JVM Memory
         Runtime runtime = Runtime.getRuntime();
         long totalMB = runtime.totalMemory() / (1024 * 1024);
@@ -136,13 +155,14 @@ public class DashboardService {
         RuntimeMXBean runtimeMXBean = ManagementFactory.getRuntimeMXBean();
         long uptimeSeconds = runtimeMXBean.getUptime() / 1000;
 
-        List<ServiceHealth> services = List.of(
-                new ServiceHealth("forgeops-backend", "Spring Boot / Java 21", "ONLINE", "HTTP :8080"),
-                new ServiceHealth("forgeops-postgres", "PostgreSQL", totalPool > 0 ? "ONLINE" : "DEGRADED",
-                        poolName + " (" + totalPool + " connections)"),
-                new ServiceHealth("gemini-ai", "Google Gemini", geminiAiService.isConfigured() ? "CONNECTED" : "FALLBACK",
-                        geminiAiService.isConfigured() ? "Remote provider configured" : "Local knowledge engine active")
-        );
+        List<ServiceHealth> services = new ArrayList<>();
+        services.add(new ServiceHealth("forgeops-backend", "Spring Boot / Java 21", "ONLINE", "HTTP :8080"));
+        services.add(new ServiceHealth("forgeops-postgres", "PostgreSQL", totalPool > 0 ? "ONLINE" : "DEGRADED",
+                poolName + " (" + totalPool + " connections)"));
+        redisStatusService.currentStatus().ifPresent(services::add);
+        services.add(new ServiceHealth("gemini-ai", "Google Gemini",
+                geminiAiService.isConfigured() ? "CONNECTED" : "FALLBACK",
+                geminiAiService.isConfigured() ? "Remote provider configured" : "Local knowledge engine active"));
 
         return new DashboardMetricsResponse(
                 memoryStats,
