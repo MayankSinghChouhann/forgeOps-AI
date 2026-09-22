@@ -3,6 +3,7 @@ package com.forgeops.backend.terminal.service;
 import com.forgeops.backend.assistant.service.GeminiAiService;
 import com.forgeops.backend.terminal.dto.CommandExplanationResponse;
 import com.forgeops.backend.terminal.dto.CommandExplanationResponse.FlagExplanation;
+import com.forgeops.backend.terminal.dto.GeneratedCommandResponse;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
@@ -77,7 +78,18 @@ public class ShellSafetyService {
         return new CommandExplanationResponse(trimmed, safetyLevel, riskExplanation, flags, safeAlternative, summary);
     }
 
-    public String generateCommand(String prompt) {
+    public GeneratedCommandResponse generateCommand(String prompt) {
+        String generated = generateCommandContent(prompt);
+        String command = extractCommand(generated);
+        CommandExplanationResponse audit = explainCommand(command);
+        return new GeneratedCommandResponse(
+                generated,
+                audit.getSafetyLevel(),
+                audit.getRiskExplanation(),
+                audit.getSafeAlternative());
+    }
+
+    private String generateCommandContent(String prompt) {
         if (geminiAiService.isConfigured()) {
             try {
                 String aiPrompt = String.format(
@@ -108,6 +120,14 @@ public class ShellSafetyService {
         } else {
             return "```bash\njournalctl -xeu <service-name> -f\n```\nStreams live systemd journal diagnostic logs for troubleshooting.";
         }
+    }
+
+    private String extractCommand(String generated) {
+        java.util.regex.Matcher matcher = java.util.regex.Pattern
+                .compile("```(?:bash|sh|shell)?\\s*([\\s\\S]*?)```", java.util.regex.Pattern.CASE_INSENSITIVE)
+                .matcher(generated);
+        if (matcher.find()) return matcher.group(1).trim();
+        return generated.lines().findFirst().orElse(generated).trim();
     }
 
     private List<FlagExplanation> extractFlags(String command) {
