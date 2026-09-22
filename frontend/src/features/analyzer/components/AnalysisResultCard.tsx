@@ -114,11 +114,11 @@ export function AnalysisResultCard({ result }: AnalysisResultCardProps) {
   const getSeverityBadge = (severity: string) => {
     switch (severity) {
       case "CRITICAL":
-        return <Badge variant="destructive" className="animate-pulse">CRITICAL SEVERITY</Badge>
+        return <Badge variant="danger" className="animate-pulse">CRITICAL SEVERITY</Badge>
       case "HIGH":
         return <Badge variant="warning">HIGH PRIORITY</Badge>
       case "MEDIUM":
-        return <Badge variant="secondary">MEDIUM PRIORITY</Badge>
+        return <Badge variant="default">MEDIUM PRIORITY</Badge>
       default:
         return <Badge variant="outline">INFO</Badge>
     }
