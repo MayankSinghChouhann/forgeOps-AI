@@ -21,7 +21,10 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDateTime;
-import java.util.Optional;
+import java.nio.charset.StandardCharsets;
+import java.security.MessageDigest;
+import java.security.NoSuchAlgorithmException;
+import java.util.Base64;
 import java.util.UUID;
 
 @Service
@@ -68,42 +71,62 @@ public class AuthService {
         User user = userRepository.findByEmail(userDetails.getUsername())
                 .orElseThrow(() -> new ResourceNotFoundException("User", "email", userDetails.getUsername()));
 
-        RefreshToken refreshToken = createRefreshToken(user);
+        IssuedRefreshToken refreshToken = createRefreshToken(user);
 
-        return new AuthResponse(jwt, refreshToken.getTokenHash(), userDetails.getUsername());
+        return new AuthResponse(jwt, refreshToken.rawToken(), userDetails.getUsername());
     }
 
     @Transactional
-    public RefreshToken createRefreshToken(User user) {
+    private IssuedRefreshToken createRefreshToken(User user) {
         refreshTokenRepository.deleteByUser(user); // Invalidating old refresh tokens for simplicity
-        
+
+        String rawToken = UUID.randomUUID().toString() + UUID.randomUUID();
         RefreshToken refreshToken = new RefreshToken();
         refreshToken.setUser(user);
         refreshToken.setExpiresAt(LocalDateTime.now().plusNanos(refreshTokenDurationMs * 1000000));
-        refreshToken.setTokenHash(UUID.randomUUID().toString()); // Usually hashed, using UUID as token for demo
+        refreshToken.setTokenHash(hashToken(rawToken));
         refreshToken.setRevoked(false);
 
-        return refreshTokenRepository.save(refreshToken);
+        refreshTokenRepository.save(refreshToken);
+        return new IssuedRefreshToken(rawToken);
     }
 
     public AuthResponse refreshToken(TokenRefreshRequest request) {
         String requestRefreshToken = request.refreshToken();
 
-        return refreshTokenRepository.findByTokenHash(requestRefreshToken)
+        return refreshTokenRepository.findByTokenHash(hashToken(requestRefreshToken))
                 .map(this::verifyExpiration)
                 .map(RefreshToken::getUser)
                 .map(user -> {
                     String token = jwtUtil.generateTokenFromUsername(user.getEmail());
-                    return new AuthResponse(token, requestRefreshToken, user.getEmail());
+                    IssuedRefreshToken rotatedToken = createRefreshToken(user);
+                    return new AuthResponse(token, rotatedToken.rawToken(), user.getEmail());
                 })
                 .orElseThrow(() -> new ResourceNotFoundException("Refresh token", "tokenHash", "[redacted]"));
     }
 
+    @Transactional
+    public void logout(TokenRefreshRequest request) {
+        refreshTokenRepository.deleteByTokenHash(hashToken(request.refreshToken()));
+    }
+
     private RefreshToken verifyExpiration(RefreshToken token) {
-        if (token.getExpiresAt().isBefore(LocalDateTime.now())) {
+        if (token.isRevoked() || token.getExpiresAt().isBefore(LocalDateTime.now())) {
             refreshTokenRepository.delete(token);
-            throw new BusinessRuleViolationException("Refresh token has expired. Please sign in again.");
+            throw new BusinessRuleViolationException("Refresh token is expired or revoked. Please sign in again.");
         }
         return token;
     }
+
+    private String hashToken(String rawToken) {
+        try {
+            byte[] digest = MessageDigest.getInstance("SHA-256")
+                    .digest(rawToken.getBytes(StandardCharsets.UTF_8));
+            return Base64.getUrlEncoder().withoutPadding().encodeToString(digest);
+        } catch (NoSuchAlgorithmException e) {
+            throw new IllegalStateException("SHA-256 is unavailable", e);
+        }
+    }
+
+    private record IssuedRefreshToken(String rawToken) {}
 }

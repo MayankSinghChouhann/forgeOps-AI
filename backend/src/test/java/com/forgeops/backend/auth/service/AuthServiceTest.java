@@ -23,6 +23,9 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.test.util.ReflectionTestUtils;
 
 import java.time.LocalDateTime;
+import java.nio.charset.StandardCharsets;
+import java.security.MessageDigest;
+import java.util.Base64;
 import java.util.Optional;
 
 import static org.assertj.core.api.Assertions.*;
@@ -101,10 +104,10 @@ class AuthServiceTest {
             User mockUser = new User("admin@forgeops.io", "encodedPass");
             RefreshToken storedToken = new RefreshToken();
             storedToken.setUser(mockUser);
-            storedToken.setTokenHash(rawRefreshToken);
+            storedToken.setTokenHash(hashToken(rawRefreshToken));
             storedToken.setExpiresAt(LocalDateTime.now().plusDays(1));
 
-            when(refreshTokenRepository.findByTokenHash(rawRefreshToken)).thenReturn(Optional.of(storedToken));
+            when(refreshTokenRepository.findByTokenHash(hashToken(rawRefreshToken))).thenReturn(Optional.of(storedToken));
             when(jwtUtil.generateTokenFromUsername("admin@forgeops.io")).thenReturn("new-mock-jwt-token");
 
             AuthResponse response = authService.refreshToken(new TokenRefreshRequest(rawRefreshToken));
@@ -112,7 +115,7 @@ class AuthServiceTest {
             assertThat(response).isNotNull();
             assertThat(response.accessToken()).isEqualTo("new-mock-jwt-token");
             assertThat(response.email()).isEqualTo("admin@forgeops.io");
-            assertThat(response.refreshToken()).isEqualTo(rawRefreshToken);
+            assertThat(response.refreshToken()).isNotBlank().isNotEqualTo(rawRefreshToken);
         }
 
         @Test
@@ -120,14 +123,14 @@ class AuthServiceTest {
         void refreshToken_GivenExpiredToken_DeletesTokenAndThrowsException() {
             String rawRefreshToken = "expired-token";
             RefreshToken expiredToken = new RefreshToken();
-            expiredToken.setTokenHash(rawRefreshToken);
+            expiredToken.setTokenHash(hashToken(rawRefreshToken));
             expiredToken.setExpiresAt(LocalDateTime.now().minusHours(2));
 
-            when(refreshTokenRepository.findByTokenHash(rawRefreshToken)).thenReturn(Optional.of(expiredToken));
+            when(refreshTokenRepository.findByTokenHash(hashToken(rawRefreshToken))).thenReturn(Optional.of(expiredToken));
 
             assertThatThrownBy(() -> authService.refreshToken(new TokenRefreshRequest(rawRefreshToken)))
                     .isInstanceOf(BusinessRuleViolationException.class)
-                    .hasMessageContaining("Refresh token has expired");
+                    .hasMessageContaining("expired or revoked");
 
             verify(refreshTokenRepository, times(1)).delete(expiredToken);
         }
@@ -135,11 +138,48 @@ class AuthServiceTest {
         @Test
         @DisplayName("refreshToken: non-existent token -> throws ResourceNotFoundException")
         void refreshToken_GivenNonExistentToken_ThrowsResourceNotFoundException() {
-            when(refreshTokenRepository.findByTokenHash("missing-token")).thenReturn(Optional.empty());
+            when(refreshTokenRepository.findByTokenHash(hashToken("missing-token"))).thenReturn(Optional.empty());
 
             assertThatThrownBy(() -> authService.refreshToken(new TokenRefreshRequest("missing-token")))
                     .isInstanceOf(ResourceNotFoundException.class)
                     .hasMessageContaining("Refresh token");
         }
     }
+
+    private static String hashToken(String rawToken) {
+        try {
+            byte[] digest = MessageDigest.getInstance("SHA-256")
+                    .digest(rawToken.getBytes(StandardCharsets.UTF_8));
+            return Base64.getUrlEncoder().withoutPadding().encodeToString(digest);
+        } catch (Exception e) {
+            throw new IllegalStateException(e);
+        }
+    }
+
+        @Test
+        @DisplayName("logout: raw token -> deletes only its SHA-256 hash")
+        void logout_DeletesHashedToken() {
+            String rawToken = "logout-token";
+
+            authService.logout(new TokenRefreshRequest(rawToken));
+
+            verify(refreshTokenRepository).deleteByTokenHash(hashToken(rawToken));
+        }
+
+        @Test
+        @DisplayName("refreshToken: revoked token -> deletes token and rejects refresh")
+        void refreshToken_GivenRevokedToken_RejectsRefresh() {
+            String rawToken = "revoked-token";
+            RefreshToken revokedToken = new RefreshToken();
+            revokedToken.setTokenHash(hashToken(rawToken));
+            revokedToken.setExpiresAt(LocalDateTime.now().plusHours(1));
+            revokedToken.setRevoked(true);
+            when(refreshTokenRepository.findByTokenHash(hashToken(rawToken))).thenReturn(Optional.of(revokedToken));
+
+            assertThatThrownBy(() -> authService.refreshToken(new TokenRefreshRequest(rawToken)))
+                    .isInstanceOf(BusinessRuleViolationException.class)
+                    .hasMessageContaining("revoked");
+
+            verify(refreshTokenRepository).delete(revokedToken);
+        }
 }
