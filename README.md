@@ -1,544 +1,379 @@
-# ForgeOps AI !!!
+# ForgeOps AI
 
-[![CI Pipeline](https://github.com/MayankSinghChouhann/forgeOps-AI/actions/workflows/ci.yml/badge.svg)](https://github.com/MayankSinghChouhann/forgeOps-AI/actions/workflows/ci.yml)
+[![CI/CD](https://github.com/MayankSinghChouhann/forgeOps-AI/actions/workflows/ci.yml/badge.svg)](https://github.com/MayankSinghChouhann/forgeOps-AI/actions/workflows/ci.yml)
 ![Java](https://img.shields.io/badge/Java-21-orange?logo=openjdk)
-![Spring Boot](https://img.shields.io/badge/Spring_Boot-3.3-green?logo=springboot)
+![Spring Boot](https://img.shields.io/badge/Spring_Boot-4.1-green?logo=springboot)
 ![React](https://img.shields.io/badge/React-18-blue?logo=react)
-![Docker](https://img.shields.io/badge/Docker-Containerized-blue?logo=docker)
-![Gemini AI](https://img.shields.io/badge/AI-Gemini_2.0_Flash-purple?logo=google)
-![Tests](https://img.shields.io/badge/Tests-55%20Passing%20(100%25)-brightgreen?logo=junit5)
+![Tests](https://img.shields.io/badge/backend-70_tests-brightgreen)
 
-**AI-Powered DevOps Intelligence Platform**
+ForgeOps AI is a production-oriented DevOps assistant for incident diagnosis,
+infrastructure generation, shell-command safety, and platform telemetry. It
+combines a Spring Boot API, React SPA, PostgreSQL, Redis, Gemini, Prometheus,
+Grafana, Docker Compose, Kubernetes, and enforced CI/CD quality gates.
 
-> A production-grade, enterprise-ready SaaS platform engineered as a flagship portfolio project — not a tutorial CRUD app, but a real-world engineering build designed to be discussed in interviews at Google, Amazon, Microsoft, Atlassian, Razorpay, and Flipkart.
+> Repository implementation status: **36 of 40 audit tasks complete, 1 partial,
+> 3 require owner/production access**. No live production deployment is claimed.
+> See [Release status](#release-status) for the exact remaining work.
 
-🔗 **Live Demo (AWS Hosted):** *[Coming in DevOps Deployment Phase]*
+## Capabilities
 
----
-
-## Table of Contents
-
-- [Why ForgeOps AI Exists](#why-forgeops-ai-exists)
-- [Features Implemented](#features-implemented)
-- [Quality Hardening & Testing Architecture](#quality-hardening--testing-architecture)
-- [Architecture](#architecture)
-- [Tech Stack](#tech-stack)
-- [Project Structure](#project-structure)
-- [Quick Start with Docker](#quick-start-with-docker)
-- [Local Development & Testing](#local-development--testing)
-- [API Reference](#api-reference)
-- [Default Credentials](#default-credentials)
-- [Roadmap / Project Status](#roadmap--project-status)
-- [Advanced Engineering Standards](#advanced-engineering-standards)
-- [Learning Goals](#learning-goals)
-- [Author](#author)
-
----
-
-## Why ForgeOps AI Exists
-
-When a Jenkins build fails, a Docker container refuses to start, or a Kubernetes pod enters `CrashLoopBackOff`, most engineers face the same friction: scroll through hundreds of log lines, paste the scariest error into Google, and dig through stale Stack Overflow threads hoping one applies.
-
-**ForgeOps AI eliminates that friction.** Feed it a Jenkins build log, a `kubectl describe pod` output, or a Dockerfile error — it gives you Root Cause Analysis (RCA) the way a Senior SRE would: structured, specific, and immediately actionable.
-
----
-
-## Features Implemented
-
-### ✅ Feature 1 — JWT Authentication & User Management
-- Spring Security 6 with stateless JWT access + refresh token rotation
-- BCrypt password hashing, explicit `ProviderManager` configuration
-- PostgreSQL persistence: `users` and `refresh_tokens` tables
-- React login/register UI with Zod form validation
-- Seeded default admin and user accounts on startup via `DatabaseInitializer`
-
-### ✅ Feature 2 — AI DevOps Assistant with Chat History
-- Real-time conversation with Google **Gemini 2.0 Flash** AI
-- Persistent chat sessions stored in PostgreSQL (`chat_sessions`, `chat_messages`)
-- Intelligent local `DevOpsKnowledgeEngine` fallback when Gemini is rate-limited or offline
-- Glassmorphic chat UI with Markdown rendering, syntax-highlighted code blocks, and 1-click copy
-- Session sidebar with chat history, delete, and new session controls
-
-### ✅ Feature 3 — Jenkins / GitLab CI Log Analyzer
-- Pastes raw CI/CD failure logs → returns structured Root Cause Analysis
-- Expert rule engine classifies: Maven Compilation Failure, NPM ERESOLVE conflict, Git SCM auth failures, generic runner errors
-- Gemini AI augments analysis with detailed contextual RCA and remediation scripts
-- Results stored in PostgreSQL with full analysis history and ANSI escape sequence stripping
-
-### ✅ Feature 4 — Docker Container Error Analyzer
-- Diagnoses Docker container errors: OOMKilled (Exit 137), Host Port Conflicts (EADDRINUSE), Docker socket permission errors
-- Generates production-grade bash remediation scripts ready to run
-- Container-specific RCA with cgroup and kernel-level memory management explanations
-- 1-click preset loading with real dirty log samples
-
-### ✅ Feature 5 — Kubernetes Cluster Troubleshooter
-- Analyzes `kubectl describe pod` / event stream outputs
-- Classifies: `CrashLoopBackOff`, `ImagePullBackOff`, scheduling failures (0/N nodes available)
-- Generates exact `kubectl` remediation commands and manifest patches
-- Preloaded real K8s incident scenarios for instant testing
-
-### ✅ Feature 6 — IaC & CI/CD Pipeline Generator
-**Supports generation of:**
-| Format | Description |
-|---|---|
-| **Terraform (AWS)** | Production VPC, EKS Cluster, S3 remote state backend, DynamoDB locking |
-| **Kubernetes Manifests** | Deployment, Service, HPA, Ingress with TLS via cert-manager, Liveness/Readiness probes |
-| **Helm Values YAML** | Production-ready `values.yaml` with autoscaling and resource limits |
-| **GitLab CI/CD** | Multi-stage pipeline: test → docker build → Trivy security scan → K8s rollout |
-| **GitHub Actions** | GHCR image build/push + zero-downtime K8s deployment workflow |
-| **Dockerfile** | Multi-stage builds for Java 21 (Spring Boot) and Node.js (React/Vite/Nginx) |
-
-Features: interactive provider/environment/runtime selectors, AI custom prompt override, syntax-highlighted code editor, 1-click copy, and file download.
-
-### ✅ Feature 7 — Linux Shell Assistant & Destructive Guard
-- **Command Audit Mode**: Analyzes any Linux/Docker/K8s command for safety
-  - `DANGEROUS`: `rm -rf /`, `dd if=/dev/zero`, `kill -9 1`, `DROP DATABASE`
-  - `CAUTION`: `docker system prune -a`, `git push --force`, `reboot`
-  - `SAFE`: Standard read-only/informational commands
-- Breaks down every flag/modifier with semantic explanations
-- Suggests safe alternatives for destructive commands
-- **CLI Synthesizer Mode**: Describe your goal in plain English → get the exact one-liner
-- AI-enhanced via Gemini with local rule-based expert engine fallback
-
-### ✅ Feature 8 — Live System Telemetry Dashboard
-Real-time platform health metrics sourced from actual runtime data:
-| Metric | Source |
-|---|---|
-| JVM Heap Memory (used/max/%) | `Runtime.getRuntime()` |
-| CPU Cores & Load Average | `ManagementFactory.getOperatingSystemMXBean()` |
-| Database Connection Pool | `HikariPoolMXBean` (active/idle/total) |
-| Platform Counters | JPA repository `.count()` queries |
-| Live Activity Feed | Chronological merge of DB analyzer + generator + chat records |
-| System Uptime | `RuntimeMXBean.getUptime()` |
-
-Auto-refreshes every 10 seconds. Zero static or hardcoded values.
-
----
-
-## Quality Hardening & Testing Architecture
-
-### 🛡️ 1. RFC 7807 Standardized Error Handling
-- **Domain Exceptions**: Created strongly typed domain exceptions: `ResourceNotFoundException` (404 Not Found) and `BusinessRuleViolationException` (400/409 Conflict).
-- **Centralized Controller Advice**: `GlobalExceptionHandler` interceptor implements Spring Boot 3 `ProblemDetail`, ensuring all error payloads follow the RFC 7807 specification:
-  ```json
-  {
-    "type": "about:blank",
-    "title": "Resource Not Found",
-    "status": 404,
-    "detail": "User with email 'devops@forgeops.io' was not found",
-    "instance": "/api/auth/profile",
-    "timestamp": "2026-08-07T08:20:00Z"
-  }
-  ```
-- Eliminates scattered try/catch blocks across controllers and prevents sensitive internal stack traces from leaking to clients.
-
-### 🔒 2. Production Actuator Security
-- In `SecurityConfig`, metric and monitoring endpoints (`/actuator/metrics`, `/actuator/prometheus`) are restricted behind JWT authentication.
-- Health endpoints (`/actuator/health`, `/actuator/info`) remain publicly available for Kubernetes Liveness/Readiness probes and Docker health checks.
-
-### 🧪 3. 55 Automated Unit & Integration Tests (100% Pass Rate)
-- **Hermetic Testing**: Configured in-memory H2 database (`src/test/resources/application.properties`) for fast, isolated test execution that runs independently of external Docker/PostgreSQL containers.
-- **Suite Breakdown**:
-  - `LogAnalyzerServiceTest`: Jenkins failures, Docker Exit 137, K8s CrashLoopBackOff, ANSI sanitization, and fallback behavior (10 tests).
-  - `ShellSafetyServiceTest`: Parameterized tests for command categorization, destructive syntax detection, and flag analysis (27 tests).
-  - `TemplateGeneratorServiceTest`: Terraform S3 state backends, K8s probes, Trivy security stages, and AI customization (14 tests).
-  - `AuthServiceTest`: User registration, BCrypt password hashing, duplicate email prevention, and token refresh validation (5 tests).
-  - `BackendApplicationTests`: Spring Boot context boot and JPA repository bootstrap verification.
-
----
+- JWT registration/login with rotating, SHA-256-at-rest refresh tokens,
+  server-side logout, USER/ADMIN roles, and environment-driven CORS.
+- AI assistant with persisted sessions, complete conversation context, Gemini
+  retry/backoff, structured response parsing, DevOps scope guardrails, local
+  fallback knowledge, and SSE response delivery.
+- Jenkins, Docker, and Kubernetes log analysis with stored RCA history.
+- Terraform, Kubernetes, Helm, Dockerfile, GitHub Actions, and GitLab CI
+  generation. Generation occurs only after an explicit user action.
+- Shell command generation and explanation with mandatory safety classification.
+- Live JVM, HikariCP, PostgreSQL, Redis, Gemini, activity, and platform metrics.
+- Paginated history APIs, bounded dashboard queries, Redis dashboard caching,
+  input-size limits, RFC 7807 errors, OpenAPI, and structured JSON logs.
+- Prometheus scraping with dedicated credentials and an auto-provisioned
+  eight-panel Grafana dashboard.
+- GitHub and GitLab pipelines, Trivy, OWASP ZAP workflow, Playwright, Vitest,
+  Testcontainers, and k6 thresholds for 500 virtual users.
 
 ## Architecture
 
-ForgeOps AI follows a strict **layered architecture** with **package-by-feature** domain organization:
-
-```
-Client (React/Vite)
-     │  JWT Bearer Token
-     ▼
-Spring Boot 3 REST API (port 8080)
-     │  JwtAuthenticationFilter
-     ▼
-┌─────────────────────────────────────────┐
-│  Controllers (thin — route + validate)  │
-│  /api/auth  /api/assistant  /api/analyzer│
-│  /api/generator  /api/terminal          │
-│  /api/dashboard/metrics                 │
-└─────────────────────────────────────────┘
-     │
-     ▼
-┌─────────────────────────────────────────┐
-│  Services (all business logic lives here)│
-│  LogAnalyzerService (RCA Engine)        │
-│  TemplateGeneratorService (IaC Synth)   │
-│  ShellSafetyService (Guard Engine)      │
-│  DashboardService (JVM Telemetry)       │
-│  AssistantService (Chat Orchestration)  │
-└─────────────────────────────────────────┘
-     │                    │
-     ▼                    ▼
-PostgreSQL           GeminiAiService
-(JPA/Hibernate)      (Google Gemini 2.0 Flash)
-                     + Local Expert Fallback
+```text
+Browser / React 18 + Vite 8
+            |
+            | JWT + JSON / SSE
+            v
+Spring Boot 4.1 / Java 21
+  |-- Auth and RBAC          |-- Log analyzer
+  |-- AI assistant          |-- IaC generator
+  |-- Shell safety          |-- Dashboard and Actuator
+            |
+            +---- PostgreSQL 16 (Flyway V1-V8)
+            +---- Redis 7 (short-lived dashboard cache)
+            +---- Gemini 3.8 Flash (optional; local fallback available)
+            +---- Prometheus -> Grafana
 ```
 
-**Architecture Decisions:**
-- **Package-by-Feature (DDD)**: `auth/`, `assistant/`, `analyzer/`, `generator/`, `terminal/`, `dashboard/`, `common/` — each domain is self-contained and can be extracted to a microservice without touching other modules.
-- **JWT Stateless Security**: No server-side session state — horizontally scalable across multiple instances behind a load balancer.
-- **AI with Graceful Degradation**: Never hard-fails when Gemini is rate-limited; expert rule engines ensure 100% production availability.
-- **Container-First**: Every service designed to run inside Docker from day one.
+The backend uses package-by-feature boundaries under `auth`, `assistant`,
+`analyzer`, `generator`, `terminal`, and `dashboard`. Production schema changes
+are Flyway-only; Hibernate runs with `ddl-auto=validate`.
 
----
+## Technology
 
-## Tech Stack
-
-### Backend
-| Technology | Version | Purpose |
-|---|---|---|
-| Java | 21 | Runtime (LTS) |
-| Spring Boot | 3.3 | Framework |
-| Spring Security 6 | — | JWT stateless auth |
-| Spring Data JPA | — | ORM / database access |
-| Hibernate | — | JPA implementation |
-| PostgreSQL | 16 | Primary relational database |
-| H2 Database | 2.x | In-memory database for hermetic unit/integration tests |
-| HikariCP | — | High-performance JDBC connection pooling |
-| Flyway | — | Database schema migrations |
-| JUnit 5 & Mockito | 5.x | Automated unit and integration testing |
-| Maven | 3.9 | Build and dependency management tool |
-
-### AI
-| Technology | Purpose |
+| Layer | Stack |
 |---|---|
-| Google Gemini 2.0 Flash | Primary LLM engine for RCA, IaC, and command explanation |
-| Local Expert Rule Engine | Built-in fallback engine when Gemini is offline/unconfigured |
+| Backend | Java 21, Spring Boot 4.1, Spring Security, JPA/Hibernate, Flyway |
+| Data | PostgreSQL 16, Redis 7, HikariCP |
+| AI | Gemini 3.8 Flash REST API with local fallback |
+| Frontend | React 18, TypeScript, Vite 8, Tailwind CSS 4 |
+| Testing | JUnit 5, Mockito, MockMvc, Testcontainers, Vitest, Playwright, k6 |
+| Operations | Docker Compose, Kubernetes/Kustomize, Prometheus, Grafana |
+| Delivery | GitHub Actions, GitLab CI, Trivy, OWASP ZAP |
 
-### Frontend
-| Technology | Version | Purpose |
-|---|---|---|
-| React | 18 | UI framework |
-| TypeScript | 5 | Type safety |
-| Vite | 5 | Build tool / dev server |
-| Tailwind CSS | 4 | Modern utility-first styling |
-| Framer Motion | 11 | Smooth micro-animations |
-| Zod + React Hook Form | — | Schema validation |
-| Axios | — | HTTP client with JWT interceptors |
-| Lucide React | — | SRE & cloud icon library |
+## Quick start with Docker
 
-### DevOps & Infrastructure
-| Technology | Purpose |
-|---|---|
-| Docker | Multi-stage containerization |
-| Docker Compose | Multi-container orchestration (App + DB + Redis) |
-| Nginx 1.27 | Frontend reverse proxy + SPA routing |
-| GitHub Actions & GitLab CI | Automated build, test, and security scanning |
-| Kubernetes & Helm | Planned cloud-native orchestration |
-| Terraform | Planned AWS Infrastructure as Code |
-| Prometheus & Grafana | Planned telemetry scraping & visualization |
+Requirements: Docker Desktop with Compose v2 and at least 4 GB of available
+memory.
 
----
+From the repository root:
 
-## Project Structure
-
-### Backend — Package-by-Feature (Domain-Driven Design)
-
-```
-backend/src/main/java/com/forgeops/backend/
-├── auth/
-│   ├── controller/        # AuthController (register, login, refresh)
-│   ├── dto/               # LoginRequest, RegisterRequest, AuthResponse
-│   ├── entity/            # User, RefreshToken
-│   ├── repository/        # UserRepository, RefreshTokenRepository
-│   ├── security/          # JwtUtil, JwtAuthenticationFilter, SecurityConfig
-│   └── service/           # AuthService
-├── assistant/
-│   ├── controller/        # AssistantController (sessions + chat)
-│   ├── dto/               # SendMessageRequest, ChatMessageResponse
-│   ├── entity/            # ChatSession, ChatMessage, MessageRole
-│   ├── repository/        # ChatSessionRepository, ChatMessageRepository
-│   └── service/           # AssistantService, GeminiAiService, DevOpsKnowledgeEngine
-├── analyzer/
-│   ├── controller/        # AnalyzerController (analyze, history)
-│   ├── dto/               # AnalyzeLogRequest, AnalysisResponse
-│   ├── entity/            # AnalysisRecord
-│   ├── repository/        # AnalysisRepository
-│   └── service/           # LogAnalyzerService (Jenkins + Docker + K8s)
-├── generator/
-│   ├── controller/        # GeneratorController (generate, history)
-│   ├── dto/               # GenerateTemplateRequest, TemplateResponse
-│   ├── entity/            # GeneratedTemplate
-│   ├── repository/        # TemplateRepository
-│   └── service/           # TemplateGeneratorService (Terraform, K8s, CI/CD)
-├── terminal/
-│   ├── controller/        # TerminalController (explain, generate)
-│   ├── dto/               # ExplainCommandRequest, CommandExplanationResponse
-│   └── service/           # ShellSafetyService (safety guard + CLI synth)
-├── dashboard/
-│   ├── controller/        # DashboardController (metrics)
-│   ├── dto/               # DashboardMetricsResponse (nested DTOs)
-│   └── service/           # DashboardService (JVM + HikariCP telemetry)
-├── common/
-│   └── exception/         # GlobalExceptionHandler (RFC 7807), ResourceNotFoundException
-└── config/
-    └── DatabaseInitializer.java  # Seeds admin & user accounts on startup
+```powershell
+Copy-Item infra/docker/.env.example infra/docker/.env
 ```
 
-### Frontend — Feature-Sliced Design
-
-```
-frontend/src/
-├── features/
-│   ├── auth/              # Login, Register, JWT token management
-│   ├── assistant/         # AI Chat UI + session sidebar
-│   ├── analyzer/          # Jenkins / Docker / Kubernetes RCA pages
-│   ├── generator/         # IaC + CI/CD pipeline generator pages
-│   ├── terminal/          # Shell assistant + destructive guard
-│   └── dashboard/         # Live telemetry overview page
-├── components/ui/         # Badge, Card (global shared components)
-├── layouts/               # AuthLayout, DashboardLayout (with sidebar)
-├── pages/                 # LoginPage, RegisterPage (route entrypoints)
-├── lib/
-│   └── axios.ts           # Axios instance with JWT interceptor
-└── App.tsx                # Root router — all 8 features fully wired
-```
-
----
-
-## Quick Start with Docker
-
-**Requires**: Docker Desktop
+Replace every placeholder in `infra/docker/.env`. Generate fresh secrets rather
+than copying sample or historical values:
 
 ```bash
-# 1. Clone the repository
-git clone https://github.com/MayankSinghChouhann/forgeOps-AI.git
-cd forgeOps-AI
-
-# 2. Set your Gemini API key (Optional — Fallback engine works out of the box)
-echo "GEMINI_API_KEY=your_gemini_api_key_here" >> infra/docker/.env
-
-# 3. Start all services (PostgreSQL + Redis + Backend + Frontend)
-docker compose -f infra/docker/docker-compose.yml up -d --build
-
-# 4. Open the application
-# Frontend: http://localhost:3000
-# Backend API: http://localhost:8080
+openssl rand -base64 48  # FORGEOPS_JWT_SECRET
+openssl rand -base64 32  # POSTGRES_PASSWORD
+openssl rand -base64 32  # REDIS_PASSWORD
+openssl rand -base64 32  # FORGEOPS_METRICS_PASSWORD
+openssl rand -base64 32  # GRAFANA_ADMIN_PASSWORD
 ```
 
-All 4 containers (`forgeops-postgres`, `forgeops-redis`, `forgeops-backend`, `forgeops-frontend`) start with health checks and dependency ordering.
+`GEMINI_API_KEY` is optional. Without it, the local expert engine handles
+supported DevOps scenarios.
 
----
+Start the application:
 
-## Local Development & Testing
-
-### Prerequisites
-- Java 21 (Eclipse Temurin / OpenJDK)
-- Node.js 20+
-- PostgreSQL 16
-- Maven 3.9+
-
-### Database Setup
-```sql
-CREATE DATABASE forgeops_db;
-CREATE USER forgeops_user WITH ENCRYPTED PASSWORD 'forgeops_password';
-GRANT ALL PRIVILEGES ON DATABASE forgeops_db TO forgeops_user;
-```
-
-### Running Backend
 ```bash
-cd backend
-export GEMINI_API_KEY=your_gemini_api_key_here
-./mvnw clean install -DskipTests
-./mvnw spring-boot:run
-# API available at http://localhost:8080
+docker compose --env-file infra/docker/.env \
+  -f infra/docker/docker-compose.yml up --build -d
 ```
 
-### Running Automated Test Suite
+Open:
+
+- Frontend: <http://localhost:3000>
+- API health: <http://localhost:8080/actuator/health>
+- Swagger UI: <http://localhost:8080/swagger-ui.html>
+
+No default application account is created unless bootstrap is explicitly
+enabled. Normally, register through the UI. For a one-time admin bootstrap, set
+all three values, start once, then disable bootstrap:
+
+```dotenv
+FORGEOPS_BOOTSTRAP_ENABLED=true
+FORGEOPS_BOOTSTRAP_ADMIN_EMAIL=admin@example.com
+FORGEOPS_BOOTSTRAP_ADMIN_PASSWORD=<unique-strong-password>
+```
+
+## Local development
+
+Requirements: Java 21, Maven 3.9+, Node.js 20+, npm, and PostgreSQL 16.
+
+Backend:
+
 ```bash
-cd backend
-./mvnw test
-# Executes all 55 hermetic unit and integration tests
+export SPRING_PROFILES_ACTIVE=dev
+export SPRING_DATASOURCE_URL=jdbc:postgresql://localhost:5432/forgeops_db
+export SPRING_DATASOURCE_USERNAME=forgeops_user
+export SPRING_DATASOURCE_PASSWORD='<local-password>'
+export FORGEOPS_JWT_SECRET="$(openssl rand -base64 48)"
+mvn -f backend/pom.xml spring-boot:run
 ```
 
-### Running Frontend
+On PowerShell, assign the same values through `$env:NAME='value'` before running
+Maven.
+
+Frontend:
+
 ```bash
 cd frontend
-npm install
+cp .env.example .env.local
+npm ci
 npm run dev
-# UI available at http://localhost:5173
 ```
 
-### Building Frontend for Production
+`VITE_API_URL=/api` uses the Vite/Nginx same-origin proxy. Set an absolute API
+URL only when the frontend and backend are hosted separately, and add that
+frontend origin to `FORGEOPS_ALLOWED_ORIGINS`.
+
+## Configuration
+
+| Variable | Required | Purpose |
+|---|---:|---|
+| `SPRING_DATASOURCE_URL` | yes | PostgreSQL JDBC URL |
+| `SPRING_DATASOURCE_USERNAME` | yes | Database user |
+| `SPRING_DATASOURCE_PASSWORD` | yes | Database password |
+| `FORGEOPS_JWT_SECRET` | yes | Base64-encoded signing secret, 256 bits or stronger |
+| `FORGEOPS_ALLOWED_ORIGINS` | yes in prod | Comma-separated trusted browser origins |
+| `REDIS_PASSWORD` | when Redis enabled | Redis authentication password |
+| `FORGEOPS_REDIS_CACHE_ENABLED` | no | Enables Redis dashboard cache |
+| `FORGEOPS_METRICS_PASSWORD` | for Prometheus | Dedicated `/actuator/prometheus` password |
+| `GRAFANA_ADMIN_PASSWORD` | with Grafana | Grafana administrator password |
+| `GEMINI_API_KEY` | no | Enables remote Gemini responses |
+| `GEMINI_MODEL` | no | Defaults to `gemini-3.8-flash` |
+| `DB_POOL_MAX_SIZE` / `DB_POOL_MIN_IDLE` | no | Production HikariCP tuning |
+
+The complete Docker-oriented template is `infra/docker/.env.example`. Never
+commit a populated `.env` file.
+
+## API and security
+
+| Area | Endpoint |
+|---|---|
+| Auth | `POST /api/auth/register`, `/login`, `/refresh`, `/logout` |
+| Assistant | session CRUD, `POST /api/assistant/chat`, `/chat/stream` |
+| Analyzer | `POST /api/analyzer/analyze`, paginated `/history` |
+| Generator | `POST /api/generator/generate`, paginated `/history` |
+| Terminal | `POST /api/terminal/explain`, `/generate` |
+| Dashboard | `GET /api/dashboard/metrics` |
+| Docs | `GET /swagger-ui.html`, `/v3/api-docs` |
+| Probes | `/actuator/health/liveness`, `/actuator/health/readiness` |
+| Metrics | `/actuator/prometheus` with monitoring Basic credentials |
+
+Access and refresh tokens are currently stored in browser `localStorage`.
+Refresh tokens are rotated and stored only as SHA-256 hashes in PostgreSQL. The
+frontend refreshes proactively before access-token expiry and falls back to one
+coordinated refresh after a 401. For a public internet deployment, migrating the
+refresh token to a Secure, HttpOnly, SameSite cookie is recommended defense in
+depth against token theft through an XSS defect.
+
+Auth and AI mutation routes have per-IP rate limits. This implementation is
+in-process, so a multi-replica production deployment should enforce an
+additional distributed limit at the ingress/API gateway.
+
+## Observability
+
+Start the optional observability profile:
+
+```bash
+docker compose --env-file infra/docker/.env \
+  -f infra/docker/docker-compose.yml --profile observability up --build -d
+```
+
+- Grafana: <http://localhost:3001> (`admin` plus the configured password)
+- Prometheus: <http://localhost:9090>
+- Dashboard: **ForgeOps / ForgeOps AI Overview**
+
+The dashboard covers HTTP rate and p95 latency, JVM heap, system/process CPU,
+HikariCP activity, uptime, and live threads. Prometheus reads its monitoring
+password from a Compose secret; application JWT credentials are not reused.
+
+## Tests and quality gates
+
+Backend:
+
+```bash
+mvn -f backend/pom.xml clean verify
+```
+
+The suite currently contains 70 tests across services, authentication,
+controller contracts, OpenAPI, secured metrics, and PostgreSQL/Flyway. The
+Testcontainers test skips only when Docker is unavailable; GitHub CI runs it
+against a real PostgreSQL container.
+
+Frontend:
+
 ```bash
 cd frontend
+npm ci
+npm run typecheck
+npm run lint
+npm test
 npm run build
+npx playwright install chromium
+npm run test:e2e
+npm audit
 ```
 
----
+Playwright covers four core journeys: authentication/dashboard, log analysis,
+explicit infrastructure generation, and shell safety.
 
-## API Reference
+Load test:
 
-### Authentication
-| Method | Endpoint | Description |
-|---|---|---|
-| `POST` | `/api/auth/register` | Register new user |
-| `POST` | `/api/auth/login` | Login, returns JWT + refresh token |
-| `POST` | `/api/auth/refresh` | Rotate refresh token |
-
-### AI Assistant
-| Method | Endpoint | Description |
-|---|---|---|
-| `POST` | `/api/assistant/sessions` | Create new chat session |
-| `GET` | `/api/assistant/sessions` | List user sessions |
-| `POST` | `/api/assistant/sessions/{id}/messages` | Send message |
-| `GET` | `/api/assistant/sessions/{id}/messages` | Get message history |
-| `DELETE` | `/api/assistant/sessions/{id}` | Delete session |
-
-### Log Analyzer (Features 3–5)
-| Method | Endpoint | Description |
-|---|---|---|
-| `POST` | `/api/analyzer/analyze` | Analyze log → RCA + Remediation |
-| `GET` | `/api/analyzer/history` | User analysis history |
-| `GET` | `/api/analyzer/{id}` | Get specific analysis |
-
-**Request body for `/analyze`:**
-```json
-{
-  "rawLog": "...paste full log output here...",
-  "targetType": "JENKINS | DOCKER | KUBERNETES",
-  "title": "Optional human-readable title"
-}
+```bash
+k6 run -e BASE_URL=http://localhost:8080 \
+  -e ACCESS_TOKEN='<jwt>' tests/load/forgeops.js
 ```
 
-### IaC & Pipeline Generator (Feature 6)
-| Method | Endpoint | Description |
-|---|---|---|
-| `POST` | `/api/generator/generate` | Generate template |
-| `GET` | `/api/generator/history` | User template history |
+The script targets 500 virtual users and fails when configured p95 latency or
+error-rate thresholds are exceeded. Run it against an isolated staging system,
+not a developer laptop or production without an approved test window.
 
-**Request body for `/generate`:**
-```json
-{
-  "templateType": "TERRAFORM | KUBERNETES | GITLAB_CI | GITHUB_ACTIONS | DOCKERFILE | HELM",
-  "targetProvider": "AWS | GCP | AZURE | K8S | GENERIC",
-  "serviceName": "my-service",
-  "environment": "production",
-  "runtime": "java | node | go | python",
-  "customPrompt": "Optional AI customization instructions"
-}
+CI blocks merges on backend verification, frontend lint/typecheck/unit/build/E2E,
+and Trivy HIGH/CRITICAL vulnerability, secret, and misconfiguration findings.
+OWASP ZAP is available as a manually triggered isolated API scan.
+
+## Kubernetes deployment
+
+The Kustomize base in `infra/k8s` includes namespace, ConfigMap, PostgreSQL,
+Redis, backend, frontend, HPA, Services, and TLS ingress resources. Images run
+as non-root with dropped capabilities, resource requests/limits, probes, and
+rolling updates.
+
+Before deployment:
+
+1. Replace `forgeops.example.com` in the ConfigMap and ingress.
+2. Configure the `forgeops-tls` secret and an ingress controller.
+3. Create `forgeops-secrets` as documented in `infra/k8s/README.md`.
+4. Prefer managed PostgreSQL/Redis and a cloud secret manager in production.
+
+Validate and apply:
+
+```bash
+kubectl kustomize infra/k8s > /dev/null
+kubectl apply -k infra/k8s
+kubectl -n forgeops rollout status deployment/backend
+kubectl -n forgeops rollout status deployment/frontend
 ```
 
-### Shell Assistant (Feature 7)
-| Method | Endpoint | Description |
-|---|---|---|
-| `POST` | `/api/terminal/explain` | Audit command safety |
-| `POST` | `/api/terminal/generate` | Generate CLI command |
+GitHub deployment is deliberately gated by the `ENABLE_K8S_DEPLOY` repository
+variable and `KUBE_CONFIG_B64` environment secret. GitLab uses the equivalent
+variables. CI publishes immutable commit-SHA image tags before rollout.
 
-### Dashboard Telemetry (Feature 8)
-| Method | Endpoint | Description |
-|---|---|---|
-| `GET` | `/api/dashboard/metrics` | Live JVM + DB + platform metrics |
+## Rollback
 
-> All endpoints except `/api/auth/**` and public actuator health probes require `Authorization: Bearer <jwt_token>` header.
+Application rollback:
 
----
+```bash
+kubectl -n forgeops rollout history deployment/backend
+kubectl -n forgeops rollout undo deployment/backend
+kubectl -n forgeops rollout undo deployment/frontend
+```
 
-## Default Credentials
+For an exact version, set both deployments to a previously verified commit-SHA
+image tag. Every implementation unit was merged through a dedicated feature PR,
+so a Git rollback can also revert one merge commit without mixing unrelated
+changes.
 
-| Role | Email | Password |
-|---|---|---|
-| **Admin** | `admin@forgeops.ai` | `root123` |
-| **User** | `mayank@forgeops.ai` | `root123` |
+Database migrations are forward-only. Take a verified PostgreSQL backup before
+release; restore that backup or apply a reviewed compensating migration if a
+schema rollback is required. Never delete an applied Flyway migration.
 
-Credentials are seeded automatically via `DatabaseInitializer` on startup.
+## Secret rotation and history cleanup
 
----
+Runtime secrets are no longer stored in tracked files, but the original audit
+found credentials in older Git history. Treat every historical value as
+compromised.
 
-## Roadmap / Project Status
+1. Rotate the Gemini key in Google AI Studio and rotate JWT/database/Redis
+   credentials in the target secret manager.
+2. Confirm applications use only the new values.
+3. Schedule a repository maintenance window and freeze pushes.
+4. Use `git filter-repo` on a fresh mirror to remove the historical `.env` and
+   replace any old inline values, review the rewritten object database, then
+   force-push all affected refs.
+5. Revoke old credentials again if they were ever used after the rewrite began,
+   invalidate open PR branches, and require every contributor to re-clone.
 
-### Phase 1 & 2 — Full Feature Development ✅ COMPLETE
+History was intentionally not rewritten automatically during this work because
+the operation is destructive, invalidates existing clones/PR SHAs, and conflicts
+with the requirement to preserve easy backtracking. Rotation must happen before
+history cleanup; rewriting history alone does not revoke a leaked credential.
 
-| Feature | Status | Description |
-|---|---|---|
-| Feature 1 — Auth | ✅ Done | JWT authentication, registration, refresh tokens |
-| Feature 2 — AI Assistant | ✅ Done | Gemini AI chat with persistent PostgreSQL history |
-| Feature 3 — Jenkins Analyzer | ✅ Done | CI/CD log RCA engine & failure classifier |
-| Feature 4 — Docker Analyzer | ✅ Done | Container error diagnosis & remediation script generator |
-| Feature 5 — K8s Troubleshooter | ✅ Done | Pod event stream analysis & patch generator |
-| Feature 6 — IaC Generator | ✅ Done | Terraform + K8s + Helm + CI/CD generator |
-| Feature 7 — Shell Assistant | ✅ Done | Destructive guard + CLI synthesizer |
-| Feature 8 — Live Dashboard | ✅ Done | Real JVM/DB/platform telemetry |
+## Release status
 
-### Phase 3, 4 & 5 — System Hardening & Quality Gates ✅ COMPLETE
+Repository-scoped engineering is complete and all merged feature PRs passed CI.
+The audit's 40-task roadmap currently stands at:
 
-| Quality Gate | Status | Description |
-|---|---|---|
-| Global Exception Handling | ✅ Done | RFC 7807 ProblemDetail format across all REST endpoints |
-| Actuator Security | ✅ Done | Metrics/Prometheus restricted behind JWT; health public |
-| Automated Testing | ✅ Done | 55 unit and integration tests with 100% pass rate |
-| Hermetic Test DB | ✅ Done | In-memory H2 database harness for isolated CI/CD testing |
-| Production Build | ✅ Done | Vite production bundle compiled in 13.7s |
+| State | Count | Details |
+|---|---:|---|
+| Complete | 36 | Application, migrations, security, AI, frontend, tests, CI/CD, K8s, observability |
+| Partial | 1 | Task 40: OpenAPI and ZAP workflow complete; staging/production execution pending |
+| External | 3 | Gemini rotation, production JWT rotation/secret-manager entry, coordinated Git history purge |
 
-### Phase 6 — DevOps Practice & Deployment 🚀 READY TO START
+Operational actions still requiring repository-owner or environment access:
 
-| Topic | Area | Description |
-|---|---|---|
-| 1. Linux Internals | Foundation | Process management, signals, exit codes, cgroups |
-| 2. Docker Hardening | Docker | Multi-stage builds, non-root users, layer caching |
-| 3. Docker Compose | Docker | Health checks, container dependencies, networks |
-| 4. Nginx Reverse Proxy | Networking | Proxy buffering, rate limiting, SSL/TLS termination |
-| 5. GitLab CI/CD Pipeline | CI/CD | Lint ➔ Test ➔ Trivy Scan ➔ Build ➔ Registry ➔ Deploy |
-| 6. Kubernetes Architecture | K8s | Pods, Deployments, Services, ConfigMaps, Secrets, HPA |
-| 7. Helm Packaging | K8s | Chart templating, values schema, release lifecycle |
-| 8. Terraform IaC | Cloud | AWS VPC, EKS, RDS, S3 remote state with DynamoDB lock |
-| 9. Observability Stack | Monitoring | Prometheus metrics scraping, Grafana dashboards, Loki |
-| 10. AWS Production Review | Cloud | AWS architecture review & production deployment |
+- Rotate all credentials that existed before the audit.
+- Run the coordinated history rewrite after rotation.
+- Configure staging secrets/DNS/TLS/cluster credentials and execute ZAP + k6.
+- Promote the verified SHA to production, validate probes/dashboards, and perform
+  a rollback drill.
 
----
+Accordingly, the repository implementation is approximately **95% complete**;
+end-to-end production release readiness is approximately **85%** until those
+external operations are performed and evidenced.
 
-## Advanced Engineering Standards
+## Implementation PR ledger
 
-### 🐳 Docker
-- **Multi-stage builds**: Maven builder → JRE 21 runtime (84% smaller image)
-- **Non-root user**: `spring:spring` group for container security hardening
-- **HEALTHCHECK**: Wired to Spring Boot Actuator `/actuator/health`
-- **Memory-optimized JVM**: `-XX:InitialRAMPercentage=40.0 -XX:MaxRAMPercentage=75.0`
+The project was deliberately split into reviewable, reversible feature branches:
 
-### ☸️ Kubernetes
-- Helm Charts for application templating and environment overrides
-- Liveness + Readiness probes for zero-downtime traffic management
-- Horizontal Pod Autoscaler (CPU/Memory-based scaling)
-- ConfigMaps + Secrets for complete separation of configuration and secrets
+- [#5 — security and schema foundation](https://github.com/MayankSinghChouhann/forgeOps-AI/pull/5)
+- [#6 — authentication hardening](https://github.com/MayankSinghChouhann/forgeOps-AI/pull/6)
+- [#7 — pagination and dashboard performance](https://github.com/MayankSinghChouhann/forgeOps-AI/pull/7)
+- [#8 — AI context, SSE, retry, and safety](https://github.com/MayankSinghChouhann/forgeOps-AI/pull/8)
+- [#9 — frontend session and health integration](https://github.com/MayankSinghChouhann/forgeOps-AI/pull/9)
+- [#10 — Redis caching and structured observability](https://github.com/MayankSinghChouhann/forgeOps-AI/pull/10)
+- [#11 — Kubernetes and CI/CD](https://github.com/MayankSinghChouhann/forgeOps-AI/pull/11)
+- [#12 — API documentation and quality gates](https://github.com/MayankSinghChouhann/forgeOps-AI/pull/12)
+- [#13 — Gemini 3.8 Flash upgrade](https://github.com/MayankSinghChouhann/forgeOps-AI/pull/13)
+- [#14 — secure Prometheus and Grafana dashboard](https://github.com/MayankSinghChouhann/forgeOps-AI/pull/14)
+- [#15 — final generator and logging cleanup](https://github.com/MayankSinghChouhann/forgeOps-AI/pull/15)
 
-### 🚀 CI/CD Pipelines
-- Multi-stage pipelines: Lint → Test → Build → Security Scan → Deploy
-- Trivy container vulnerability scanning
-- Hermetic test gate: 100% pass rate required for image tagging
-- GitOps deployment workflows
+## Repository layout
 
----
+```text
+backend/                 Spring Boot API, migrations, and backend tests
+frontend/                React SPA, Vitest, and Playwright journeys
+infra/docker/            Docker Compose and environment template
+infra/k8s/               Kustomize production base
+infra/observability/     Prometheus and Grafana provisioning
+tests/load/              k6 load scenario and thresholds
+.github/workflows/       CI/CD and manually triggered OWASP ZAP scan
+.gitlab-ci.yml            GitLab build, test, scan, package, and deploy pipeline
+```
 
-## Learning Goals
+## License
 
-By the end of this project, the goal is production-ready understanding of:
-
-> **Backend**: Java 21 · Spring Boot 3 · Spring Security · REST API Design · PostgreSQL · JPA/Hibernate · Redis · JWT · HikariCP · Maven · RFC 7807 ProblemDetail · JUnit 5 · Mockito
->
-> **AI Integration**: Gemini API · Prompt Engineering · Fallback Architecture · Rate Limit Handling
->
-> **Frontend**: React 18 · TypeScript · Vite · Tailwind CSS · React Hook Form · Zod · Axios · Feature-Sliced Architecture
->
-> **DevOps**: Linux · Docker · Docker Compose · Nginx · GitLab CI · GitHub Actions · Kubernetes · Helm · Terraform · AWS · Prometheus · Grafana
->
-> **Engineering**: Clean Code · SOLID Principles · DDD · Layered Architecture · DTO Pattern · REST Standards · Security Best Practices · Observability
-
----
-
-## Author
-
-**Mayank Singh Chouhan**
-B.Tech Computer Science Engineering, UPES Dehradun
-
-> *"We are NOT building a project. We are becoming software engineers."*
-
----
-
-*README updated to reflect completion of Phase 1 through 5, including all 8 features, RFC 7807 error handling, Actuator security, and 55 automated tests.*
+No license file is currently included. Add an explicit license before public
+distribution or third-party reuse.
