@@ -78,7 +78,7 @@ public class RateLimitFilter extends OncePerRequestFilter {
         if (!"POST".equalsIgnoreCase(request.getMethod())) return null;
         String path = request.getRequestURI();
         if (path.startsWith("/api/auth/")) return "auth";
-        if (path.equals("/api/assistant/chat") || path.equals("/api/analyzer/analyze")
+        if (path.startsWith("/api/assistant/chat") || path.equals("/api/analyzer/analyze")
                 || path.equals("/api/generator/generate") || path.startsWith("/api/terminal/")) return "ai";
         return null;
     }
