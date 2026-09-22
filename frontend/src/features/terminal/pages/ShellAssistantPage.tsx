@@ -1,7 +1,7 @@
 import * as React from "react"
 import { Terminal, ShieldAlert, ShieldCheck, AlertTriangle, Sparkles, Copy, Check, Info } from "lucide-react"
 import { terminalApi } from "../api/terminal.api"
-import { CommandExplanationResponse } from "../types/terminal.types"
+import { CommandExplanationResponse, GeneratedCommandResponse } from "../types/terminal.types"
 import { Badge } from "@/components/ui/Badge"
 
 const SAMPLE_COMMANDS = [
@@ -109,7 +109,7 @@ export function ShellAssistantPage() {
   const [promptInput, setPromptInput] = React.useState("Find top 10 memory consuming processes on Linux and sort by RAM")
   const [loading, setLoading] = React.useState(false)
   const [explanation, setExplanation] = React.useState<CommandExplanationResponse | null>(null)
-  const [generatedOutput, setGeneratedOutput] = React.useState<string | null>(null)
+  const [generatedOutput, setGeneratedOutput] = React.useState<GeneratedCommandResponse | null>(null)
   const [copied, setCopied] = React.useState(false)
   const [error, setError] = React.useState<string | null>(null)
 
@@ -137,7 +137,7 @@ export function ShellAssistantPage() {
     setError(null)
     try {
       const res = await terminalApi.generateCommand(promptInput)
-      setGeneratedOutput(res.result)
+      setGeneratedOutput(res)
     } catch (err: any) {
       setError(err?.response?.data?.message || "Failed to generate shell command.")
     } finally {
@@ -356,7 +356,7 @@ export function ShellAssistantPage() {
                   Generated Solution
                 </span>
                 <button
-                  onClick={() => handleCopy(generatedOutput)}
+                  onClick={() => handleCopy(generatedOutput.result)}
                   className="flex items-center space-x-1.5 px-3 py-1 text-xs font-mono font-medium rounded-md bg-brand-blue/20 text-brand-cyan border border-brand-blue/30 hover:bg-brand-blue/30 transition-colors"
                 >
                   {copied ? <Check className="h-3.5 w-3.5 text-status-healthy" /> : <Copy className="h-3.5 w-3.5" />}
@@ -364,7 +364,16 @@ export function ShellAssistantPage() {
                 </button>
               </div>
 
-              <FormattedContent content={generatedOutput} />
+              <div className={`rounded-md border p-3 text-xs font-mono ${
+                generatedOutput.safetyLevel === "DANGEROUS"
+                  ? "border-status-failed/40 bg-status-failed/10 text-status-failed"
+                  : generatedOutput.safetyLevel === "CAUTION"
+                  ? "border-status-warning/40 bg-status-warning/10 text-status-warning"
+                  : "border-status-healthy/40 bg-status-healthy/10 text-status-healthy"
+              }`}>
+                {generatedOutput.safetyLevel}: {generatedOutput.riskExplanation}
+              </div>
+              <FormattedContent content={generatedOutput.result} />
             </div>
           )}
         </div>

@@ -19,6 +19,8 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDateTime;
+import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 import java.util.UUID;
 import java.util.stream.Collectors;
@@ -113,7 +115,7 @@ public class AssistantService {
         // ============================================================
         // AI Response Pipeline: Gemini → Local Fallback
         // ============================================================
-        String responseContent = resolveAiResponse(request.prompt());
+        String responseContent = resolveAiResponse(session, request.prompt());
 
         // Save Assistant Response to DB
         ChatMessage assistantMsg = new ChatMessage(session, MessageRole.ASSISTANT, responseContent);
@@ -141,10 +143,19 @@ public class AssistantService {
      * The service doesn't care which provider responds — it just needs a String.
      * This makes it easy to swap out Gemini for OpenAI, Claude, or a local Ollama model."
      */
-    private String resolveAiResponse(String prompt) {
+    private String resolveAiResponse(ChatSession session, String prompt) {
         if (geminiAiService.isConfigured()) {
             try {
-                String geminiResponse = geminiAiService.generateDevOpsResponse(prompt);
+                List<ChatMessage> recentMessages = new ArrayList<>(
+                        messageRepository.findTop20BySessionOrderByCreatedAtDesc(session));
+                Collections.reverse(recentMessages);
+                List<GeminiAiService.ConversationTurn> conversation = recentMessages.stream()
+                        .filter(message -> message.getRole() != MessageRole.SYSTEM)
+                        .map(message -> new GeminiAiService.ConversationTurn(
+                                message.getRole() == MessageRole.ASSISTANT ? "model" : "user",
+                                message.getContent()))
+                        .toList();
+                String geminiResponse = geminiAiService.generateDevOpsResponse(conversation);
                 if (geminiResponse != null && !geminiResponse.isBlank()) {
                     log.info("[AssistantService] Using Gemini AI response.");
                     return geminiResponse;

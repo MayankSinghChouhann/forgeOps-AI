@@ -9,9 +9,13 @@ import jakarta.validation.Valid;
 import jakarta.validation.constraints.Max;
 import jakarta.validation.constraints.Min;
 import org.springframework.http.ResponseEntity;
+import org.springframework.http.MediaType;
+import org.springframework.core.task.TaskExecutor;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.servlet.mvc.method.annotation.SseEmitter;
+import org.springframework.beans.factory.annotation.Qualifier;
 
 import java.util.List;
 import java.util.UUID;
@@ -24,9 +28,12 @@ import org.springframework.validation.annotation.Validated;
 public class AssistantController {
 
     private final AssistantService assistantService;
+    private final TaskExecutor aiTaskExecutor;
 
-    public AssistantController(AssistantService assistantService) {
+    public AssistantController(AssistantService assistantService,
+                               @Qualifier("aiTaskExecutor") TaskExecutor aiTaskExecutor) {
         this.assistantService = assistantService;
+        this.aiTaskExecutor = aiTaskExecutor;
     }
 
     @GetMapping("/sessions")
@@ -61,6 +68,23 @@ public class AssistantController {
                                                            @Valid @RequestBody SendMessageRequest request) {
         ChatMessageResponse response = assistantService.sendMessage(userDetails.getUsername(), request);
         return ResponseEntity.ok(response);
+    }
+
+    @PostMapping(value = "/chat/stream", produces = MediaType.TEXT_EVENT_STREAM_VALUE)
+    public SseEmitter streamMessage(@AuthenticationPrincipal UserDetails userDetails,
+                                    @Valid @RequestBody SendMessageRequest request) {
+        SseEmitter emitter = new SseEmitter(120_000L);
+        aiTaskExecutor.execute(() -> {
+            try {
+                ChatMessageResponse response = assistantService.sendMessage(userDetails.getUsername(), request);
+                emitter.send(SseEmitter.event().name("message").data(response));
+                emitter.send(SseEmitter.event().name("complete").data("done"));
+                emitter.complete();
+            } catch (Exception exception) {
+                emitter.completeWithError(exception);
+            }
+        });
+        return emitter;
     }
 
     @DeleteMapping("/sessions/{sessionId}")

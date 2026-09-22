@@ -19,3 +19,10 @@ export interface ExplainCommandRequest {
 export interface GenerateCommandRequest {
   prompt: string
 }
+
+export interface GeneratedCommandResponse {
+  result: string
+  safetyLevel: "SAFE" | "CAUTION" | "DANGEROUS"
+  riskExplanation: string
+  safeAlternative?: string
+}
