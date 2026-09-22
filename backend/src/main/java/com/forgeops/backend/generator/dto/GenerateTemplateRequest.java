@@ -1,19 +1,23 @@
 package com.forgeops.backend.generator.dto;
 
 import jakarta.validation.constraints.NotBlank;
+import jakarta.validation.constraints.Size;
 
 public class GenerateTemplateRequest {
 
     @NotBlank(message = "Template type is required (e.g. TERRAFORM, KUBERNETES, GITLAB_CI, GITHUB_ACTIONS, DOCKERFILE)")
+    @Size(max = 64, message = "Template type must not exceed 64 characters")
     private String templateType;
 
     private String targetProvider = "AWS"; // AWS, GCP, K8S, GENERIC
+    @Size(max = 120, message = "Service name must not exceed 120 characters")
     private String serviceName = "forgeops-service";
     private String environment = "production";
     private String runtime = "java"; // java, node, go, python
     private boolean enablePostgres = true;
     private boolean enableRedis = true;
     private boolean enableMonitoring = true;
+    @Size(max = 4_000, message = "Custom prompt must not exceed 4,000 characters")
     private String customPrompt;
 
     public GenerateTemplateRequest() {}
