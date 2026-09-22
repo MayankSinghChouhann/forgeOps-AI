@@ -228,9 +228,9 @@ class TemplateGeneratorServiceTest {
         @DisplayName("getTemplateById: non-existent UUID → throws ResourceNotFoundException")
         void getTemplateById_GivenNonExistentId_ThrowsResourceNotFoundException() {
             UUID randomId = UUID.randomUUID();
-            when(templateRepository.findById(randomId)).thenReturn(Optional.empty());
+            when(templateRepository.findByIdAndUserId(randomId, 1L)).thenReturn(Optional.empty());
 
-            assertThatThrownBy(() -> templateGeneratorService.getTemplateById(randomId))
+            assertThatThrownBy(() -> templateGeneratorService.getTemplateById(1L, randomId))
                     .isInstanceOf(ResourceNotFoundException.class)
                     .hasMessageContaining("GeneratedTemplate");
         }
