@@ -15,10 +15,6 @@ export function InfrastructureGeneratorPage() {
   const [copied, setCopied] = React.useState(false)
   const [error, setError] = React.useState<string | null>(null)
 
-  React.useEffect(() => {
-    handleGenerate()
-  }, [templateType, targetProvider, environment])
-
   const handleGenerate = async () => {
     setLoading(true)
     setError(null)
