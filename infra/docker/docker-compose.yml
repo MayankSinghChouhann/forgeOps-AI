@@ -29,12 +29,13 @@ services:
   redis:
     image: redis:7-alpine
     container_name: forgeops-redis
-    ports:
-      - "6379:6379"
+    command: ["redis-server", "--appendonly", "yes", "--requirepass", "${REDIS_PASSWORD:?Set REDIS_PASSWORD in infra/docker/.env}"]
+    environment:
+      REDIS_PASSWORD: ${REDIS_PASSWORD:?Set REDIS_PASSWORD in infra/docker/.env}
     volumes:
       - redis_data:/data
     healthcheck:
-      test: ["CMD", "redis-cli", "ping"]
+      test: ["CMD", "redis-cli", "-a", "${REDIS_PASSWORD:?Set REDIS_PASSWORD in infra/docker/.env}", "ping"]
       interval: 10s
       timeout: 5s
       retries: 5
@@ -62,6 +63,10 @@ services:
       FORGEOPS_BOOTSTRAP_ENABLED: ${FORGEOPS_BOOTSTRAP_ENABLED:-false}
       FORGEOPS_BOOTSTRAP_ADMIN_EMAIL: ${FORGEOPS_BOOTSTRAP_ADMIN_EMAIL:-}
       FORGEOPS_BOOTSTRAP_ADMIN_PASSWORD: ${FORGEOPS_BOOTSTRAP_ADMIN_PASSWORD:-}
+      FORGEOPS_REDIS_CACHE_ENABLED: "true"
+      REDIS_HOST: redis
+      REDIS_PORT: 6379
+      REDIS_PASSWORD: ${REDIS_PASSWORD:?Set REDIS_PASSWORD in infra/docker/.env}
       GEMINI_API_KEY: ${GEMINI_API_KEY}
       GEMINI_MODEL: ${GEMINI_MODEL:-gemini-1.5-flash}
     ports:
