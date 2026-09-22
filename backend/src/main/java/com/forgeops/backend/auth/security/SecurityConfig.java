@@ -29,17 +29,20 @@ public class SecurityConfig {
     private final UserDetailsServiceImpl userDetailsService;
     private final AuthEntryPointJwt unauthorizedHandler;
     private final JwtAuthenticationFilter jwtAuthenticationFilter;
+    private final MetricsAuthenticationFilter metricsAuthenticationFilter;
     private final RateLimitFilter rateLimitFilter;
     private final List<String> allowedOrigins;
 
     public SecurityConfig(UserDetailsServiceImpl userDetailsService,
                           AuthEntryPointJwt unauthorizedHandler,
                           JwtAuthenticationFilter jwtAuthenticationFilter,
+                          MetricsAuthenticationFilter metricsAuthenticationFilter,
                           RateLimitFilter rateLimitFilter,
                           @Value("${forgeops.security.allowed-origins}") List<String> allowedOrigins) {
         this.userDetailsService = userDetailsService;
         this.unauthorizedHandler = unauthorizedHandler;
         this.jwtAuthenticationFilter = jwtAuthenticationFilter;
+        this.metricsAuthenticationFilter = metricsAuthenticationFilter;
         this.rateLimitFilter = rateLimitFilter;
         this.allowedOrigins = allowedOrigins;
     }
@@ -89,6 +92,7 @@ public class SecurityConfig {
                 );
 
         http.addFilterBefore(rateLimitFilter, UsernamePasswordAuthenticationFilter.class);
+        http.addFilterBefore(metricsAuthenticationFilter, UsernamePasswordAuthenticationFilter.class);
         http.addFilterBefore(jwtAuthenticationFilter, UsernamePasswordAuthenticationFilter.class);
         
         return http.build();
