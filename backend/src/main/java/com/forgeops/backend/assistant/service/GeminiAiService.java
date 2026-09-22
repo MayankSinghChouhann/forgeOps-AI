@@ -29,7 +29,7 @@ public class GeminiAiService {
     @Value("${forgeops.ai.gemini.api-key:}")
     private String apiKey;
 
-    @Value("${forgeops.ai.gemini.model:gemini-1.5-flash}")
+    @Value("${forgeops.ai.gemini.model:gemini-3.8-flash}")
     private String model;
 
     @Value("${forgeops.ai.gemini.base-url:https://generativelanguage.googleapis.com/v1beta/models}")
@@ -68,11 +68,7 @@ public class GeminiAiService {
         Map<String, Object> requestBody = Map.of(
                 "systemInstruction", Map.of("parts", List.of(Map.of("text", DEVOPS_SYSTEM_INSTRUCTION))),
                 "contents", contents,
-                "generationConfig", Map.of(
-                        "temperature", 0.4,
-                        "maxOutputTokens", 2048,
-                        "topP", 0.95
-                )
+                "generationConfig", Map.of("maxOutputTokens", 2048)
         );
 
         String modelPath = model.startsWith("models/") ? model : "models/" + model;
