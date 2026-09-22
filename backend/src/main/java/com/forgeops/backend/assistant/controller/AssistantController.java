@@ -6,6 +6,8 @@ import com.forgeops.backend.assistant.dto.CreateSessionRequest;
 import com.forgeops.backend.assistant.dto.SendMessageRequest;
 import com.forgeops.backend.assistant.service.AssistantService;
 import jakarta.validation.Valid;
+import jakarta.validation.constraints.Max;
+import jakarta.validation.constraints.Min;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.security.core.userdetails.UserDetails;
@@ -13,9 +15,12 @@ import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
 import java.util.UUID;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.validation.annotation.Validated;
 
 @RestController
 @RequestMapping("/api/assistant")
+@Validated
 public class AssistantController {
 
     private final AssistantService assistantService;
@@ -25,8 +30,12 @@ public class AssistantController {
     }
 
     @GetMapping("/sessions")
-    public ResponseEntity<List<ChatSessionResponse>> getUserSessions(@AuthenticationPrincipal UserDetails userDetails) {
-        List<ChatSessionResponse> sessions = assistantService.getUserSessions(userDetails.getUsername());
+    public ResponseEntity<List<ChatSessionResponse>> getUserSessions(
+            @AuthenticationPrincipal UserDetails userDetails,
+            @RequestParam(defaultValue = "0") @Min(0) int page,
+            @RequestParam(defaultValue = "50") @Min(1) @Max(100) int size) {
+        List<ChatSessionResponse> sessions = assistantService.getUserSessions(
+                userDetails.getUsername(), PageRequest.of(page, size));
         return ResponseEntity.ok(sessions);
     }
 
@@ -39,8 +48,11 @@ public class AssistantController {
 
     @GetMapping("/sessions/{sessionId}/messages")
     public ResponseEntity<List<ChatMessageResponse>> getSessionMessages(@AuthenticationPrincipal UserDetails userDetails,
-                                                                        @PathVariable UUID sessionId) {
-        List<ChatMessageResponse> messages = assistantService.getSessionMessages(userDetails.getUsername(), sessionId);
+                                                                        @PathVariable UUID sessionId,
+                                                                        @RequestParam(defaultValue = "0") @Min(0) int page,
+                                                                        @RequestParam(defaultValue = "100") @Min(1) @Max(200) int size) {
+        List<ChatMessageResponse> messages = assistantService.getSessionMessages(
+                userDetails.getUsername(), sessionId, PageRequest.of(page, size));
         return ResponseEntity.ok(messages);
     }
 

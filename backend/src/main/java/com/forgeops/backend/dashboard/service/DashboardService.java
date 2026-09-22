@@ -89,7 +89,7 @@ public class DashboardService {
         // 5. Recent Chronological Activities
         List<ActivityEvent> activities = new ArrayList<>();
 
-        List<AnalysisRecord> latestAnalyses = analysisRepository.findAll();
+        List<AnalysisRecord> latestAnalyses = analysisRepository.findTop8ByOrderByCreatedAtDesc();
         for (AnalysisRecord a : latestAnalyses) {
             activities.add(new ActivityEvent(
                     "ANALYZER",
@@ -100,7 +100,7 @@ public class DashboardService {
             ));
         }
 
-        List<GeneratedTemplate> latestTemplates = templateRepository.findAll();
+        List<GeneratedTemplate> latestTemplates = templateRepository.findTop8ByOrderByCreatedAtDesc();
         for (GeneratedTemplate t : latestTemplates) {
             activities.add(new ActivityEvent(
                     "GENERATOR",
@@ -111,7 +111,7 @@ public class DashboardService {
             ));
         }
 
-        List<ChatSession> latestSessions = sessionRepository.findAll();
+        List<ChatSession> latestSessions = sessionRepository.findTop8ByOrderByCreatedAtDesc();
         for (ChatSession s : latestSessions) {
             activities.add(new ActivityEvent(
                     "ASSISTANT",

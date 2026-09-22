@@ -11,9 +11,11 @@ import com.forgeops.backend.assistant.repository.ChatMessageRepository;
 import com.forgeops.backend.assistant.repository.ChatSessionRepository;
 import com.forgeops.backend.auth.entity.User;
 import com.forgeops.backend.auth.repository.UserRepository;
+import com.forgeops.backend.common.exception.ResourceNotFoundException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
+import org.springframework.data.domain.Pageable;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDateTime;
@@ -56,13 +58,13 @@ public class AssistantService {
 
     private User getUserByEmail(String email) {
         return userRepository.findByEmail(email)
-                .orElseThrow(() -> new RuntimeException("User not found: " + email));
+                .orElseThrow(() -> new ResourceNotFoundException("User", "email", email));
     }
 
     @Transactional(readOnly = true)
-    public List<ChatSessionResponse> getUserSessions(String userEmail) {
+    public List<ChatSessionResponse> getUserSessions(String userEmail, Pageable pageable) {
         User user = getUserByEmail(userEmail);
-        return sessionRepository.findAllByUserOrderByUpdatedAtDesc(user)
+        return sessionRepository.findAllByUserOrderByUpdatedAtDesc(user, pageable)
                 .stream()
                 .map(s -> new ChatSessionResponse(s.getId(), s.getTitle(), s.getCreatedAt(), s.getUpdatedAt()))
                 .collect(Collectors.toList());
@@ -77,12 +79,12 @@ public class AssistantService {
     }
 
     @Transactional(readOnly = true)
-    public List<ChatMessageResponse> getSessionMessages(String userEmail, UUID sessionId) {
+    public List<ChatMessageResponse> getSessionMessages(String userEmail, UUID sessionId, Pageable pageable) {
         User user = getUserByEmail(userEmail);
         ChatSession session = sessionRepository.findByIdAndUser(sessionId, user)
-                .orElseThrow(() -> new RuntimeException("Chat session not found"));
+                .orElseThrow(() -> new ResourceNotFoundException("ChatSession", "id", sessionId));
 
-        return messageRepository.findAllBySessionOrderByCreatedAtAsc(session)
+        return messageRepository.findAllBySessionOrderByCreatedAtAsc(session, pageable)
                 .stream()
                 .map(m -> new ChatMessageResponse(m.getId(), m.getRole().name(), m.getContent(), m.getCreatedAt()))
                 .collect(Collectors.toList());
@@ -95,7 +97,7 @@ public class AssistantService {
 
         if (request.sessionId() != null) {
             session = sessionRepository.findByIdAndUser(request.sessionId(), user)
-                    .orElseThrow(() -> new RuntimeException("Chat session not found"));
+                    .orElseThrow(() -> new ResourceNotFoundException("ChatSession", "id", request.sessionId()));
         } else {
             // Auto-create session with prompt as title (truncated to 40 chars)
             String title = request.prompt().length() > 40
@@ -160,7 +162,7 @@ public class AssistantService {
     public void deleteSession(String userEmail, UUID sessionId) {
         User user = getUserByEmail(userEmail);
         ChatSession session = sessionRepository.findByIdAndUser(sessionId, user)
-                .orElseThrow(() -> new RuntimeException("Chat session not found"));
+                .orElseThrow(() -> new ResourceNotFoundException("ChatSession", "id", sessionId));
         sessionRepository.delete(session);
     }
 }

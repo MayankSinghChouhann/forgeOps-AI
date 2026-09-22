@@ -9,6 +9,7 @@ import com.forgeops.backend.common.exception.ResourceNotFoundException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
+import org.springframework.data.domain.Pageable;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
@@ -78,16 +79,14 @@ public class LogAnalyzerService {
     }
 
     @Transactional(readOnly = true)
-    public List<AnalysisResponse> getUserHistory(Long userId) {
-        List<AnalysisRecord> records = (userId != null) 
-                ? analysisRepository.findByUserIdOrderByCreatedAtDesc(userId)
-                : analysisRepository.findAll();
+    public List<AnalysisResponse> getUserHistory(Long userId, Pageable pageable) {
+        List<AnalysisRecord> records = analysisRepository.findByUserIdOrderByCreatedAtDesc(userId, pageable);
         return records.stream().map(AnalysisResponse::fromEntity).toList();
     }
 
     @Transactional(readOnly = true)
-    public AnalysisResponse getAnalysisById(UUID id) {
-        return analysisRepository.findById(id)
+    public AnalysisResponse getAnalysisById(Long userId, UUID id) {
+        return analysisRepository.findByIdAndUserId(id, userId)
                 .map(AnalysisResponse::fromEntity)
                 .orElseThrow(() -> new ResourceNotFoundException("AnalysisRecord", "id", id));
     }

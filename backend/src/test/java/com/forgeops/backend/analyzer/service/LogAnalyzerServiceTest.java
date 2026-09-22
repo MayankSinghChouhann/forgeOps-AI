@@ -305,14 +305,14 @@ class LogAnalyzerServiceTest {
         void getAnalysisById_GivenNonExistentId_ThrowsResourceNotFoundException() {
             // ARRANGE
             UUID nonExistentId = UUID.randomUUID();
-            when(analysisRepository.findById(nonExistentId)).thenReturn(Optional.empty());
+            when(analysisRepository.findByIdAndUserId(nonExistentId, 1L)).thenReturn(Optional.empty());
 
             // ACT + ASSERT
-            assertThatThrownBy(() -> logAnalyzerService.getAnalysisById(nonExistentId))
+            assertThatThrownBy(() -> logAnalyzerService.getAnalysisById(1L, nonExistentId))
                     .isInstanceOf(ResourceNotFoundException.class)
                     .hasMessageContaining("AnalysisRecord");
 
-            verify(analysisRepository, times(1)).findById(nonExistentId);
+            verify(analysisRepository, times(1)).findByIdAndUserId(nonExistentId, 1L);
         }
 
         @Test

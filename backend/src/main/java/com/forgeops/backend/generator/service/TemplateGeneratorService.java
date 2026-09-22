@@ -9,6 +9,7 @@ import com.forgeops.backend.generator.repository.TemplateRepository;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
+import org.springframework.data.domain.Pageable;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
@@ -69,16 +70,14 @@ public class TemplateGeneratorService {
     }
 
     @Transactional(readOnly = true)
-    public List<TemplateResponse> getUserHistory(Long userId) {
-        List<GeneratedTemplate> records = (userId != null)
-                ? templateRepository.findByUserIdOrderByCreatedAtDesc(userId)
-                : templateRepository.findAll();
+    public List<TemplateResponse> getUserHistory(Long userId, Pageable pageable) {
+        List<GeneratedTemplate> records = templateRepository.findByUserIdOrderByCreatedAtDesc(userId, pageable);
         return records.stream().map(TemplateResponse::fromEntity).toList();
     }
 
     @Transactional(readOnly = true)
-    public TemplateResponse getTemplateById(UUID id) {
-        return templateRepository.findById(id)
+    public TemplateResponse getTemplateById(Long userId, UUID id) {
+        return templateRepository.findByIdAndUserId(id, userId)
                 .map(TemplateResponse::fromEntity)
                 .orElseThrow(() -> new ResourceNotFoundException("GeneratedTemplate", "id", id));
     }
