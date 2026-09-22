@@ -55,8 +55,16 @@ jobs:
         run: npm ci
       - name: Lint
         run: npm run lint
+      - name: Type check
+        run: npm run typecheck
+      - name: Unit tests
+        run: npm test
       - name: Build production bundle
         run: npm run build
+      - name: Install Chromium for E2E tests
+        run: npx playwright install --with-deps chromium
+      - name: Core journey E2E tests
+        run: npm run test:e2e
 
   security:
     name: Trivy repository scan
