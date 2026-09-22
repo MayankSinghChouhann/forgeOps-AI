@@ -6,15 +6,15 @@ services:
     image: postgres:16-alpine
     container_name: forgeops-postgres
     environment:
-      POSTGRES_USER: forgeops_user
-      POSTGRES_PASSWORD: forgeops_password
-      POSTGRES_DB: forgeops_db
+      POSTGRES_USER: ${POSTGRES_USER:-forgeops_user}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?Set POSTGRES_PASSWORD in infra/docker/.env}
+      POSTGRES_DB: ${POSTGRES_DB:-forgeops_db}
     ports:
       - "5432:5432"
     volumes:
       - postgres_data:/var/lib/postgresql/data
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U forgeops_user -d forgeops_db"]
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-forgeops_user} -d ${POSTGRES_DB:-forgeops_db}"]
       interval: 10s
       timeout: 5s
       retries: 5
@@ -54,9 +54,14 @@ services:
       - .env
     environment:
       SPRING_DATASOURCE_URL: jdbc:postgresql://postgres:5432/forgeops_db
-      SPRING_DATASOURCE_USERNAME: forgeops_user
-      SPRING_DATASOURCE_PASSWORD: forgeops_password
-      FORGEOPS_JWT_SECRET: 404E635266556A586E3272357538782F413F4428472B4B6250645367566B5970
+      SPRING_PROFILES_ACTIVE: prod
+      SPRING_DATASOURCE_USERNAME: ${POSTGRES_USER:-forgeops_user}
+      SPRING_DATASOURCE_PASSWORD: ${POSTGRES_PASSWORD:?Set POSTGRES_PASSWORD in infra/docker/.env}
+      FORGEOPS_JWT_SECRET: ${FORGEOPS_JWT_SECRET:?Set a Base64-encoded 256-bit JWT secret}
+      FORGEOPS_ALLOWED_ORIGINS: ${FORGEOPS_ALLOWED_ORIGINS:-http://localhost:3000}
+      FORGEOPS_BOOTSTRAP_ENABLED: ${FORGEOPS_BOOTSTRAP_ENABLED:-false}
+      FORGEOPS_BOOTSTRAP_ADMIN_EMAIL: ${FORGEOPS_BOOTSTRAP_ADMIN_EMAIL:-}
+      FORGEOPS_BOOTSTRAP_ADMIN_PASSWORD: ${FORGEOPS_BOOTSTRAP_ADMIN_PASSWORD:-}
       GEMINI_API_KEY: ${GEMINI_API_KEY}
       GEMINI_MODEL: ${GEMINI_MODEL:-gemini-1.5-flash}
     ports:
