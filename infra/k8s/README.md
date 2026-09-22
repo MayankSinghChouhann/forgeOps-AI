@@ -14,6 +14,7 @@ kubectl -n forgeops create secret generic forgeops-secrets \
   --from-literal=postgres-password='<strong-password>' \
   --from-literal=redis-password='<strong-password>' \
   --from-literal=jwt-secret='<base64-encoded-256-bit-secret>' \
+  --from-literal=metrics-password='<strong-monitoring-password>' \
   --from-literal=gemini-api-key='<optional-key>'
 ```
 
