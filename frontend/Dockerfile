@@ -30,8 +30,10 @@ COPY nginx.conf /etc/nginx/conf.d/default.conf
 # Copy production static assets from builder stage
 COPY --from=builder /app/dist /usr/share/nginx/html
 
-# Prepare runtime paths before dropping root privileges.
-RUN chown -R nginx:nginx /var/cache/nginx /var/run /usr/share/nginx/html /etc/nginx/conf.d
+# Prepare runtime paths before dropping root privileges. The packaged Nginx
+# configuration writes its PID under /run, which is not writable by nginx.
+RUN sed -i 's|pid        /run/nginx.pid;|pid        /tmp/nginx.pid;|' /etc/nginx/nginx.conf \
+  && chown -R nginx:nginx /var/cache/nginx /usr/share/nginx/html /etc/nginx/conf.d
 
 USER nginx
 
