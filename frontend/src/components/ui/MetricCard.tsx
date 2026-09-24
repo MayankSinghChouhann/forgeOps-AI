@@ -1,0 +1,4 @@
+import * as React from "react"
+export function MetricCard({ label, value, detail, footer, progress }: { label: string; value: React.ReactNode; detail?: React.ReactNode; footer?: React.ReactNode; progress?: number }) {
+  return <div className="rounded-lg border border-border bg-surface p-4"><p className="text-sm font-medium text-text-secondary">{label}</p><div className="mt-3 flex items-baseline justify-between gap-3"><p className="text-2xl font-semibold tracking-tight text-text-primary">{value}</p>{detail && <span className="text-xs text-text-muted">{detail}</span>}</div>{typeof progress === "number" && <div className="mt-3 h-1 overflow-hidden rounded-full bg-elevated" aria-label={`${progress}% utilized`}><div className="h-full rounded-full bg-accent" style={{ width: `${Math.max(0, Math.min(progress, 100))}%` }} /></div>}{footer && <div className="mt-3 text-xs text-text-muted">{footer}</div>}</div>
+}

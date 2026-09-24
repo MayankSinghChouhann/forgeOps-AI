@@ -32,15 +32,15 @@ function FormattedContent({ content }: { content: string }) {
           const code = part.slice(firstLineEnd + 1, -3).trim()
 
           return (
-            <div key={index} className="my-3 rounded-lg border border-border/60 bg-[#090D16] overflow-hidden shadow-inner font-mono text-xs">
-              <div className="flex items-center justify-between px-3.5 py-1.5 bg-[#121826] border-b border-border/40 text-[11px] text-text-muted">
+            <div key={index} className="my-3 overflow-hidden rounded-md border border-border bg-[#0d1015] font-mono text-xs">
+              <div className="flex items-center justify-between border-b border-border bg-elevated px-3.5 py-2 text-[11px] text-text-muted">
                 <div className="flex items-center space-x-1.5">
-                  <Terminal className="h-3.5 w-3.5 text-brand-cyan" />
-                  <span className="uppercase tracking-wider font-semibold text-brand-cyan/80">{language}</span>
+                  <Terminal className="h-3.5 w-3.5" />
+                  <span className="font-medium">{language}</span>
                 </div>
                 <button
                   onClick={() => copyToClipboard(code, index)}
-                  className="flex items-center space-x-1 hover:text-brand-cyan transition-colors px-2 py-0.5 rounded bg-page/50 border border-border/30 active:scale-95"
+                  className="flex items-center gap-1 rounded px-2 py-1 transition-colors hover:bg-surface-hover hover:text-text-primary"
                 >
                   {copiedIndex === index ? (
                     <>
@@ -55,7 +55,7 @@ function FormattedContent({ content }: { content: string }) {
                   )}
                 </button>
               </div>
-              <pre className="p-4 overflow-x-auto text-brand-cyan/95 selection:bg-brand-blue/30 leading-normal">
+              <pre className="overflow-x-auto p-4 leading-normal text-text-secondary">
                 <code>{code}</code>
               </pre>
             </div>
@@ -81,7 +81,7 @@ function FormattedContent({ content }: { content: string }) {
               // H4
               if (trimmed.startsWith("#### ")) {
                 return (
-                  <h4 key={lIndex} className="text-sm font-semibold text-brand-cyan/90 mt-3 mb-1.5">
+                  <h4 key={lIndex} className="mt-3 mb-1.5 text-sm font-semibold text-text-primary">
                     {trimmed.replace("#### ", "")}
                   </h4>
                 )
@@ -91,7 +91,7 @@ function FormattedContent({ content }: { content: string }) {
               if (trimmed.startsWith("- ") || trimmed.startsWith("* ")) {
                 return (
                   <div key={lIndex} className="flex items-start space-x-2 ml-2 my-1">
-                    <span className="text-brand-cyan font-bold leading-none mt-1.5">•</span>
+                    <span className="mt-1.5 font-bold leading-none text-text-muted">•</span>
                     <span className="text-text-secondary">{renderInline(trimmed.slice(2))}</span>
                   </div>
                 )
@@ -102,7 +102,7 @@ function FormattedContent({ content }: { content: string }) {
               if (numMatch) {
                 return (
                   <div key={lIndex} className="flex items-start space-x-2 ml-2 my-1">
-                    <span className="text-brand-cyan font-mono text-xs font-semibold leading-none mt-1">{numMatch[1]}.</span>
+                    <span className="mt-1 font-mono text-xs font-semibold leading-none text-text-muted">{numMatch[1]}.</span>
                     <span className="text-text-secondary">{renderInline(numMatch[2])}</span>
                   </div>
                 )
@@ -130,7 +130,7 @@ function renderInline(text: string) {
     }
     if (part.startsWith("`") && part.endsWith("`")) {
       return (
-        <code key={i} className="px-1.5 py-0.5 mx-0.5 rounded bg-elevated border border-border/50 font-mono text-xs text-brand-cyan">
+        <code key={i} className="mx-0.5 rounded border border-border bg-elevated px-1.5 py-0.5 font-mono text-xs text-text-primary">
           {part.slice(1, -1)}
         </code>
       )
@@ -147,59 +147,47 @@ export function ChatMessageList({ messages, sending }: ChatMessageListProps) {
   }, [messages, sending])
 
   return (
-    <div className="flex-1 overflow-y-auto p-6 space-y-6 custom-scrollbar">
+    <div className="flex-1 overflow-y-auto px-4 py-6 sm:px-6">
       {messages.length === 0 ? (
-        <div className="h-full flex flex-col items-center justify-center text-center max-w-lg mx-auto py-12">
-          <div className="h-14 w-14 rounded-2xl bg-brand-blue/10 border border-brand-blue/30 flex items-center justify-center mb-4 shadow-[0_0_30px_rgba(35,103,214,0.15)]">
-            <Bot className="h-7 w-7 text-brand-cyan" />
-          </div>
-          <h3 className="text-lg font-semibold text-text-primary">ForgeOps DevOps Intelligence Assistant</h3>
-          <p className="text-text-muted text-xs mt-2 leading-relaxed">
-            Diagnose Kubernetes CrashLoopBackOff, troubleshoot Docker exit codes, optimize Nginx configurations, or analyze CI/CD pipeline failures.
-          </p>
+        <div className="mx-auto flex h-full max-w-xl flex-col justify-center py-12 text-center">
+          <h3 className="text-base font-semibold text-text-primary">Start an operational investigation</h3>
+          <p className="mt-2 text-sm leading-6 text-text-muted">Ask about Kubernetes failures, Docker exit codes, Nginx configuration, CI/CD incidents, or infrastructure design.</p>
         </div>
       ) : (
-        messages.map((msg) => {
+        <div className="mx-auto max-w-4xl divide-y divide-border">{messages.map((msg) => {
           const isAssistant = msg.role === "ASSISTANT"
           return (
             <div
               key={msg.id}
-              className={`flex items-start space-x-3.5 max-w-4xl ${
-                isAssistant ? "mr-auto" : "ml-auto flex-row-reverse space-x-reverse"
-              }`}
+              className="flex items-start gap-3 py-5"
             >
               <div
-                className={`h-8 w-8 rounded-lg flex items-center justify-center shrink-0 border ${
+                className={`flex h-8 w-8 shrink-0 items-center justify-center rounded-md border ${
                   isAssistant
-                    ? "bg-brand-blue/15 border-brand-blue/40 text-brand-cyan"
-                    : "bg-surface border-border text-text-primary"
+                    ? "border-border bg-elevated text-accent"
+                    : "border-border bg-surface-hover text-text-secondary"
                 }`}
               >
                 {isAssistant ? <Bot className="h-4 w-4" /> : <User className="h-4 w-4" />}
               </div>
 
-              <div
-                className={`p-4 rounded-xl border max-w-2xl text-sm ${
-                  isAssistant
-                    ? "bg-elevated/90 border-border/60 shadow-sm"
-                    : "bg-brand-blue/10 border-brand-blue/30 text-text-primary"
-                }`}
-              >
+              <div className="min-w-0 flex-1 text-sm">
+                <p className="mb-2 text-xs font-medium text-text-muted">{isAssistant ? "ForgeOps Assistant" : "You"}</p>
                 <FormattedContent content={msg.content} />
               </div>
             </div>
           )
-        })
+        })}</div>
       )}
 
       {sending && (
-        <div className="flex items-start space-x-3.5 max-w-4xl mr-auto animate-pulse">
-          <div className="h-8 w-8 rounded-lg bg-brand-blue/15 border border-brand-blue/40 text-brand-cyan flex items-center justify-center shrink-0">
+        <div className="mx-auto flex max-w-4xl items-start gap-3 border-t border-border py-5" role="status">
+          <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-md border border-border bg-elevated text-accent">
             <Bot className="h-4 w-4" />
           </div>
-          <div className="p-4 rounded-xl bg-elevated/90 border border-border/60 text-xs font-mono text-text-muted flex items-center space-x-2">
-            <span className="h-2 w-2 rounded-full bg-brand-cyan animate-ping" />
-            <span>DevOps Intelligence Engine analyzing system logs...</span>
+          <div className="flex items-center gap-2 pt-2 text-sm text-text-muted">
+            <span className="h-1.5 w-1.5 animate-pulse rounded-full bg-accent" />
+            <span>Analyzing the current context…</span>
           </div>
         </div>
       )}

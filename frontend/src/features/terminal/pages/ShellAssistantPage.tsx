@@ -2,7 +2,8 @@ import * as React from "react"
 import { Terminal, ShieldAlert, ShieldCheck, AlertTriangle, Sparkles, Copy, Check, Info } from "lucide-react"
 import { terminalApi } from "../api/terminal.api"
 import { CommandExplanationResponse, GeneratedCommandResponse } from "../types/terminal.types"
-import { Badge } from "@/components/ui/Badge"
+import { PageHeader } from "@/components/ui/PageHeader"
+import { StatusIndicator } from "@/components/ui/StatusIndicator"
 
 const SAMPLE_COMMANDS = [
   { label: "rm -rf /", cmd: "rm -rf / --no-preserve-root", level: "DANGEROUS" },
@@ -31,15 +32,15 @@ function FormattedContent({ content }: { content: string }) {
           const code = part.slice(firstLineEnd + 1, -3).trim()
 
           return (
-            <div key={index} className="my-3 rounded-lg border border-border/60 bg-[#090D16] overflow-hidden shadow-inner font-mono text-xs">
-              <div className="flex items-center justify-between px-3.5 py-1.5 bg-[#121826] border-b border-border/40 text-[11px] text-text-muted">
+            <div key={index} className="my-3 overflow-hidden rounded-md border border-border bg-[#0d1015] font-mono text-xs">
+              <div className="flex items-center justify-between border-b border-border bg-elevated px-3.5 py-2 text-[11px] text-text-muted">
                 <div className="flex items-center space-x-1.5">
-                  <Terminal className="h-3.5 w-3.5 text-brand-cyan" />
-                  <span className="uppercase tracking-wider font-semibold text-brand-cyan/80">{language}</span>
+                  <Terminal className="h-3.5 w-3.5" />
+                  <span className="font-medium">{language}</span>
                 </div>
                 <button
                   onClick={() => copyToClipboard(code, index)}
-                  className="flex items-center space-x-1 hover:text-brand-cyan transition-colors px-2 py-0.5 rounded bg-page/50 border border-border/30 active:scale-95"
+                  className="flex items-center gap-1 rounded px-2 py-1 transition-colors hover:bg-surface-hover hover:text-text-primary"
                 >
                   {copiedIndex === index ? (
                     <>
@@ -54,7 +55,7 @@ function FormattedContent({ content }: { content: string }) {
                   )}
                 </button>
               </div>
-              <pre className="p-4 overflow-x-auto text-brand-cyan/95 leading-normal">
+              <pre className="overflow-x-auto p-4 leading-normal text-text-secondary">
                 <code>{code}</code>
               </pre>
             </div>
@@ -67,14 +68,14 @@ function FormattedContent({ content }: { content: string }) {
             {lines.map((line, lineIdx) => {
               if (line.startsWith("### ")) {
                 return (
-                  <h4 key={lineIdx} className="text-sm font-semibold text-text-primary mt-3 mb-1 font-mono">
+                  <h4 key={lineIdx} className="mt-3 mb-1 text-sm font-semibold text-text-primary">
                     {line.replace("### ", "")}
                   </h4>
                 )
               }
               if (line.startsWith("#### ")) {
                 return (
-                  <h5 key={lineIdx} className="text-xs font-semibold text-brand-cyan mt-2 mb-1 uppercase tracking-wider font-mono">
+                  <h5 key={lineIdx} className="mt-2 mb-1 text-xs font-semibold text-text-primary">
                     {line.replace("#### ", "")}
                   </h5>
                 )
@@ -153,48 +154,33 @@ export function ShellAssistantPage() {
 
   return (
     <div className="space-y-6 max-w-[1600px] mx-auto pb-12">
-      {/* Header */}
-      <div className="bg-elevated border border-border/70 rounded-card p-6 flex flex-col md:flex-row gap-4 items-start md:items-center justify-between relative overflow-hidden shadow-lg">
-        <div className="flex items-center space-x-3.5">
-          <div className="h-10 w-10 rounded-lg bg-brand-cyan/10 border border-brand-cyan/30 flex items-center justify-center shrink-0">
-            <Terminal className="h-5 w-5 text-brand-cyan" />
-          </div>
-          <div>
-            <h1 className="text-xl font-semibold text-text-primary tracking-tight font-mono">
-              Linux Shell Assistant & Destructive Command Guard
-            </h1>
-            <p className="text-xs text-text-muted mt-0.5">
-              Deep CLI syntax analysis, destructive command prevention, flag breakdowns, and natural language command generation.
-            </p>
-          </div>
-        </div>
-        <Badge variant="success" className="bg-status-healthy/10 text-status-healthy border-status-healthy/20">
-          <span className="h-1.5 w-1.5 rounded-full bg-status-healthy mr-1.5 animate-pulse" />
-          Guard Active
-        </Badge>
-      </div>
+      <PageHeader title="API Playground" description="Audit shell commands and generate safer operational commands from natural language." actions={<StatusIndicator status="healthy" label="Command guard active" />} />
 
       {/* Tabs */}
-      <div className="flex space-x-2 border-b border-border/50 pb-2">
+      <div className="flex gap-1 border-b border-border" role="tablist" aria-label="Command tools">
         <button
           onClick={() => setActiveTab("AUDIT")}
-          className={`px-4 py-2 rounded-md font-mono text-xs font-medium transition-all ${
+          role="tab"
+          aria-selected={activeTab === "AUDIT"}
+          className={`border-b-2 px-4 py-2.5 text-sm font-medium transition-colors ${
             activeTab === "AUDIT"
-              ? "bg-brand-blue text-white shadow-md"
-              : "text-text-muted hover:text-text-primary hover:bg-elevated"
+              ? "border-accent text-text-primary"
+              : "border-transparent text-text-muted hover:text-text-primary"
           }`}
         >
-          1. Command Audit & Safety Guard
+          Command audit
         </button>
         <button
           onClick={() => setActiveTab("GENERATE")}
-          className={`px-4 py-2 rounded-md font-mono text-xs font-medium transition-all ${
+          role="tab"
+          aria-selected={activeTab === "GENERATE"}
+          className={`border-b-2 px-4 py-2.5 text-sm font-medium transition-colors ${
             activeTab === "GENERATE"
-              ? "bg-brand-blue text-white shadow-md"
-              : "text-text-muted hover:text-text-primary hover:bg-elevated"
+              ? "border-accent text-text-primary"
+              : "border-transparent text-text-muted hover:text-text-primary"
           }`}
         >
-          2. Natural Language CLI Synthesizer
+          Command generator
         </button>
       </div>
 
@@ -203,7 +189,7 @@ export function ShellAssistantPage() {
         <div className="space-y-6">
           {/* Quick Presets */}
           <div className="flex flex-wrap items-center gap-2">
-            <span className="text-[11px] font-mono text-text-muted uppercase font-semibold mr-2">Audit Presets:</span>
+            <span className="mr-2 text-xs font-medium text-text-muted">Examples</span>
             {SAMPLE_COMMANDS.map((item, idx) => (
               <button
                 key={idx}
@@ -211,7 +197,7 @@ export function ShellAssistantPage() {
                   setCommandInput(item.cmd)
                   handleAudit(item.cmd)
                 }}
-                className="px-2.5 py-1 rounded bg-elevated border border-border/70 hover:border-brand-cyan/40 text-xs font-mono text-text-primary flex items-center space-x-1.5 transition-all"
+                className="flex items-center gap-1.5 rounded-md border border-border bg-surface px-2.5 py-1.5 text-xs text-text-primary transition-colors hover:border-border-strong hover:bg-surface-hover"
               >
                 <span>{item.label}</span>
                 <span className={`text-[9px] px-1 rounded ${
@@ -225,23 +211,23 @@ export function ShellAssistantPage() {
           </div>
 
           {/* Input Box */}
-          <div className="bg-elevated border border-border/80 rounded-card p-5 shadow-lg space-y-4">
-            <label className="text-xs font-mono font-semibold text-text-primary flex items-center space-x-2">
-              <span>Enter Linux / Docker / SRE Shell Command to Audit</span>
+          <div className="space-y-4 rounded-lg border border-border bg-surface p-5">
+            <label className="text-sm font-semibold text-text-primary">
+              <span>Command to audit</span>
             </label>
-            <div className="flex gap-2">
+            <div className="flex flex-col gap-2 sm:flex-row">
               <input
                 type="text"
                 value={commandInput}
                 onChange={(e) => setCommandInput(e.target.value)}
                 onKeyDown={(e) => e.key === "Enter" && handleAudit()}
                 placeholder="e.g. docker system prune -a --volumes or rm -rf /"
-                className="flex-1 rounded-md bg-[#07090E] border border-border/80 px-4 py-3 font-mono text-xs text-text-primary focus:outline-none focus:border-brand-cyan shadow-inner"
+                className="min-w-0 flex-1 rounded-md border border-border bg-[#0d1015] px-4 py-3 font-mono text-xs text-text-primary focus:border-accent focus:outline-none focus:ring-2 focus:ring-accent/20"
               />
               <button
                 onClick={() => handleAudit()}
                 disabled={loading || !commandInput.trim()}
-                className="px-6 py-3 rounded-md bg-brand-blue hover:bg-brand-blue/90 text-white font-mono text-xs font-medium transition-all shadow disabled:opacity-50"
+                className="rounded-md bg-accent px-5 py-3 text-sm font-medium text-white transition-colors hover:bg-accent-hover disabled:opacity-50"
               >
                 {loading ? "Analyzing..." : "Audit Command"}
               </button>
@@ -249,7 +235,7 @@ export function ShellAssistantPage() {
           </div>
 
           {error && (
-            <div className="p-3 rounded bg-status-failed/10 border border-status-failed/30 text-xs text-status-failed font-mono">
+          <div className="rounded-md border border-status-failed/30 bg-status-failed/10 p-3 text-sm text-status-failed">
               {error}
             </div>
           )}
@@ -258,7 +244,7 @@ export function ShellAssistantPage() {
           {explanation && (
             <div className="space-y-6 animate-in fade-in duration-200">
               {/* Safety Banner */}
-              <div className={`p-5 rounded-card border shadow-lg ${
+              <div className={`rounded-lg border p-5 ${
                 explanation.safetyLevel === "DANGEROUS"
                   ? "bg-status-failed/10 border-status-failed/40"
                   : explanation.safetyLevel === "CAUTION"
@@ -267,7 +253,7 @@ export function ShellAssistantPage() {
               }`}>
                 <div className="flex items-start space-x-3.5">
                   {explanation.safetyLevel === "DANGEROUS" ? (
-                    <ShieldAlert className="h-6 w-6 text-status-failed shrink-0 animate-bounce" />
+                    <ShieldAlert className="h-5 w-5 shrink-0 text-status-failed" />
                   ) : explanation.safetyLevel === "CAUTION" ? (
                     <AlertTriangle className="h-6 w-6 text-status-warning shrink-0" />
                   ) : (
@@ -275,16 +261,16 @@ export function ShellAssistantPage() {
                   )}
                   <div className="space-y-1">
                     <div className="flex items-center space-x-2">
-                      <span className="text-sm font-mono font-bold uppercase tracking-wider text-text-primary">
-                        Safety Classification: {explanation.safetyLevel}
+                      <span className="text-sm font-semibold text-text-primary">
+                        Safety classification: {explanation.safetyLevel.charAt(0) + explanation.safetyLevel.slice(1).toLowerCase()}
                       </span>
                     </div>
-                    <p className="text-xs text-text-primary font-mono leading-relaxed">
+                    <p className="text-sm leading-relaxed text-text-secondary">
                       {explanation.riskExplanation}
                     </p>
                     {explanation.safeAlternative && (
-                      <p className="text-xs text-brand-cyan font-mono mt-2 pt-2 border-t border-border/40">
-                        💡 Recommended Safe Alternative: {explanation.safeAlternative}
+                      <p className="mt-3 border-t border-border/40 pt-3 text-sm text-text-secondary">
+                        <span className="font-medium text-text-primary">Safer alternative:</span> <code className="font-mono text-xs">{explanation.safeAlternative}</code>
                       </p>
                     )}
                   </div>
@@ -293,17 +279,17 @@ export function ShellAssistantPage() {
 
               {/* Flags Breakdown */}
               {explanation.flags && explanation.flags.length > 0 && (
-                <div className="bg-elevated border border-border/80 rounded-card p-6 shadow-md space-y-3">
+                <div className="space-y-3 rounded-lg border border-border bg-surface p-5">
                   <div className="flex items-center space-x-2 pb-2 border-b border-border/50">
                     <Info className="h-4 w-4 text-brand-blue" />
-                    <h3 className="text-xs font-mono font-semibold uppercase tracking-wider text-text-primary">
-                      Command Flags & Modifiers Breakdown
+                    <h3 className="text-sm font-semibold text-text-primary">
+                      Flags and modifiers
                     </h3>
                   </div>
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
                     {explanation.flags.map((f, i) => (
                       <div key={i} className="p-3 rounded bg-page/70 border border-border/50 flex items-start space-x-3">
-                        <code className="text-xs font-mono font-bold text-brand-cyan bg-[#07090E] px-2 py-0.5 rounded border border-border">
+                        <code className="rounded border border-border bg-[#0d1015] px-2 py-0.5 font-mono text-xs font-semibold text-text-primary">
                           {f.flag}
                         </code>
                         <p className="text-xs text-text-muted leading-relaxed">{f.description}</p>
@@ -314,7 +300,7 @@ export function ShellAssistantPage() {
               )}
 
               {/* Summary / AI Breakdown */}
-              <div className="bg-elevated border border-border/80 rounded-card p-6 shadow-md">
+              <div className="rounded-lg border border-border bg-surface p-5">
                 <FormattedContent content={explanation.summary} />
               </div>
             </div>
@@ -325,24 +311,24 @@ export function ShellAssistantPage() {
       {/* TAB 2: GENERATE */}
       {activeTab === "GENERATE" && (
         <div className="space-y-6">
-          <div className="bg-elevated border border-border/80 rounded-card p-5 shadow-lg space-y-4">
-            <label className="text-xs font-mono font-semibold text-text-primary flex items-center space-x-2">
-              <Sparkles className="h-4 w-4 text-brand-cyan" />
+          <div className="space-y-4 rounded-lg border border-border bg-surface p-5">
+            <label className="flex items-center gap-2 text-sm font-semibold text-text-primary">
+              <Sparkles className="h-4 w-4 text-text-muted" />
               <span>Describe what you want to accomplish in Linux / DevOps</span>
             </label>
-            <div className="flex gap-2">
+            <div className="flex flex-col gap-2 sm:flex-row">
               <input
                 type="text"
                 value={promptInput}
                 onChange={(e) => setPromptInput(e.target.value)}
                 onKeyDown={(e) => e.key === "Enter" && handleGenerate()}
                 placeholder="e.g. Stream the last 200 logs from a container and grep for Exception"
-                className="flex-1 rounded-md bg-[#07090E] border border-border/80 px-4 py-3 font-mono text-xs text-text-primary focus:outline-none focus:border-brand-cyan shadow-inner"
+                className="min-w-0 flex-1 rounded-md border border-border bg-page px-4 py-3 text-sm text-text-primary focus:border-accent focus:outline-none focus:ring-2 focus:ring-accent/20"
               />
               <button
                 onClick={handleGenerate}
                 disabled={loading || !promptInput.trim()}
-                className="px-6 py-3 rounded-md bg-brand-blue hover:bg-brand-blue/90 text-white font-mono text-xs font-medium transition-all shadow disabled:opacity-50"
+                className="rounded-md bg-accent px-5 py-3 text-sm font-medium text-white transition-colors hover:bg-accent-hover disabled:opacity-50"
               >
                 {loading ? "Generating..." : "Generate Command"}
               </button>
@@ -350,14 +336,14 @@ export function ShellAssistantPage() {
           </div>
 
           {generatedOutput && (
-            <div className="bg-elevated border border-border/80 rounded-card p-6 shadow-xl space-y-4 animate-in fade-in duration-200">
+            <div className="space-y-4 rounded-lg border border-border bg-surface p-5">
               <div className="flex items-center justify-between pb-3 border-b border-border/50">
-                <span className="text-xs font-mono font-semibold text-text-primary">
+                <span className="text-sm font-semibold text-text-primary">
                   Generated Solution
                 </span>
                 <button
                   onClick={() => handleCopy(generatedOutput.result)}
-                  className="flex items-center space-x-1.5 px-3 py-1 text-xs font-mono font-medium rounded-md bg-brand-blue/20 text-brand-cyan border border-brand-blue/30 hover:bg-brand-blue/30 transition-colors"
+                  className="flex items-center gap-1.5 rounded-md border border-border bg-elevated px-3 py-1.5 text-xs font-medium text-text-primary transition-colors hover:bg-surface-hover"
                 >
                   {copied ? <Check className="h-3.5 w-3.5 text-status-healthy" /> : <Copy className="h-3.5 w-3.5" />}
                   <span>{copied ? "Copied" : "Copy"}</span>

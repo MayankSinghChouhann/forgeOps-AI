@@ -24,10 +24,10 @@ export function ProtectedRoute() {
   // Without this, users would see a flash redirect to /login on page refresh.
   if (isLoading) {
     return (
-      <div className="flex items-center justify-center h-screen bg-page">
-        <div className="flex flex-col items-center gap-4">
-          <div className="h-8 w-8 rounded-full border-2 border-brand-blue border-t-transparent animate-spin" />
-          <p className="text-text-muted text-sm font-mono">Verifying session...</p>
+      <div className="flex h-screen items-center justify-center bg-page" role="status">
+        <div className="flex flex-col items-center gap-3">
+          <div className="h-6 w-6 animate-spin rounded-full border-2 border-border border-t-accent" />
+          <p className="text-sm text-text-muted">Verifying session…</p>
         </div>
       </div>
     )

@@ -31,8 +31,34 @@ Grafana, Docker Compose, Kubernetes, and enforced CI/CD quality gates.
   input-size limits, RFC 7807 errors, OpenAPI, and structured JSON logs.
 - Prometheus scraping with dedicated credentials and an auto-provisioned
   eight-panel Grafana dashboard.
+- Enterprise dark-mode frontend with centralized design tokens, responsive
+  navigation, compact operational tables, semantic status indicators, and
+  accessible authentication and form controls.
 - GitHub and GitLab pipelines, Trivy, OWASP ZAP workflow, Playwright, Vitest,
   Testcontainers, and k6 thresholds for 500 virtual users.
+
+## Frontend design system
+
+The ForgeOps interface uses a restrained, operations-focused design system
+rather than a terminal theme. Global tokens in `frontend/src/index.css` define
+neutral surfaces, borders, typography, one blue interaction accent, and status
+colors used only for health and risk. Monospace typography is limited to logs,
+commands, generated code, identifiers, and timestamps.
+
+Shared frontend primitives include:
+
+- `PageHeader`, `MetricCard`, and `StatusIndicator` for consistent hierarchy.
+- Unified `Button`, `Input`, `Card`, and `Badge` variants with visible keyboard
+  focus states.
+- A responsive application shell with a 256 px desktop sidebar and an
+  accessible mobile drawer.
+- A reusable analyzer workspace shared by Jenkins, Docker, and Kubernetes
+  diagnostics.
+- Structured activity and analysis tables with horizontal overflow containment
+  on narrow screens.
+
+The responsive E2E suite checks every primary route and verifies containment at
+1440 px, 1366 px, 1024 px, and 390 px viewport widths.
 
 ## Architecture
 
@@ -236,8 +262,9 @@ npm run test:e2e
 npm audit
 ```
 
-Playwright covers four core journeys: authentication/dashboard, log analysis,
-explicit infrastructure generation, and shell safety.
+Playwright covers seven journeys: authentication/dashboard, log analysis,
+explicit infrastructure generation, shell safety, mobile navigation, every
+primary workspace route, and desktop/laptop/tablet viewport containment.
 
 Load test:
 
@@ -359,6 +386,8 @@ The project was deliberately split into reviewable, reversible feature branches:
 - [#13 — Gemini 3.8 Flash upgrade](https://github.com/MayankSinghChouhann/forgeOps-AI/pull/13)
 - [#14 — secure Prometheus and Grafana dashboard](https://github.com/MayankSinghChouhann/forgeOps-AI/pull/14)
 - [#15 — final generator and logging cleanup](https://github.com/MayankSinghChouhann/forgeOps-AI/pull/15)
+- [#16 — production operations and release guide](https://github.com/MayankSinghChouhann/forgeOps-AI/pull/16)
+- [#17 — non-root Nginx runtime fix](https://github.com/MayankSinghChouhann/forgeOps-AI/pull/17)
 
 ## Repository layout
 

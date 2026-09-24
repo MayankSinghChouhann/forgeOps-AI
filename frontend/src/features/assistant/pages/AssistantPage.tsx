@@ -4,7 +4,10 @@ import { assistantApi } from "../api/assistant.api"
 import { ChatSidebar } from "../components/ChatSidebar"
 import { ChatMessageList } from "../components/ChatMessageList"
 import { ChatInput } from "../components/ChatInput"
-import { Bot, Terminal, Cpu } from "lucide-react"
+import { Plus } from "lucide-react"
+import { PageHeader } from "@/components/ui/PageHeader"
+import { Button } from "@/components/ui/Button"
+import { StatusIndicator } from "@/components/ui/StatusIndicator"
 
 export function AssistantPage() {
   const [sessions, setSessions] = React.useState<ChatSession[]>([])
@@ -125,59 +128,18 @@ export function AssistantPage() {
   const activeSession = safeSessions.find((s) => s.id === activeSessionId)
 
   return (
-    <div className="flex h-[calc(100vh-8rem)] rounded-xl border border-border/50 bg-page overflow-hidden shadow-2xl">
-      {/* Sidebar */}
-      <ChatSidebar
-        sessions={safeSessions}
-        activeSessionId={activeSessionId}
-        onSelectSession={setActiveSessionId}
-        onNewChat={handleNewChat}
-        onDeleteSession={handleDeleteSession}
-        loading={loadingSessions}
-      />
-
-      {/* Main Chat Pane */}
-      <div className="flex-1 flex flex-col h-full bg-page/40">
-        {/* Chat Topbar */}
-        <div className="px-6 py-3.5 border-b border-border/50 bg-elevated/60 backdrop-blur flex items-center justify-between">
-          <div className="flex items-center space-x-3">
-            <div className="h-8 w-8 rounded-lg bg-brand-blue/15 border border-brand-blue/30 text-brand-cyan flex items-center justify-center">
-              <Bot className="h-4 w-4" />
-            </div>
-            <div>
-              <h2 className="text-sm font-semibold text-text-primary tracking-tight font-mono">
-                {activeSession ? activeSession.title : "New DevOps Diagnostic Session"}
-              </h2>
-              <p className="text-[11px] text-text-muted flex items-center space-x-1 font-mono">
-                <span className="h-1.5 w-1.5 rounded-full bg-status-healthy" />
-                <span>DevOps Intelligence Engine v1.0 • Connected</span>
-              </p>
-            </div>
+    <div className="mx-auto flex max-w-[1500px] flex-col gap-6 pb-4">
+      <PageHeader title="AI Assistant" description="Operational guidance grounded in your current DevOps context." actions={<Button className="md:hidden" variant="secondary" size="sm" onClick={handleNewChat}><Plus className="h-3.5 w-3.5" />New session</Button>} />
+      <div className="flex h-[calc(100dvh-11.5rem)] min-h-[520px] overflow-hidden rounded-lg border border-border bg-surface">
+        <ChatSidebar sessions={safeSessions} activeSessionId={activeSessionId} onSelectSession={setActiveSessionId} onNewChat={handleNewChat} onDeleteSession={handleDeleteSession} loading={loadingSessions} />
+        <div className="flex min-w-0 flex-1 flex-col bg-page">
+          <div className="flex flex-wrap items-center justify-between gap-3 border-b border-border bg-surface px-4 py-3 sm:px-5">
+            <div className="min-w-0"><h2 className="truncate text-sm font-semibold text-text-primary">{activeSession ? activeSession.title : "New operational session"}</h2><div className="mt-1"><StatusIndicator status="healthy" label="Assistant connected" /></div></div>
+            <div className="hidden items-center gap-5 text-xs text-text-muted lg:flex"><span>Environment <strong className="font-medium text-text-secondary">Production</strong></span><span>Context <strong className="font-medium text-text-secondary">Shell · Kubernetes · Docker</strong></span></div>
           </div>
-
-          <div className="flex items-center space-x-2 text-[11px] font-mono text-text-muted">
-            <span className="px-2 py-0.5 rounded bg-page/60 border border-border/40 flex items-center space-x-1">
-              <Terminal className="h-3 w-3 text-brand-cyan" />
-              <span>Shell + K8s + Docker</span>
-            </span>
-            <span className="px-2 py-0.5 rounded bg-page/60 border border-border/40 flex items-center space-x-1">
-              <Cpu className="h-3 w-3 text-brand-cyan" />
-              <span>Gemini Context Ready</span>
-            </span>
-          </div>
+          {loadingMessages ? <div className="flex flex-1 items-center justify-center text-sm text-text-muted" role="status">Loading conversation…</div> : <ChatMessageList messages={messages} sending={sending} />}
+          <ChatInput onSend={handleSend} disabled={sending} />
         </div>
-
-        {/* Message Area */}
-        {loadingMessages ? (
-          <div className="flex-1 flex items-center justify-center text-xs font-mono text-text-muted">
-            Loading conversation messages...
-          </div>
-        ) : (
-          <ChatMessageList messages={messages} sending={sending} />
-        )}
-
-        {/* Prompt Input */}
-        <ChatInput onSend={handleSend} disabled={sending} />
       </div>
     </div>
   )

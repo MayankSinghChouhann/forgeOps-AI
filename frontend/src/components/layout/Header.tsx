@@ -1,67 +1,26 @@
-import { Bell, Search, LogOut } from "lucide-react"
+import { Bell, Search, LogOut, Menu } from "lucide-react"
+import { useLocation } from "react-router-dom"
 import { useAuth } from "@/features/auth/hooks/useAuth"
 
-/**
- * Header component — top navigation bar for the dashboard.
- *
- * Reads the logged-in user's email from AuthContext via useAuth()
- * and renders it alongside the logout button. The logout action
- * clears localStorage and redirects to /login.
- */
-export function Header() {
+const routeNames: Record<string, string> = { overview: "Overview", assistant: "AI Assistant", "log-analyzer": "Log Analyzer", docker: "Docker", kubernetes: "Kubernetes", cicd: "CI/CD", infrastructure: "Infrastructure", "api-playground": "API Playground", terminal: "API Playground", settings: "Settings" }
+
+export function Header({ onOpenSidebar }: { onOpenSidebar: () => void }) {
   const { user, logout } = useAuth()
-
+  const { pathname } = useLocation()
+  const segments = pathname.split("/").filter(Boolean)
+  const segment = segments[segments.length - 1] || "overview"
+  const pageName = routeNames[segment] || "ForgeOps"
   return (
-    <header className="h-16 flex items-center justify-between px-6 bg-page border-b border-border z-10 sticky top-0">
-      <div className="flex items-center flex-1 space-x-6">
-        <div className="flex items-center space-x-2 text-sm text-text-muted font-mono">
-          <span className="hover:text-text-primary cursor-pointer transition-colors">forgeops-ai-core</span>
-          <span>/</span>
-          <span className="text-text-primary font-semibold">overview</span>
-        </div>
+    <header className="sticky top-0 z-20 flex h-16 items-center justify-between border-b border-border bg-page/95 px-4 backdrop-blur-sm sm:px-6 lg:px-8">
+      <div className="flex min-w-0 items-center gap-3">
+        <button type="button" onClick={onOpenSidebar} className="rounded-md p-2 text-text-muted hover:bg-surface-hover hover:text-text-primary lg:hidden" aria-label="Open navigation"><Menu className="h-5 w-5" /></button>
+        <div className="min-w-0"><p className="truncate text-sm font-semibold text-text-primary">{pageName}</p><p className="hidden text-xs text-text-muted sm:block">ForgeOps / {pageName}</p></div>
       </div>
-
-      <div className="flex items-center space-x-4">
-        {/* Global Search hint */}
-        <div className="relative group cursor-pointer hidden md:block">
-          <Search className="absolute left-3 top-2 h-4 w-4 text-text-muted group-hover:text-text-primary transition-colors" />
-          <div className="flex items-center justify-between h-8 w-64 rounded-md border border-border bg-terminal pl-9 pr-2 text-sm text-text-muted group-hover:border-white/20 transition-all">
-            <span>Search resources...</span>
-            <span className="flex items-center space-x-0.5 text-[10px] font-mono border border-border rounded px-1.5 py-0.5 bg-page text-text-muted">
-              <span>⌘</span><span>K</span>
-            </span>
-          </div>
-        </div>
-
-        <div className="w-px h-6 bg-border mx-2 hidden md:block"></div>
-
-        {/* Notification bell */}
-        <button className="relative p-2 text-text-muted hover:text-text-primary transition-colors rounded-full hover:bg-elevated border border-transparent hover:border-border">
-          <Bell className="h-4 w-4" />
-          <span className="absolute top-1.5 right-1.5 h-2 w-2 rounded-full bg-brand-cyan border-2 border-page"></span>
-        </button>
-
-        {/* User info + Logout */}
-        <div className="flex items-center gap-2 pl-2 border-l border-border">
-          {/* User avatar with email initial */}
-          <div className="h-8 w-8 rounded-full bg-brand-blue/20 border border-brand-blue/40 flex items-center justify-center text-brand-blue text-xs font-bold font-mono uppercase select-none">
-            {user?.email?.charAt(0) ?? "?"}
-          </div>
-
-          {/* User email — hidden on small screens */}
-          <span className="hidden lg:block text-xs text-text-muted font-mono max-w-[140px] truncate" title={user?.email}>
-            {user?.email}
-          </span>
-
-          {/* Logout button */}
-          <button
-            onClick={logout}
-            title="Sign out"
-            className="p-2 text-text-muted hover:text-status-failed transition-colors rounded-md hover:bg-status-failed/10 border border-transparent hover:border-status-failed/30"
-          >
-            <LogOut className="h-4 w-4" />
-          </button>
-        </div>
+      <div className="flex items-center gap-2 sm:gap-3">
+        <button type="button" className="hidden h-9 w-64 items-center gap-2 rounded-md border border-border bg-surface px-3 text-sm text-text-muted transition-colors hover:border-border-strong md:flex" aria-label="Search resources"><Search className="h-4 w-4" aria-hidden="true" /><span className="flex-1 text-left">Search resources</span><kbd className="rounded border border-border px-1.5 py-0.5 font-sans text-[10px]">⌘K</kbd></button>
+        <button type="button" className="relative rounded-md p-2 text-text-muted hover:bg-surface-hover hover:text-text-primary" aria-label="Notifications"><Bell className="h-4 w-4" /><span className="absolute right-2 top-2 h-1.5 w-1.5 rounded-full bg-accent" /></button>
+        <div className="mx-1 h-6 w-px bg-border" />
+        <div className="flex items-center gap-2"><div className="flex h-8 w-8 items-center justify-center rounded-full bg-elevated text-xs font-semibold text-text-secondary" aria-hidden="true">{user?.email?.charAt(0).toUpperCase() ?? "?"}</div><span className="hidden max-w-36 truncate text-xs text-text-muted xl:block" title={user?.email}>{user?.email}</span><button type="button" onClick={logout} title="Sign out" aria-label="Sign out" className="rounded-md p-2 text-text-muted hover:bg-surface-hover hover:text-status-failed"><LogOut className="h-4 w-4" /></button></div>
       </div>
     </header>
   )
