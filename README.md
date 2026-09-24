@@ -12,8 +12,9 @@ combines a Spring Boot API, React SPA, PostgreSQL, Redis, Gemini, Prometheus,
 Grafana, Docker Compose, Kubernetes, and enforced CI/CD quality gates.
 
 > Repository implementation status: **36 of 40 audit tasks complete, 1 partial,
-> 3 require owner/production access**. No live production deployment is claimed.
-> See [Release status](#release-status) for the exact remaining work.
+> 3 require owner/production access**. A one-time AWS Mumbai demo deployment was
+> verified on 2026-09-24; it is not a production release. See
+> [Release status](#release-status) for the exact remaining work.
 
 ## Capabilities
 
@@ -59,6 +60,43 @@ Shared frontend primitives include:
 
 The responsive E2E suite checks every primary route and verifies containment at
 1440 px, 1366 px, 1024 px, and 390 px viewport widths.
+
+## AWS demo evidence
+
+The following sanitized screenshots were captured from the one-time Docker
+Compose demo environment in AWS Mumbai on 2026-09-24. They contain no login
+passwords, secrets, private-key material, or monitoring credentials. This is
+verification evidence only, not a claim of a production deployment.
+
+### Live operations overview
+
+![ForgeOps live operations overview](docs/images/dashboard-overview.png)
+
+The overview shows live backend telemetry, database-pool status, diagnostics,
+and persisted activity from the deployed environment.
+
+### Incident analysis and workflow generation
+
+![ForgeOps log analysis workspace](docs/images/log-analyzer.png)
+
+![ForgeOps CI/CD workflow generator](docs/images/cicd-generator.png)
+
+The diagnostic and generation workspaces retain their real API-backed actions
+while presenting input, status, and generated output in a reviewable format.
+
+### Infrastructure and API workspaces
+
+![ForgeOps infrastructure generator](docs/images/infrastructure-generator.png)
+
+![ForgeOps API playground](docs/images/api-playground.png)
+
+### Responsive navigation
+
+![ForgeOps mobile navigation drawer](docs/images/mobile-navigation.png)
+
+The desktop sidebar becomes an accessible, contained drawer at a 390 px
+viewport; the Playwright suite verifies that this layout has no horizontal page
+overflow.
 
 ## Architecture
 
@@ -388,6 +426,7 @@ The project was deliberately split into reviewable, reversible feature branches:
 - [#15 — final generator and logging cleanup](https://github.com/MayankSinghChouhann/forgeOps-AI/pull/15)
 - [#16 — production operations and release guide](https://github.com/MayankSinghChouhann/forgeOps-AI/pull/16)
 - [#17 — non-root Nginx runtime fix](https://github.com/MayankSinghChouhann/forgeOps-AI/pull/17)
+- [#18 — enterprise DevOps frontend design system](https://github.com/MayankSinghChouhann/forgeOps-AI/pull/18)
 
 ## Repository layout
 
