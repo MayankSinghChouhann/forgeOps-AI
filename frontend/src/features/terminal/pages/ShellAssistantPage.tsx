@@ -83,7 +83,7 @@ function FormattedContent({ content }: { content: string }) {
               if (line.startsWith("- ")) {
                 return (
                   <div key={lineIdx} className="flex items-start space-x-2 text-xs text-text-muted pl-2">
-                    <span className="text-brand-blue font-bold mt-0.5">•</span>
+                    <span className="text-accent font-bold mt-0.5">•</span>
                     <span>{line.replace("- ", "")}</span>
                   </div>
                 )
@@ -242,7 +242,7 @@ export function ShellAssistantPage() {
 
           {/* Explanation Output */}
           {explanation && (
-            <div className="space-y-6 animate-in fade-in duration-200">
+            <div className="space-y-6">
               {/* Safety Banner */}
               <div className={`rounded-lg border p-5 ${
                 explanation.safetyLevel === "DANGEROUS"
@@ -281,7 +281,7 @@ export function ShellAssistantPage() {
               {explanation.flags && explanation.flags.length > 0 && (
                 <div className="space-y-3 rounded-lg border border-border bg-surface p-5">
                   <div className="flex items-center space-x-2 pb-2 border-b border-border/50">
-                    <Info className="h-4 w-4 text-brand-blue" />
+                    <Info className="h-4 w-4 text-accent" />
                     <h3 className="text-sm font-semibold text-text-primary">
                       Flags and modifiers
                     </h3>

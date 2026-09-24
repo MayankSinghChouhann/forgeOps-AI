@@ -13,7 +13,7 @@ export function FormField({ label, error, children, className, ...props }: FormF
         {label}
       </label>
       {children}
-      {error && <p className="text-[0.8rem] font-medium text-error">{error}</p>}
+      {error && <p className="text-xs font-medium text-status-failed">{error}</p>}
     </div>
   )
 }
