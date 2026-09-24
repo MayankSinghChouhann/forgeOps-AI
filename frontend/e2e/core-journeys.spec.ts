@@ -86,18 +86,19 @@ test('user can authenticate and reach live overview', async ({ page }) => {
   await page.goto('/login')
   await page.getByLabel('Email').fill('engineer@forgeops.ai')
   await page.getByLabel('Password').fill('strong-password')
-  await page.getByRole('button', { name: 'Sign In' }).click()
+  await page.getByRole('button', { name: /sign in/i }).click()
 
   await expect(page).toHaveURL(/\/dashboard\/overview$/)
-  await expect(page.getByText('Welcome back,')).toBeVisible()
-  await expect(page.getByRole('main').getByText('engineer@forgeops.ai')).toBeVisible()
+  await expect(page.getByRole('heading', { name: 'Overview' })).toBeVisible()
+  await expect(page.getByText('Live infrastructure and application telemetry.')).toBeVisible()
+  await expect(page.getByText('256 MB')).toBeVisible()
 })
 
 test('user can analyze a CI failure', async ({ page }) => {
   await seedAuthenticatedSession(page)
   await page.goto('/dashboard/log-analyzer')
   await page.getByPlaceholder(/Paste Jenkins/).fill('ERROR connection pool exhausted')
-  await page.getByRole('button', { name: /Execute Diagnostic Analysis/ }).click()
+  await page.getByRole('button', { name: 'Analyze log' }).click()
 
   await expect(page.getByText('Database connection pool exhausted')).toBeVisible()
   await expect(page.getByText('Connections were not returned to the pool.')).toBeVisible()
@@ -117,6 +118,49 @@ test('user sees shell safety classification', async ({ page }) => {
   await seedAuthenticatedSession(page)
   await page.goto('/dashboard/terminal')
 
-  await expect(page.getByText('Safety Classification: CAUTION')).toBeVisible()
+  await expect(page.getByText('Safety classification: Caution')).toBeVisible()
   await expect(page.getByText('Run docker system df first.')).toBeVisible()
+})
+
+test('mobile navigation opens without horizontal page overflow', async ({ page }) => {
+  await page.setViewportSize({ width: 390, height: 844 })
+  await seedAuthenticatedSession(page)
+  await page.goto('/dashboard/overview')
+
+  await expect(page.getByRole('button', { name: 'Open navigation' })).toBeVisible()
+  await page.getByRole('button', { name: 'Open navigation' }).click()
+  await expect(page.getByLabel('Primary navigation')).toBeVisible()
+  await expect(page.getByRole('link', { name: 'Settings' })).toBeVisible()
+  expect(await page.evaluate(() => document.documentElement.scrollWidth <= window.innerWidth)).toBe(true)
+})
+
+test('every primary workspace renders inside the viewport', async ({ page }) => {
+  await seedAuthenticatedSession(page)
+  const destinations = [
+    ['/dashboard/overview', 'Overview'],
+    ['/dashboard/assistant', 'AI Assistant'],
+    ['/dashboard/log-analyzer', 'Log Analyzer'],
+    ['/dashboard/docker', 'Docker'],
+    ['/dashboard/kubernetes', 'Kubernetes'],
+    ['/dashboard/cicd', 'CI/CD'],
+    ['/dashboard/infrastructure', 'Infrastructure'],
+    ['/dashboard/api-playground', 'API Playground'],
+    ['/dashboard/settings', 'Settings'],
+  ] as const
+
+  for (const [path, heading] of destinations) {
+    await page.goto(path)
+    await expect(page.getByRole('heading', { name: heading, level: 1 })).toBeVisible()
+    expect(await page.evaluate(() => document.documentElement.scrollWidth <= window.innerWidth)).toBe(true)
+  }
+})
+
+test('overview stays contained at desktop, laptop, and tablet widths', async ({ page }) => {
+  await seedAuthenticatedSession(page)
+  for (const width of [1440, 1366, 1024]) {
+    await page.setViewportSize({ width, height: 900 })
+    await page.goto('/dashboard/overview')
+    await expect(page.getByRole('heading', { name: 'Overview', level: 1 })).toBeVisible()
+    expect(await page.evaluate(() => document.documentElement.scrollWidth <= window.innerWidth)).toBe(true)
+  }
 })
