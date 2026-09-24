@@ -1,289 +1,140 @@
 import * as React from "react"
-import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/Card"
-import { Badge } from "@/components/ui/Badge"
-import { GitMerge, Server, Cpu, Database, Network, CheckCircle2, RefreshCw, Layers, ShieldCheck, Terminal, FileText } from "lucide-react"
-import { useAuth } from "@/features/auth/hooks/useAuth"
+import { RefreshCw } from "lucide-react"
+import { Button } from "@/components/ui/Button"
+import { MetricCard } from "@/components/ui/MetricCard"
+import { PageHeader } from "@/components/ui/PageHeader"
+import { StatusIndicator, StatusTone } from "@/components/ui/StatusIndicator"
 import { dashboardApi } from "../api/dashboard.api"
 import { DashboardMetricsResponse } from "../types/dashboard.types"
 
 export function OverviewPage() {
-  const { user } = useAuth()
   const [metrics, setMetrics] = React.useState<DashboardMetricsResponse | null>(null)
   const [loading, setLoading] = React.useState(false)
+  const [error, setError] = React.useState<string | null>(null)
+  const [lastUpdated, setLastUpdated] = React.useState<Date | null>(null)
 
-  const fetchMetrics = async () => {
+  const fetchMetrics = React.useCallback(async () => {
     try {
       setLoading(true)
-      const data = await dashboardApi.getMetrics()
-      setMetrics(data)
+      setError(null)
+      setMetrics(await dashboardApi.getMetrics())
+      setLastUpdated(new Date())
     } catch (err) {
       console.error("Failed to fetch live dashboard telemetry", err)
+      setError("Live telemetry is temporarily unavailable.")
     } finally {
       setLoading(false)
     }
-  }
+  }, [])
 
   React.useEffect(() => {
     fetchMetrics()
     const interval = setInterval(fetchMetrics, 10000)
     return () => clearInterval(interval)
-  }, [])
+  }, [fetchMetrics])
 
-  const formatUptime = (seconds: number) => {
-    const d = Math.floor(seconds / (3600 * 24))
-    const h = Math.floor((seconds % (3600 * 24)) / 3600)
-    const m = Math.floor((seconds % 3600) / 60)
-    return `${d > 0 ? d + "d " : ""}${h}h ${m}m`
+  const serviceTone = (status: string): StatusTone => {
+    if (["ONLINE", "CONNECTED"].includes(status)) return "healthy"
+    if (status === "FALLBACK") return "warning"
+    if (status === "DEGRADED") return "warning"
+    return "failed"
   }
 
-  const allServicesHealthy = metrics?.services?.every((service) =>
-    ["ONLINE", "CONNECTED", "FALLBACK"].includes(service.status)) ?? false
+  const totalDiagnostics = metrics
+    ? metrics.counters.totalAnalyses + metrics.counters.totalTemplates + metrics.counters.totalChatSessions
+    : null
 
   return (
-    <div className="space-y-6 max-w-[1600px] mx-auto pb-12">
-      {/* Welcome Banner — live user and telemetry status */}
-      <div className="bg-elevated border border-border/70 rounded-card p-6 flex flex-col md:flex-row gap-4 items-start md:items-center justify-between relative overflow-hidden shadow-lg">
-        <div className="absolute top-0 right-0 w-80 h-80 bg-brand-blue/5 blur-[90px] rounded-full pointer-events-none" />
-        <div className="flex items-center space-x-3.5 z-10">
-          <div className="h-10 w-10 rounded-lg bg-status-healthy/10 border border-status-healthy/30 flex items-center justify-center shrink-0">
-            <CheckCircle2 className="h-5 w-5 text-status-healthy" />
-          </div>
-          <div>
-            <h2 className="text-lg font-semibold text-text-primary tracking-tight font-mono">
-              Welcome back, <span className="text-brand-cyan">{user?.email}</span>
-            </h2>
-            <p className="text-text-muted mt-0.5 text-xs">
-              Live backend telemetry from the services currently connected to ForgeOps.
-            </p>
-          </div>
-        </div>
+    <div className="mx-auto max-w-[1500px] space-y-6 pb-10">
+      <PageHeader
+        title="Overview"
+        description="Live infrastructure and application telemetry."
+        actions={
+          <>
+            <span className="hidden text-xs text-text-muted sm:inline">
+              {lastUpdated ? `Last refreshed ${lastUpdated.toLocaleTimeString()}` : "Waiting for telemetry"}
+            </span>
+            <Button variant="secondary" size="sm" onClick={fetchMetrics} disabled={loading}>
+              <RefreshCw className={`h-3.5 w-3.5 ${loading ? "animate-spin" : ""}`} />
+              Refresh
+            </Button>
+          </>
+        }
+      />
 
-        <div className="flex items-center space-x-3 z-10">
-          <button
-            onClick={fetchMetrics}
-            className="flex items-center space-x-1.5 px-3 py-1.5 rounded-md bg-page/80 border border-border/80 text-xs font-mono text-text-muted hover:text-text-primary transition-colors"
-          >
-            <RefreshCw className={`h-3.5 w-3.5 ${loading ? "animate-spin text-brand-cyan" : ""}`} />
-            <span>Sync Telemetry</span>
-          </button>
-          <Badge variant="success">
-            <span className="h-1.5 w-1.5 rounded-full bg-status-healthy mr-1.5 animate-pulse" />
-            {metrics?.systemStatus || "HEALTHY"} (Uptime: {metrics ? formatUptime(metrics.uptimeSeconds) : "Active"})
-          </Badge>
+      {error && (
+        <div role="alert" className="rounded-lg border border-status-warning/30 bg-status-warning/10 px-4 py-3 text-sm text-status-warning">
+          {error} Existing data remains visible while ForgeOps retries.
         </div>
+      )}
+
+      <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-4">
+        <MetricCard
+          label="Memory"
+          value={metrics ? `${metrics.memory.usedMB} MB` : "—"}
+          detail={metrics ? `/ ${metrics.memory.maxMB} MB` : undefined}
+          progress={metrics?.memory.percentUsed}
+          footer={metrics ? `${metrics.memory.percentUsed}% utilized` : "Loading live usage"}
+        />
+        <MetricCard
+          label="CPU"
+          value={metrics ? `${metrics.cpu.availableCores} cores` : "—"}
+          detail={metrics ? `${metrics.cpu.estimatedLoadPercent}% load` : undefined}
+          progress={metrics?.cpu.estimatedLoadPercent}
+          footer={<StatusIndicator status="healthy" label="Normal" />}
+        />
+        <MetricCard
+          label="Database connections"
+          value={metrics ? `${metrics.database.activeConnections} active` : "—"}
+          detail={metrics ? `${metrics.database.idleConnections} idle` : undefined}
+          footer={metrics ? `${metrics.database.totalPoolSize} total · ${metrics.database.poolName}` : "Loading pool status"}
+        />
+        <MetricCard
+          label="Diagnostics"
+          value={totalDiagnostics ?? "—"}
+          detail={metrics ? `${metrics.counters.totalUsers} user${metrics.counters.totalUsers === 1 ? "" : "s"}` : undefined}
+          footer={metrics ? `${metrics.counters.totalAnalyses} RCA · ${metrics.counters.totalTemplates} IaC · ${metrics.counters.totalChatSessions} sessions` : "Loading counters"}
+        />
       </div>
 
-      {/* Top 4 Live Metric Cards */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-        {/* JVM Memory */}
-        <Card className="bg-elevated/90 border-border/70 shadow-sm">
-          <CardHeader className="pb-2">
-            <div className="flex items-center justify-between">
-              <span className="text-[11px] font-mono uppercase tracking-wider text-text-muted">JVM Heap Memory</span>
-              <Cpu className="h-4 w-4 text-brand-blue" />
+      <div className="grid grid-cols-1 gap-6 xl:grid-cols-[minmax(0,1.8fr)_minmax(320px,1fr)]">
+        <section className="overflow-hidden rounded-lg border border-border bg-surface" aria-labelledby="activity-title">
+          <div className="flex items-center justify-between border-b border-border px-5 py-4">
+            <div><h2 id="activity-title" className="text-base font-semibold">Recent activity</h2><p className="mt-0.5 text-xs text-text-muted">Diagnostics and infrastructure actions from the live database.</p></div>
+            <span className="text-xs text-text-muted">{metrics?.recentActivities.length ?? 0} events</span>
+          </div>
+          {metrics?.recentActivities?.length ? (
+            <div className="overflow-x-auto">
+              <table className="w-full min-w-[640px] text-left text-sm">
+                <thead className="bg-elevated/70 text-xs text-text-muted"><tr><th className="px-5 py-3 font-medium">Time</th><th className="px-4 py-3 font-medium">Type</th><th className="px-4 py-3 font-medium">Summary</th><th className="px-5 py-3 font-medium">Status</th></tr></thead>
+                <tbody className="divide-y divide-border">
+                  {metrics.recentActivities.map((activity, index) => (
+                    <tr key={`${activity.timestamp}-${index}`} className="hover:bg-surface-hover/50">
+                      <td className="whitespace-nowrap px-5 py-3 font-mono text-xs text-text-muted">{activity.timestamp ? new Date(activity.timestamp).toLocaleTimeString() : "Now"}</td>
+                      <td className="px-4 py-3 text-text-secondary">{activity.type}</td>
+                      <td className="px-4 py-3"><p className="font-medium text-text-primary">{activity.title}</p><p className="mt-0.5 text-xs text-text-muted">{activity.description}</p></td>
+                      <td className="px-5 py-3"><StatusIndicator status={activity.status === "SUCCESS" ? "healthy" : activity.status === "WARNING" ? "warning" : "failed"} label={activity.status.toLowerCase()} /></td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
             </div>
-          </CardHeader>
-          <CardContent className="space-y-2">
-            <div className="flex items-baseline justify-between">
-              <span className="text-2xl font-mono font-bold text-text-primary">
-                {metrics?.memory ? `${metrics.memory.usedMB} MB` : "---"}
-              </span>
-              <span className="text-xs font-mono text-text-muted">
-                / {metrics?.memory ? `${metrics.memory.maxMB} MB` : "---"}
-              </span>
-            </div>
-            <div className="w-full bg-page rounded-full h-1.5 overflow-hidden">
-              <div
-                className="bg-brand-blue h-1.5 rounded-full transition-all duration-500"
-                style={{ width: `${metrics?.memory ? metrics.memory.percentUsed : 35}%` }}
-              />
-            </div>
-            <div className="text-[10px] font-mono text-text-muted flex justify-between">
-              <span>{metrics?.memory ? `${metrics.memory.percentUsed}% Allocated` : "Normal"}</span>
-              <span className="text-status-healthy">Healthy</span>
-            </div>
-          </CardContent>
-        </Card>
+          ) : (
+            <div className="px-5 py-12 text-center"><p className="font-medium text-text-secondary">No recent activity</p><p className="mt-1 text-sm text-text-muted">Diagnostics and infrastructure actions will appear here.</p></div>
+          )}
+        </section>
 
-        {/* CPU & Threads */}
-        <Card className="bg-elevated/90 border-border/70 shadow-sm">
-          <CardHeader className="pb-2">
-            <div className="flex items-center justify-between">
-              <span className="text-[11px] font-mono uppercase tracking-wider text-text-muted">Compute Resources</span>
-              <Server className="h-4 w-4 text-brand-cyan" />
-            </div>
-          </CardHeader>
-          <CardContent className="space-y-2">
-            <div className="flex items-baseline justify-between">
-              <span className="text-2xl font-mono font-bold text-text-primary">
-                {metrics?.cpu ? `${metrics.cpu.availableCores} Cores` : "8 Cores"}
-              </span>
-              <span className="text-xs font-mono text-text-muted">
-                Load: {metrics?.cpu ? `${metrics.cpu.estimatedLoadPercent}%` : "12%"}
-              </span>
-            </div>
-            <div className="w-full bg-page rounded-full h-1.5 overflow-hidden">
-              <div
-                className="bg-brand-cyan h-1.5 rounded-full transition-all duration-500"
-                style={{ width: `${metrics?.cpu ? metrics.cpu.estimatedLoadPercent : 20}%` }}
-              />
-            </div>
-            <div className="text-[10px] font-mono text-text-muted flex justify-between">
-              <span>Architecture: x86_64</span>
-              <span className="text-status-healthy">Nominal</span>
-            </div>
-          </CardContent>
-        </Card>
-
-        {/* Database Connection Pool */}
-        <Card className="bg-elevated/90 border-border/70 shadow-sm">
-          <CardHeader className="pb-2">
-            <div className="flex items-center justify-between">
-              <span className="text-[11px] font-mono uppercase tracking-wider text-text-muted">HikariCP Pool</span>
-              <Database className="h-4 w-4 text-status-healthy" />
-            </div>
-          </CardHeader>
-          <CardContent className="space-y-2">
-            <div className="flex items-baseline justify-between">
-              <span className="text-2xl font-mono font-bold text-text-primary">
-                {metrics?.database ? `${metrics.database.activeConnections} Active` : "1 Active"}
-              </span>
-              <span className="text-xs font-mono text-text-muted">
-                {metrics?.database ? `${metrics.database.idleConnections} Idle` : "9 Idle"}
-              </span>
-            </div>
-            <div className="w-full bg-page rounded-full h-1.5 overflow-hidden">
-              <div
-                className="bg-status-healthy h-1.5 rounded-full transition-all duration-500"
-                style={{ width: `${metrics?.database ? (metrics.database.activeConnections * 10) : 10}%` }}
-              />
-            </div>
-            <div className="text-[10px] font-mono text-text-muted flex justify-between">
-              <span>Pool Size: {metrics?.database ? metrics.database.totalPoolSize : 10}</span>
-              <span className="text-status-healthy">PostgreSQL</span>
-            </div>
-          </CardContent>
-        </Card>
-
-        {/* Total Platform Artifacts */}
-        <Card className="bg-elevated/90 border-border/70 shadow-sm">
-          <CardHeader className="pb-2">
-            <div className="flex items-center justify-between">
-              <span className="text-[11px] font-mono uppercase tracking-wider text-text-muted">Total Diagnostics</span>
-              <ShieldCheck className="h-4 w-4 text-status-warning" />
-            </div>
-          </CardHeader>
-          <CardContent className="space-y-2">
-            <div className="flex items-baseline justify-between">
-              <span className="text-2xl font-mono font-bold text-text-primary">
-                {metrics?.counters ? (metrics.counters.totalAnalyses + metrics.counters.totalTemplates + metrics.counters.totalChatSessions) : "0"}
-              </span>
-              <span className="text-xs font-mono text-text-muted">
-                {metrics?.counters?.totalUsers || 1} User(s)
-              </span>
-            </div>
-            <div className="w-full bg-page rounded-full h-1.5 overflow-hidden">
-              <div className="bg-status-warning h-1.5 rounded-full w-full" />
-            </div>
-            <div className="text-[10px] font-mono text-text-muted flex justify-between">
-              <span>RCA: {metrics?.counters?.totalAnalyses || 0}</span>
-              <span>IaC: {metrics?.counters?.totalTemplates || 0}</span>
-              <span>Sessions: {metrics?.counters?.totalChatSessions || 0}</span>
-            </div>
-          </CardContent>
-        </Card>
-      </div>
-
-      {/* Main Grid: Live Chronological Activity Stream & Cluster Services */}
-      <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
-        {/* LEFT / CENTER: Live Activity Feed (7/12) */}
-        <div className="lg:col-span-7 space-y-6">
-          <Card className="bg-elevated border-border/80 shadow-md">
-            <CardHeader className="pb-3 border-b border-border/50 flex flex-row items-center justify-between">
-              <CardTitle className="text-xs font-mono font-semibold uppercase tracking-wider text-text-primary flex items-center space-x-2">
-                <GitMerge className="h-4 w-4 text-brand-blue" />
-                <span>Live Chronological Activity Feed</span>
-              </CardTitle>
-              <Badge variant="outline" className="text-[10px] font-mono">
-                Real Database Events
-              </Badge>
-            </CardHeader>
-            <CardContent className="pt-4 space-y-3">
-              {metrics?.recentActivities && metrics.recentActivities.length > 0 ? (
-                metrics.recentActivities.map((act, idx) => (
-                  <div
-                    key={idx}
-                    className="p-3 rounded-md bg-page/70 border border-border/50 flex items-start space-x-3 hover:border-brand-blue/40 transition-all"
-                  >
-                    <div className="mt-0.5 shrink-0">
-                      {act.type === "ANALYZER" ? (
-                        <FileText className="h-4 w-4 text-status-warning" />
-                      ) : act.type === "GENERATOR" ? (
-                        <Layers className="h-4 w-4 text-brand-cyan" />
-                      ) : (
-                        <Terminal className="h-4 w-4 text-brand-blue" />
-                      )}
-                    </div>
-                    <div className="flex-1 min-w-0">
-                      <div className="flex items-center justify-between">
-                        <span className="text-xs font-mono font-medium text-text-primary truncate">
-                          {act.title}
-                        </span>
-                        <span className="text-[10px] font-mono text-text-muted shrink-0 ml-2">
-                          {act.timestamp ? new Date(act.timestamp).toLocaleTimeString() : "Just now"}
-                        </span>
-                      </div>
-                      <p className="text-[11px] font-mono text-text-muted mt-0.5 truncate">
-                        {act.description}
-                      </p>
-                    </div>
-                  </div>
-                ))
-              ) : (
-                <div className="p-8 text-center text-xs font-mono text-text-muted">
-                  No activity records yet. Run a log diagnosis or generate an IaC template to see live telemetry!
-                </div>
-              )}
-            </CardContent>
-          </Card>
-        </div>
-
-        {/* RIGHT: Production Topology & Services (5/12) */}
-        <div className="lg:col-span-5 space-y-6">
-          <Card className="bg-elevated border-border/80 shadow-md">
-            <CardHeader className="pb-3 border-b border-border/50 flex flex-row items-center justify-between">
-              <CardTitle className="text-xs font-mono font-semibold uppercase tracking-wider text-text-primary flex items-center space-x-2">
-                <Network className="h-4 w-4 text-brand-cyan" />
-                <span>Microservice Health Check</span>
-              </CardTitle>
-              <Badge variant={allServicesHealthy ? "success" : "warning"}>
-                {allServicesHealthy ? "Operational" : "Attention Required"}
-              </Badge>
-            </CardHeader>
-            <CardContent className="pt-4 space-y-3">
-              {(metrics?.services || []).map((s, i) => (
-                <div
-                  key={i}
-                  className="p-2.5 rounded-md bg-page/60 border border-border/40 flex items-center justify-between text-xs font-mono"
-                >
-                  <div className="flex items-center space-x-2">
-                    <span className={`h-2 w-2 rounded-full ${
-                      ["ONLINE", "CONNECTED"].includes(s.status) ? "bg-status-healthy animate-pulse" :
-                      s.status === "FALLBACK" ? "bg-status-warning" : "bg-status-failed"
-                    }`} />
-                    <span className="text-text-primary">{s.name} ({s.type})</span>
-                  </div>
-                  <span className="text-[10px] text-text-muted">{s.status} · {s.detail}</span>
-                </div>
-              ))}
-              {!metrics?.services?.length && (
-                <div className="p-4 text-center text-xs font-mono text-text-muted">
-                  Waiting for live health telemetry…
-                </div>
-              )}
-            </CardContent>
-          </Card>
-        </div>
+        <section className="rounded-lg border border-border bg-surface" aria-labelledby="health-title">
+          <div className="border-b border-border px-5 py-4"><h2 id="health-title" className="text-base font-semibold">Service health</h2><p className="mt-0.5 text-xs text-text-muted">Connected platform dependencies.</p></div>
+          <div className="divide-y divide-border">
+            {metrics?.services?.length ? metrics.services.map((service) => (
+              <div key={`${service.name}-${service.type}`} className="flex items-start justify-between gap-4 px-5 py-4">
+                <div className="min-w-0"><p className="truncate text-sm font-medium text-text-primary">{service.name}</p><p className="mt-0.5 text-xs text-text-muted">{service.type} · {service.detail}</p></div>
+                <StatusIndicator status={serviceTone(service.status)} label={service.status === "FALLBACK" ? "Fallback" : service.status.charAt(0) + service.status.slice(1).toLowerCase()} />
+              </div>
+            )) : <div className="px-5 py-10 text-center text-sm text-text-muted">Waiting for service telemetry…</div>}
+          </div>
+        </section>
       </div>
     </div>
   )

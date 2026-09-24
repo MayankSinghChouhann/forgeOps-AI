@@ -1,8 +1,9 @@
 import * as React from "react"
-import { GitMerge, Sparkles, Copy, Check, Download, Layers, ShieldCheck, Cpu } from "lucide-react"
+import { Sparkles, Copy, Check, Download, Layers, ShieldCheck, Cpu, GitMerge } from "lucide-react"
 import { generatorApi } from "../api/generator.api"
 import { TemplateResponse } from "../types/generator.types"
-import { Badge } from "@/components/ui/Badge"
+import { PageHeader } from "@/components/ui/PageHeader"
+import { StatusIndicator } from "@/components/ui/StatusIndicator"
 
 export function PipelineGeneratorPage() {
   const [pipelineType, setPipelineType] = React.useState<"GITLAB_CI" | "GITHUB_ACTIONS">("GITLAB_CI")
@@ -54,41 +55,22 @@ export function PipelineGeneratorPage() {
 
   return (
     <div className="space-y-6 max-w-[1600px] mx-auto pb-12">
-      {/* Header */}
-      <div className="bg-elevated border border-border/70 rounded-card p-6 flex flex-col md:flex-row gap-4 items-start md:items-center justify-between relative overflow-hidden shadow-lg">
-        <div className="flex items-center space-x-3.5">
-          <div className="h-10 w-10 rounded-lg bg-brand-blue/10 border border-brand-blue/30 flex items-center justify-center shrink-0">
-            <GitMerge className="h-5 w-5 text-brand-blue" />
-          </div>
-          <div>
-            <h1 className="text-xl font-semibold text-text-primary tracking-tight font-mono">
-              CI/CD Pipeline Generator
-            </h1>
-            <p className="text-xs text-text-muted mt-0.5">
-              Production-grade GitLab CI & GitHub Actions YAML workflows with security gates, caching, and automated deployment.
-            </p>
-          </div>
-        </div>
-        <Badge variant="success" className="bg-status-healthy/10 text-status-healthy border-status-healthy/20">
-          <span className="h-1.5 w-1.5 rounded-full bg-status-healthy mr-1.5 animate-pulse" />
-          Pipeline Engine Active
-        </Badge>
-      </div>
+      <PageHeader title="CI/CD" description="Generate reviewable GitLab CI and GitHub Actions workflows with testing, security, and deployment stages." actions={<StatusIndicator status="healthy" label="Pipeline engine online" />} />
 
       {/* Control Panel */}
       <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-6">
         {/* Pipeline Target */}
-        <div className="bg-elevated border border-border/80 rounded-card p-5 shadow-sm space-y-3">
-          <span className="text-xs font-mono font-semibold uppercase tracking-wider text-text-muted">
-            1. Target CI/CD Platform
+        <div className="space-y-3 rounded-lg border border-border bg-surface p-5">
+          <span className="text-sm font-semibold text-text-secondary">
+            Target platform
           </span>
           <div className="grid grid-cols-2 gap-2">
             <button
               onClick={() => setPipelineType("GITLAB_CI")}
-              className={`p-3 rounded-md border text-xs font-mono font-medium transition-all ${
+              className={`rounded-md border p-3 text-xs font-medium transition-colors ${
                 pipelineType === "GITLAB_CI"
-                  ? "bg-brand-blue/20 border-brand-blue text-brand-cyan shadow-sm"
-                  : "bg-page/50 border-border/60 text-text-muted hover:text-text-primary hover:bg-page"
+                  ? "border-accent bg-accent/10 text-text-primary"
+                  : "border-border bg-page text-text-muted hover:bg-surface-hover hover:text-text-primary"
               }`}
             >
               GitLab CI/CD
@@ -96,10 +78,10 @@ export function PipelineGeneratorPage() {
             </button>
             <button
               onClick={() => setPipelineType("GITHUB_ACTIONS")}
-              className={`p-3 rounded-md border text-xs font-mono font-medium transition-all ${
+              className={`rounded-md border p-3 text-xs font-medium transition-colors ${
                 pipelineType === "GITHUB_ACTIONS"
-                  ? "bg-brand-blue/20 border-brand-blue text-brand-cyan shadow-sm"
-                  : "bg-page/50 border-border/60 text-text-muted hover:text-text-primary hover:bg-page"
+                  ? "border-accent bg-accent/10 text-text-primary"
+                  : "border-border bg-page text-text-muted hover:bg-surface-hover hover:text-text-primary"
               }`}
             >
               GitHub Actions
@@ -109,9 +91,9 @@ export function PipelineGeneratorPage() {
         </div>
 
         {/* Runtime Stack */}
-        <div className="bg-elevated border border-border/80 rounded-card p-5 shadow-sm space-y-3">
-          <span className="text-xs font-mono font-semibold uppercase tracking-wider text-text-muted">
-            2. Application Runtime
+        <div className="space-y-3 rounded-lg border border-border bg-surface p-5">
+          <span className="text-sm font-semibold text-text-secondary">
+            Application runtime
           </span>
           <div className="grid grid-cols-2 gap-2">
             {[
@@ -123,10 +105,10 @@ export function PipelineGeneratorPage() {
               <button
                 key={r.id}
                 onClick={() => setRuntime(r.id)}
-                className={`p-2.5 rounded-md border text-xs font-mono transition-all text-left ${
+                className={`rounded-md border p-2.5 text-left text-xs transition-colors ${
                   runtime === r.id
-                    ? "bg-brand-cyan/15 border-brand-cyan text-brand-cyan"
-                    : "bg-page/50 border-border/60 text-text-muted hover:text-text-primary"
+                    ? "border-accent bg-accent/10 text-text-primary"
+                    : "border-border bg-page text-text-muted hover:text-text-primary"
                 }`}
               >
                 {r.label}
@@ -136,16 +118,16 @@ export function PipelineGeneratorPage() {
         </div>
 
         {/* Pipeline Gates */}
-        <div className="bg-elevated border border-border/80 rounded-card p-5 shadow-sm space-y-3">
-          <span className="text-xs font-mono font-semibold uppercase tracking-wider text-text-muted">
-            3. Included Stages
+        <div className="space-y-3 rounded-lg border border-border bg-surface p-5">
+          <span className="text-sm font-semibold text-text-secondary">
+            Included stages
           </span>
-          <div className="space-y-1.5 text-xs font-mono">
+          <div className="space-y-2 text-xs text-text-secondary">
             <div className="flex items-center space-x-2 text-status-healthy">
               <ShieldCheck className="h-3.5 w-3.5" />
               <span>Unit & Integration Testing</span>
             </div>
-            <div className="flex items-center space-x-2 text-brand-cyan">
+            <div className="flex items-center space-x-2 text-accent">
               <Layers className="h-3.5 w-3.5" />
               <span>Docker Multi-Stage Build & Push</span>
             </div>
@@ -160,20 +142,20 @@ export function PipelineGeneratorPage() {
           </div>
         </div>
 
-        <div className="bg-elevated border border-border/80 rounded-card p-5 shadow-sm space-y-3">
-          <span className="text-xs font-mono font-semibold uppercase tracking-wider text-text-muted">
-            4. Generate Once Ready
+        <div className="space-y-3 rounded-lg border border-border bg-surface p-5">
+          <span className="text-sm font-semibold text-text-secondary">
+            Service
           </span>
           <input
             value={serviceName}
             onChange={(event) => setServiceName(event.target.value)}
             aria-label="Service name"
-            className="w-full rounded-md bg-page/70 border border-border/70 px-3 py-2 text-xs font-mono text-text-primary focus:outline-none focus:border-brand-cyan"
+            className="w-full rounded-md border border-border bg-page px-3 py-2 text-sm text-text-primary focus:border-accent focus:outline-none focus:ring-2 focus:ring-accent/20"
           />
           <button
             onClick={handleGenerate}
             disabled={loading || !serviceName.trim()}
-            className="w-full flex items-center justify-center gap-2 px-4 py-2.5 rounded-md bg-brand-blue text-white text-xs font-mono font-medium hover:bg-brand-blue/90 disabled:opacity-50"
+            className="flex h-9 w-full items-center justify-center gap-2 rounded-md bg-accent px-4 text-sm font-medium text-white hover:bg-accent-hover disabled:opacity-50"
           >
             <Sparkles className="h-3.5 w-3.5" />
             {loading ? "Generating..." : "Generate Pipeline"}
@@ -182,25 +164,24 @@ export function PipelineGeneratorPage() {
       </div>
 
       {/* Code Editor & Preview Card */}
-      <div className="bg-elevated border border-border/80 rounded-card p-6 shadow-xl space-y-4">
+      <div className="space-y-4 rounded-lg border border-border bg-surface p-5">
         <div className="flex flex-col md:flex-row md:items-center justify-between gap-3 pb-3 border-b border-border/50">
           <div className="flex items-center space-x-2">
-            <div className="h-2.5 w-2.5 rounded-full bg-status-healthy animate-pulse" />
-            <span className="text-xs font-mono font-semibold text-text-primary">
+            <span className="text-sm font-semibold text-text-primary">
               {pipelineType === "GITLAB_CI" ? ".gitlab-ci.yml" : ".github/workflows/deploy.yml"}
             </span>
           </div>
           <div className="flex items-center space-x-2">
             <button
               onClick={handleCopy}
-              className="flex items-center space-x-1.5 px-3 py-1.5 text-xs font-mono font-medium rounded-md bg-brand-blue/20 text-brand-cyan border border-brand-blue/30 hover:bg-brand-blue/30 transition-colors"
+              className="flex items-center gap-1.5 rounded-md border border-border bg-elevated px-3 py-1.5 text-xs font-medium text-text-primary transition-colors hover:bg-surface-hover"
             >
               {copied ? <Check className="h-3.5 w-3.5 text-status-healthy" /> : <Copy className="h-3.5 w-3.5" />}
               <span>{copied ? "Copied" : "Copy YAML"}</span>
             </button>
             <button
               onClick={handleDownload}
-              className="flex items-center space-x-1.5 px-3 py-1.5 text-xs font-mono font-medium rounded-md bg-page border border-border/80 text-text-primary hover:bg-elevated transition-colors"
+              className="flex items-center gap-1.5 rounded-md border border-border bg-page px-3 py-1.5 text-xs font-medium text-text-primary transition-colors hover:bg-surface-hover"
             >
               <Download className="h-3.5 w-3.5" />
               <span>Download</span>
@@ -209,7 +190,7 @@ export function PipelineGeneratorPage() {
         </div>
 
         {error && (
-          <div className="p-3 rounded bg-status-failed/10 border border-status-failed/30 text-xs text-status-failed font-mono">
+          <div className="rounded-md border border-status-failed/30 bg-status-failed/10 p-3 text-sm text-status-failed">
             {error}
           </div>
         )}

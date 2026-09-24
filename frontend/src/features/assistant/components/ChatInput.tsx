@@ -1,5 +1,5 @@
 import * as React from "react"
-import { Send, Sparkles } from "lucide-react"
+import { Send } from "lucide-react"
 
 interface ChatInputProps {
   onSend: (prompt: string) => void
@@ -31,18 +31,16 @@ export function ChatInput({ onSend, disabled }: ChatInputProps) {
   }
 
   return (
-    <div className="p-4 border-t border-border/50 bg-page/80 backdrop-blur space-y-3">
+    <div className="space-y-3 border-t border-border bg-surface p-3 sm:p-4">
       {/* Quick Prompt Suggestions */}
-      <div className="flex items-center space-x-2 overflow-x-auto pb-1 text-[11px] font-mono no-scrollbar">
-        <span className="text-text-muted flex items-center shrink-0">
-          <Sparkles className="h-3 w-3 mr-1 text-brand-cyan" /> Suggestions:
-        </span>
+      <div className="flex items-center gap-2 overflow-x-auto pb-1 text-xs">
+        <span className="shrink-0 text-text-muted">Suggestions</span>
         {SUGGESTIONS.map((s, i) => (
           <button
             key={i}
             onClick={() => onSend(s)}
             disabled={disabled}
-            className="shrink-0 px-2.5 py-1 rounded-full bg-elevated border border-border/60 hover:border-brand-blue/60 hover:text-brand-cyan text-text-secondary transition-all text-[11px] disabled:opacity-50 active:scale-95"
+            className="shrink-0 rounded-md border border-border bg-page px-2.5 py-1 text-xs text-text-secondary transition-colors hover:border-border-strong hover:text-text-primary disabled:opacity-50"
           >
             {s}
           </button>
@@ -50,20 +48,21 @@ export function ChatInput({ onSend, disabled }: ChatInputProps) {
       </div>
 
       {/* Input Box */}
-      <form onSubmit={handleSubmit} className="relative flex items-center">
+      <form onSubmit={handleSubmit} className="relative flex items-end">
         <textarea
-          rows={1}
+          rows={2}
           value={prompt}
           onChange={(e) => setPrompt(e.target.value)}
           onKeyDown={handleKeyDown}
-          placeholder="Ask DevOps Mentor or paste logs, manifests, or shell errors (Enter to send)..."
+          placeholder="Ask about an incident, or paste logs, manifests, and shell errors…"
           disabled={disabled}
-          className="w-full bg-elevated border border-border/60 focus:border-brand-blue/80 rounded-xl px-4 py-3 pr-14 text-sm text-text-primary placeholder:text-text-muted focus:outline-none focus:ring-1 focus:ring-brand-blue/50 resize-none font-mono transition-all shadow-inner"
+          className="max-h-32 min-h-14 w-full resize-none rounded-lg border border-border bg-page px-4 py-3 pr-14 text-sm text-text-primary placeholder:text-text-muted focus:border-accent focus:outline-none focus:ring-2 focus:ring-accent/20"
         />
         <button
           type="submit"
           disabled={disabled || !prompt.trim()}
-          className="absolute right-2.5 bg-brand-blue hover:bg-brand-blue/80 disabled:opacity-40 text-white p-2 rounded-lg transition-all shadow-sm active:scale-95 flex items-center justify-center"
+          className="absolute bottom-2.5 right-2.5 flex items-center justify-center rounded-md bg-accent p-2 text-white transition-colors hover:bg-accent-hover disabled:opacity-40"
+          aria-label="Send message"
         >
           <Send className="h-4 w-4" />
         </button>
