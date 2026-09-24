@@ -136,7 +136,7 @@ export function PipelineGeneratorPage() {
               <span>Trivy Container Security Vulnerability Scan</span>
             </div>
             <div className="flex items-center space-x-2 text-text-primary">
-              <GitMerge className="h-3.5 w-3.5 text-brand-blue" />
+              <GitMerge className="h-3.5 w-3.5 text-accent" />
               <span>Kubernetes Zero-Downtime Rollout</span>
             </div>
           </div>
