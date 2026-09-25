@@ -47,6 +47,7 @@ services:
   # 3. Spring Boot Backend
   # ----------------------------------------------------
   backend:
+    image: "${BACKEND_IMAGE:-forgeops-ai-backend:local}"
     build:
       context: ../../backend
       dockerfile: Dockerfile
@@ -93,6 +94,7 @@ services:
   # 4. React Frontend (Nginx)
   # ----------------------------------------------------
   frontend:
+    image: "${FRONTEND_IMAGE:-forgeops-ai-frontend:local}"
     build:
       context: ../../frontend
       dockerfile: Dockerfile
