@@ -22,22 +22,7 @@ import static org.assertj.core.api.Assertions.*;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.*;
 
-/**
- * LogAnalyzerServiceTest — Unit Tests for the Root Cause Analysis Engine
- *
- * Testing Strategy:
- *  - @ExtendWith(MockitoExtension.class): uses Mockito for dependency mocking
- *    without loading the full Spring context (much faster than @SpringBootTest)
- *  - We test the SERVICE layer, not the controller or repository
- *  - External dependencies (GeminiAiService, AnalysisRepository) are MOCKED
- *    to isolate the unit under test
- *
- * Why this matters in interviews:
- *  "What is a unit test?" — A test that verifies a single class in isolation,
- *   with all external dependencies replaced by test doubles (mocks/stubs).
- *
- * Test Naming Convention: methodName_GivenState_ExpectedBehavior
- */
+/** Unit tests for log classification and analysis behavior. */
 @ExtendWith(MockitoExtension.class)
 @DisplayName("LogAnalyzerService — RCA Engine Unit Tests")
 class LogAnalyzerServiceTest {

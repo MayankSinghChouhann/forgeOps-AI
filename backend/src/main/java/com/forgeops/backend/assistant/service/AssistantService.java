@@ -26,14 +26,8 @@ import java.util.UUID;
 import java.util.stream.Collectors;
 
 /**
- * AssistantService — Orchestrates the AI response pipeline.
- *
- * AI Provider Strategy (Graceful Degradation):
- *  Priority 1: GeminiAiService (Google Gemini 1.5 Flash via REST API)
- *  Priority 2: DevOpsKnowledgeEngine (Local rule-based fallback)
- *
- * This design ensures 100% uptime even if the Gemini API is unavailable.
- * This is a standard "Circuit Breaker" pattern used at Netflix, Google, and Uber.
+ * Orchestrates chat persistence and response generation. Uses Gemini when
+ * configured and falls back to the local DevOps knowledge engine otherwise.
  */
 @Service
 public class AssistantService {
@@ -133,16 +127,7 @@ public class AssistantService {
         );
     }
 
-    /**
-     * AI Response Resolution with Graceful Fallback.
-     *
-     * 1. Try Gemini first (real LLM — full contextual understanding)
-     * 2. On null/failure — fall back to DevOpsKnowledgeEngine (local rules)
-     *
-     * Interview talking point: "We use a strategy pattern here.
-     * The service doesn't care which provider responds — it just needs a String.
-     * This makes it easy to swap out Gemini for OpenAI, Claude, or a local Ollama model."
-     */
+    /** Uses a local response when Gemini is unavailable or returns no content. */
     private String resolveAiResponse(ChatSession session, String prompt) {
         if (geminiAiService.isConfigured()) {
             try {

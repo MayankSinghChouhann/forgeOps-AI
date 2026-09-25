@@ -4,8 +4,7 @@ import { clearAccessToken, getAccessToken } from '@/features/auth/tokenStore'
 /**
  * Configured Axios instance for all ForgeOps API calls.
  *
- * Base URL points to the Spring Boot backend running locally on port 8080.
- * In production, this is replaced via the VITE_API_URL environment variable.
+ * API requests use the same-origin /api proxy unless VITE_API_URL is set.
  *
  * Interceptors handle:
  * - Request: Attaches the in-memory JWT access token as a Bearer token
