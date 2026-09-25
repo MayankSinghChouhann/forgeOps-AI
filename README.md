@@ -4,7 +4,6 @@
 ![Java](https://img.shields.io/badge/Java-21-orange?logo=openjdk)
 ![Spring Boot](https://img.shields.io/badge/Spring_Boot-4.1-green?logo=springboot)
 ![React](https://img.shields.io/badge/React-18-blue?logo=react)
-![Tests](https://img.shields.io/badge/backend-70_tests-brightgreen)
 
 ForgeOps AI is a production-oriented DevOps assistant for incident diagnosis,
 infrastructure generation, shell-command safety, and platform telemetry. It
@@ -16,6 +15,19 @@ Grafana, Docker Compose, Kubernetes, and enforced CI/CD quality gates.
 > demo. Owner-controlled secret rotation, managed production infrastructure,
 > staging evidence, and a live production verification remain outstanding.
 > See [Release status](#release-status).
+
+## Contents
+
+- [Capabilities](#capabilities)
+- [AWS release-candidate demo](#aws-release-candidate-demo-2026-09-25)
+- [Architecture](#architecture)
+- [Quick start with Docker](#quick-start-with-docker)
+- [Configuration](#configuration)
+- [Tests and quality gates](#tests-and-quality-gates)
+- [Kubernetes deployment](#kubernetes-deployment)
+- [Rollback](#rollback)
+- [Release status](#release-status)
+- [Implementation PR ledger](#implementation-pr-ledger)
 
 ## Capabilities
 
@@ -89,14 +101,50 @@ analysis, CI/CD generation, `/actuator/health/liveness`, and
 update; Docker volumes were preserved for rollback. None of these checks
 replaces staging DAST/load testing, a restore drill, or production TLS checks.
 
-## AWS demo evidence (historical)
+### Screenshot provenance
+
+Every screenshot referenced in this README is a direct capture of the ForgeOps
+application, AWS Console, or an operator terminal. No screenshot is AI-generated
+or synthetically recreated. Credentials, private-key contents, passwords, and
+AWS account identifiers are intentionally excluded from the published evidence.
+
+## Manual AWS provisioning evidence (historical)
+
+These original, unedited operator screenshots from 2026-09-23 and 2026-09-24
+show the initial EC2 provisioning path. They are retained for audit chronology,
+not as evidence of the current hardened network configuration.
+
+### EC2 instance launch
+
+![AWS EC2 instance launch completed successfully](docs/images/aws-ec2-launch-success-manual.png)
+
+The AWS Console recorded successful request initialization, security-group
+creation, rule creation, and instance launch in the Mumbai region.
+
+### SSH access established
+
+![Successful SSH session to the Ubuntu EC2 host](docs/images/aws-ssh-session-manual.png)
+
+The terminal capture confirms that the PEM file permissions were restricted and
+an Ubuntu SSH session was established without exposing the private-key content.
+
+### Initial Compose services
+
+![Initial Docker Compose services running on EC2](docs/images/aws-compose-services-manual.png)
+
+This pre-hardening capture records the original backend, frontend, PostgreSQL,
+Redis, Prometheus, and Grafana services. Its public port bindings are historical;
+the 2026-09-25 release-candidate deployment binds application and data ports to
+EC2 loopback and is accessed through the encrypted SSH tunnel described above.
+
+## AWS application evidence (historical)
 
 The following sanitized screenshots were captured from the one-time Docker
 Compose demo environment in AWS Mumbai on 2026-09-24. These are historical UI
 evidence from before the latest security/runtime changes, not a current release
-smoke test. They contain no login
-passwords, secrets, private-key material, or monitoring credentials. This is
-verification evidence only, not a claim of a production deployment.
+smoke test. They contain no login passwords, secrets, private-key material, or
+monitoring credentials. This is verification evidence only, not a claim of a
+production deployment.
 
 ### Live operations overview
 
@@ -429,12 +477,11 @@ history cleanup; rewriting history alone does not revoke a leaked credential.
 
 ## Release status
 
-Repository checks pass on the latest merged application baseline, but this does
-not mean the service is ready for public production traffic. A main-branch CI
-release run must also finish publishing and scanning the exact immutable images
-before deployment. The prior audit's 40-task count was recorded before the
-latest hardening PRs and is not a current readiness score; no percentage is
-claimed here.
+Repository checks and the main-branch scans for the exact immutable backend and
+frontend images pass on the latest merged application baseline. This does not
+mean the service is ready for public production traffic. The prior audit's
+40-task count was recorded before the latest hardening PRs and is not a current
+readiness score; no percentage is claimed here.
 
 | Area | Status | Details |
 |---|---|---|
@@ -442,7 +489,7 @@ claimed here.
 | Staging | Not verified | No current staging endpoint, DAST/k6 report, backup-restore proof, or rollback drill is attached. |
 | Production | Not launched | No approved production architecture/domain/TLS, managed data services, owner-rotated secrets, or live smoke-test evidence is configured. |
 | Current demo evidence | One-time EC2 | The 2026-09-25 screenshots above show the verified immutable release-candidate images over a local SSH tunnel, not a public deployment. |
-| Historical evidence | Demo only | The 2026-09-24 screenshots are kept separately as historical UI evidence. |
+| Historical evidence | Demo only | The 2026-09-23/24 manual provisioning and UI screenshots are kept separately for audit chronology. |
 
 Required before a production launch:
 
