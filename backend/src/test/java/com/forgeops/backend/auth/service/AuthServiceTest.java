@@ -2,14 +2,12 @@ package com.forgeops.backend.auth.service;
 
 import com.forgeops.backend.auth.dto.AuthResponse;
 import com.forgeops.backend.auth.dto.RegisterRequest;
-import com.forgeops.backend.auth.dto.TokenRefreshRequest;
 import com.forgeops.backend.auth.entity.RefreshToken;
 import com.forgeops.backend.auth.entity.User;
 import com.forgeops.backend.auth.repository.RefreshTokenRepository;
 import com.forgeops.backend.auth.repository.UserRepository;
 import com.forgeops.backend.auth.security.JwtUtil;
 import com.forgeops.backend.common.exception.BusinessRuleViolationException;
-import com.forgeops.backend.common.exception.ResourceNotFoundException;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
@@ -19,6 +17,7 @@ import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.security.authentication.AuthenticationManager;
+import org.springframework.security.authentication.BadCredentialsException;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.test.util.ReflectionTestUtils;
 
@@ -98,7 +97,7 @@ class AuthServiceTest {
     class RefreshTokenLifecycleTests {
 
         @Test
-        @DisplayName("refreshToken: valid token -> returns new JWT with same refresh token")
+        @DisplayName("refreshToken: valid token -> returns new JWT and rotates refresh token")
         void refreshToken_GivenValidToken_ReturnsNewJwt() {
             String rawRefreshToken = "sample-valid-refresh-token";
             User mockUser = new User("admin@forgeops.io", "encodedPass");
@@ -110,16 +109,17 @@ class AuthServiceTest {
             when(refreshTokenRepository.findByTokenHash(hashToken(rawRefreshToken))).thenReturn(Optional.of(storedToken));
             when(jwtUtil.generateTokenFromUsername("admin@forgeops.io")).thenReturn("new-mock-jwt-token");
 
-            AuthResponse response = authService.refreshToken(new TokenRefreshRequest(rawRefreshToken));
+            AuthService.AuthSession session = authService.refreshToken(rawRefreshToken);
+            AuthResponse response = session.response();
 
             assertThat(response).isNotNull();
             assertThat(response.accessToken()).isEqualTo("new-mock-jwt-token");
             assertThat(response.email()).isEqualTo("admin@forgeops.io");
-            assertThat(response.refreshToken()).isNotBlank().isNotEqualTo(rawRefreshToken);
+            assertThat(session.refreshToken()).isNotBlank().isNotEqualTo(rawRefreshToken);
         }
 
         @Test
-        @DisplayName("refreshToken: expired token -> deletes token and throws BusinessRuleViolationException")
+        @DisplayName("refreshToken: expired token -> deletes token and rejects authentication")
         void refreshToken_GivenExpiredToken_DeletesTokenAndThrowsException() {
             String rawRefreshToken = "expired-token";
             RefreshToken expiredToken = new RefreshToken();
@@ -128,21 +128,21 @@ class AuthServiceTest {
 
             when(refreshTokenRepository.findByTokenHash(hashToken(rawRefreshToken))).thenReturn(Optional.of(expiredToken));
 
-            assertThatThrownBy(() -> authService.refreshToken(new TokenRefreshRequest(rawRefreshToken)))
-                    .isInstanceOf(BusinessRuleViolationException.class)
-                    .hasMessageContaining("expired or revoked");
+            assertThatThrownBy(() -> authService.refreshToken(rawRefreshToken))
+                    .isInstanceOf(BadCredentialsException.class)
+                    .hasMessageContaining("invalid or expired");
 
             verify(refreshTokenRepository, times(1)).delete(expiredToken);
         }
 
         @Test
-        @DisplayName("refreshToken: non-existent token -> throws ResourceNotFoundException")
+        @DisplayName("refreshToken: non-existent token -> rejects authentication")
         void refreshToken_GivenNonExistentToken_ThrowsResourceNotFoundException() {
             when(refreshTokenRepository.findByTokenHash(hashToken("missing-token"))).thenReturn(Optional.empty());
 
-            assertThatThrownBy(() -> authService.refreshToken(new TokenRefreshRequest("missing-token")))
-                    .isInstanceOf(ResourceNotFoundException.class)
-                    .hasMessageContaining("Refresh token");
+            assertThatThrownBy(() -> authService.refreshToken("missing-token"))
+                    .isInstanceOf(BadCredentialsException.class)
+                    .hasMessageContaining("invalid or expired");
         }
     }
 
@@ -161,7 +161,7 @@ class AuthServiceTest {
         void logout_DeletesHashedToken() {
             String rawToken = "logout-token";
 
-            authService.logout(new TokenRefreshRequest(rawToken));
+            authService.logout(rawToken);
 
             verify(refreshTokenRepository).deleteByTokenHash(hashToken(rawToken));
         }
@@ -176,9 +176,9 @@ class AuthServiceTest {
             revokedToken.setRevoked(true);
             when(refreshTokenRepository.findByTokenHash(hashToken(rawToken))).thenReturn(Optional.of(revokedToken));
 
-            assertThatThrownBy(() -> authService.refreshToken(new TokenRefreshRequest(rawToken)))
-                    .isInstanceOf(BusinessRuleViolationException.class)
-                    .hasMessageContaining("revoked");
+            assertThatThrownBy(() -> authService.refreshToken(rawToken))
+                    .isInstanceOf(BadCredentialsException.class)
+                    .hasMessageContaining("invalid or expired");
 
             verify(refreshTokenRepository).delete(revokedToken);
         }

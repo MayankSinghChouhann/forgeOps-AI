@@ -1,4 +1,5 @@
 import apiClient from "@/lib/axios"
+import { getAccessToken } from "@/features/auth/tokenStore"
 import { ChatSession, ChatMessage, SendMessagePayload } from "../types/assistant.types"
 
 export const assistantApi = {
@@ -28,8 +29,9 @@ export const assistantApi = {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
-        Authorization: `Bearer ${localStorage.getItem('accessToken') || ''}`,
+        Authorization: `Bearer ${getAccessToken() || ''}`,
       },
+      credentials: 'include',
       body: JSON.stringify(payload),
     })
     if (!response.ok || !response.body) throw new Error(`Streaming request failed (${response.status})`)

@@ -1,4 +1,5 @@
 import axios from 'axios'
+import { clearAccessToken, getAccessToken } from '@/features/auth/tokenStore'
 
 /**
  * Configured Axios instance for all ForgeOps API calls.
@@ -7,7 +8,7 @@ import axios from 'axios'
  * In production, this is replaced via the VITE_API_URL environment variable.
  *
  * Interceptors handle:
- * - Request: Attaches the JWT access token from localStorage as a Bearer token
+ * - Request: Attaches the in-memory JWT access token as a Bearer token
  *   on every outgoing request, so protected endpoints work automatically.
  * - Response: Catches 401 Unauthorized responses (e.g. expired token) and
  *   redirects the user to the login page, clearing stale credentials.
@@ -17,12 +18,13 @@ const apiClient = axios.create({
   headers: {
     'Content-Type': 'application/json',
   },
+  withCredentials: true,
 })
 
-// Request Interceptor — attach JWT Bearer token from localStorage
+// Request Interceptor — attach the short-lived in-memory access token.
 apiClient.interceptors.request.use(
   (config) => {
-    const token = localStorage.getItem('accessToken')
+    const token = getAccessToken()
     if (token) {
       config.headers.Authorization = `Bearer ${token}`
     }
@@ -38,10 +40,7 @@ apiClient.interceptors.response.use(
     const isAuthEndpoint = ['/auth/login', '/auth/register', '/auth/refresh']
       .some((path) => error.config?.url?.includes(path))
     if (error.response?.status === 401 && !isAuthEndpoint) {
-      // Clear all stored auth data on token expiry or invalid token
-      localStorage.removeItem('accessToken')
-      localStorage.removeItem('refreshToken')
-      localStorage.removeItem('userEmail')
+      clearAccessToken()
       // Redirect to login page
       window.location.href = '/login'
     }

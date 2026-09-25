@@ -3,12 +3,18 @@ package com.forgeops.backend.auth.controller;
 import com.forgeops.backend.auth.dto.AuthResponse;
 import com.forgeops.backend.auth.dto.LoginRequest;
 import com.forgeops.backend.auth.dto.RegisterRequest;
-import com.forgeops.backend.auth.dto.TokenRefreshRequest;
 import com.forgeops.backend.auth.service.AuthService;
 import jakarta.validation.Valid;
+import org.springframework.beans.factory.annotation.Value;
+import org.springframework.http.CacheControl;
+import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseCookie;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.authentication.BadCredentialsException;
 import org.springframework.web.bind.annotation.*;
+
+import java.time.Duration;
 
 /**
  * AuthController — Authentication Endpoints
@@ -33,10 +39,18 @@ import org.springframework.web.bind.annotation.*;
 @RequestMapping("/api/auth")
 public class AuthController {
 
-    private final AuthService authService;
+    static final String REFRESH_COOKIE_NAME = "forgeops_refresh";
 
-    public AuthController(AuthService authService) {
+    private final AuthService authService;
+    private final boolean secureRefreshCookie;
+    private final Duration refreshCookieLifetime;
+
+    public AuthController(AuthService authService,
+                          @Value("${forgeops.auth.refresh-cookie-secure:false}") boolean secureRefreshCookie,
+                          @Value("${forgeops.app.jwtRefreshExpirationMs}") long refreshTokenDurationMs) {
         this.authService = authService;
+        this.secureRefreshCookie = secureRefreshCookie;
+        this.refreshCookieLifetime = Duration.ofMillis(refreshTokenDurationMs);
     }
 
     /**
@@ -57,8 +71,8 @@ public class AuthController {
      */
     @PostMapping("/login")
     public ResponseEntity<AuthResponse> authenticateUser(@Valid @RequestBody LoginRequest loginRequest) {
-        AuthResponse authResponse = authService.authenticateUser(loginRequest);
-        return ResponseEntity.ok(authResponse);
+        AuthService.AuthSession session = authService.authenticateUser(loginRequest);
+        return authenticatedResponse(session);
     }
 
     /**
@@ -68,14 +82,45 @@ public class AuthController {
      * both handled by GlobalExceptionHandler.
      */
     @PostMapping("/refresh")
-    public ResponseEntity<AuthResponse> refreshToken(@Valid @RequestBody TokenRefreshRequest request) {
-        AuthResponse response = authService.refreshToken(request);
-        return ResponseEntity.ok(response);
+    public ResponseEntity<AuthResponse> refreshToken(
+            @CookieValue(name = REFRESH_COOKIE_NAME, required = false) String refreshToken) {
+        AuthService.AuthSession session = authService.refreshToken(requireRefreshToken(refreshToken));
+        return authenticatedResponse(session);
     }
 
     @PostMapping("/logout")
-    public ResponseEntity<Void> logout(@Valid @RequestBody TokenRefreshRequest request) {
-        authService.logout(request);
-        return ResponseEntity.noContent().build();
+    public ResponseEntity<Void> logout(
+            @CookieValue(name = REFRESH_COOKIE_NAME, required = false) String refreshToken) {
+        if (refreshToken != null && !refreshToken.isBlank()) {
+            authService.logout(refreshToken);
+        }
+        return ResponseEntity.noContent()
+                .header(HttpHeaders.SET_COOKIE, refreshCookie("").maxAge(Duration.ZERO).build().toString())
+                .cacheControl(CacheControl.noStore())
+                .build();
+    }
+
+    private ResponseEntity<AuthResponse> authenticatedResponse(AuthService.AuthSession session) {
+        return ResponseEntity.ok()
+                .header(HttpHeaders.SET_COOKIE, refreshCookie(session.refreshToken()).build().toString())
+                .cacheControl(CacheControl.noStore())
+                .header(HttpHeaders.PRAGMA, "no-cache")
+                .body(session.response());
+    }
+
+    private ResponseCookie.ResponseCookieBuilder refreshCookie(String value) {
+        return ResponseCookie.from(REFRESH_COOKIE_NAME, value)
+                .httpOnly(true)
+                .secure(secureRefreshCookie)
+                .sameSite("Strict")
+                .path("/api/auth")
+                .maxAge(refreshCookieLifetime);
+    }
+
+    private String requireRefreshToken(String refreshToken) {
+        if (refreshToken == null || refreshToken.isBlank()) {
+            throw new BadCredentialsException("Refresh session is missing or expired.");
+        }
+        return refreshToken;
     }
 }
