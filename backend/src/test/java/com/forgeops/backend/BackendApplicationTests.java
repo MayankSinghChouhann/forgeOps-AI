@@ -42,6 +42,15 @@ class BackendApplicationTests {
 	}
 
 	@Test
+	void kubernetesHealthProbesArePublic() throws Exception {
+		for (String group : new String[] {"liveness", "readiness"}) {
+			mockMvc.perform(get("/actuator/health/" + group))
+					.andExpect(status().isOk())
+					.andExpect(jsonPath("$.status").value("UP"));
+		}
+	}
+
+	@Test
 	void prometheusMetricsAcceptDedicatedMonitoringCredentials() throws Exception {
 		mockMvc.perform(get("/actuator/prometheus")
 					.with(httpBasic("forgeops-monitor", "metrics-secret")))

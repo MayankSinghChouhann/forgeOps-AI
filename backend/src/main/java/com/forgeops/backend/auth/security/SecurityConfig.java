@@ -83,9 +83,9 @@ public class SecurityConfig {
                         .requestMatchers("/api/auth/**").permitAll()
                         // API documentation is public; operations still enforce their own JWT rules.
                         .requestMatchers("/v3/api-docs/**", "/swagger-ui.html", "/swagger-ui/**").permitAll()
-                        // Only /health and /info are public — metrics require authentication
+                        // Health probe groups must be reachable by unauthenticated kubelets.
                         // SECURITY: /actuator/prometheus and /actuator/metrics expose JVM internals
-                        .requestMatchers("/actuator/health", "/actuator/info").permitAll()
+                        .requestMatchers("/actuator/health", "/actuator/health/**", "/actuator/info").permitAll()
                         .requestMatchers("/actuator/metrics/**", "/actuator/prometheus").hasRole("ADMIN")
                         // All other requests require a valid JWT token
                         .anyRequest().authenticated()
