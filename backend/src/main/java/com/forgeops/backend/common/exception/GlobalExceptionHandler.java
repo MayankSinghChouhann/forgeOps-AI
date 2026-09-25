@@ -20,50 +20,7 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.stream.Collectors;
 
-/**
- * GlobalExceptionHandler — Centralized RFC 7807 Problem Detail Error Responses
- *
- * ==========================================================================
- * WHY THIS MATTERS (Interview-Ready Explanation):
- * ==========================================================================
- * Without this class, every Spring exception produces a different shape:
- *   - Validation failures: { timestamp, status, errors, ... }
- *   - Unauthorized: a redirect or 403 page
- *   - RuntimeException: a 500 with a stack trace visible to the client
- *
- * This is an API contract violation. Clients (frontend, mobile apps, partners)
- * need a PREDICTABLE error format to handle failures consistently.
- *
- * RFC 7807 (Problem Details for HTTP APIs) is the industry standard.
- * Spring Boot 3.x has native ProblemDetail support built-in.
- *
- * Every error returns:
- * {
- *   "type": "https://forgeops.ai/errors/resource-not-found",  ← error type URI
- *   "title": "Resource Not Found",                             ← human-readable title
- *   "status": 404,                                             ← HTTP status code
- *   "detail": "Analysis record not found with id: 'abc-123'", ← specific message
- *   "instance": "/api/analyzer/abc-123",                      ← the failing request URI
- *   "timestamp": "2024-01-15T10:30:00Z"                       ← when it happened
- * }
- *
- * ==========================================================================
- * DESIGN DECISIONS:
- * ==========================================================================
- * 1. @RestControllerAdvice — applies to ALL @RestController classes globally.
- *    No need to add try/catch blocks in individual controllers.
- *
- * 2. Specific exceptions first — Spring picks the most specific handler.
- *    Generic Exception handler is the final safety net.
- *
- * 3. Stack traces are NEVER returned to clients — this is a security requirement.
- *    Stack traces reveal internal framework versions and class names to attackers.
- *
- * 4. All 4xx/5xx are logged at appropriate levels:
- *    - 4xx (client errors): WARN — client did something wrong
- *    - 5xx (server errors): ERROR — WE have a bug
- * ==========================================================================
- */
+/** Converts application errors to consistent Problem Detail responses. */
 @RestControllerAdvice
 public class GlobalExceptionHandler {
 

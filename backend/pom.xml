@@ -11,20 +11,18 @@
 	<groupId>com.forgeops</groupId>
 	<artifactId>backend</artifactId>
 	<version>0.0.1-SNAPSHOT</version>
-	<name/>
-	<description/>
-	<url/>
+	<name>ForgeOps-AI Backend</name>
+	<description>Spring Boot API for ForgeOps-AI operations workflows</description>
+	<url>https://github.com/MayankSinghChouhann/forgeOps-AI</url>
 	<licenses>
-		<license/>
+		<license>
+			<name>MIT License</name>
+			<url>https://opensource.org/licenses/MIT</url>
+		</license>
 	</licenses>
-	<developers>
-		<developer/>
-	</developers>
 	<scm>
-		<connection/>
-		<developerConnection/>
-		<tag/>
-		<url/>
+		<connection>scm:git:https://github.com/MayankSinghChouhann/forgeOps-AI.git</connection>
+		<url>https://github.com/MayankSinghChouhann/forgeOps-AI</url>
 	</scm>
 	<properties>
 		<java.version>21</java.version>

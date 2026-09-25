@@ -15,18 +15,7 @@ import org.mockito.junit.jupiter.MockitoExtension;
 import static org.assertj.core.api.Assertions.*;
 import static org.mockito.Mockito.*;
 
-/**
- * ShellSafetyServiceTest — Unit Tests for the Destructive Command Guard Engine
- *
- * Testing Strategy:
- *  Parameterized tests (@ValueSource) are used for commands of the same
- *  danger category, avoiding test duplication (DRY principle).
- *
- *  Interview Tip:
- *  "Why do you test business logic, not Spring annotations?"
- *  → Because annotations are tested by Spring's own test suite.
- *    We test OUR logic: classification rules, flag extraction, AI integration.
- */
+/** Tests command classification, flag extraction, and AI fallback behavior. */
 @ExtendWith(MockitoExtension.class)
 @DisplayName("ShellSafetyService — Destructive Command Guard Unit Tests")
 class ShellSafetyServiceTest {

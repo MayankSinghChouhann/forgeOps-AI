@@ -56,3 +56,13 @@ docker-compose.override.yml
 # -----------------------------------------------
 *.log
 logs/
+
+# Generated test and scan reports
+coverage/
+playwright-report/
+test-results/
+zap-report/
+backend-dast.log
+*.tsbuildinfo
+*.hprof
+*.heapdump

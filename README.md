@@ -8,7 +8,7 @@ ForgeOps-AI serves as an operational hub for DevOps and Platform Engineering tea
 
 Intended users include DevOps engineers, system administrators, and site reliability engineers (SREs).
 
-> Screenshot provenance: every image in `docs/images/` is an original, manually captured project or deployment artifact. No image in this README was AI-generated or synthetically recreated.
+The screenshots below are original captures of the application, CI pipeline, and demo deployment.
 
 ## Contents
 
@@ -117,9 +117,9 @@ forgeOps-AI/
 
 ### Investigation and Automation
 
-| Log analysis | CI/CD generator | Infrastructure generator |
-| --- | --- | --- |
-| ![Live log analysis result](docs/images/release-2026-09-25-log-analysis.png) | ![ForgeOps CI/CD workflow generator](docs/images/cicd-generator.png) | ![ForgeOps infrastructure generator](docs/images/infrastructure-generator.png) |
+| Log analysis | Generated CI/CD pipeline |
+| --- | --- |
+| ![Live log analysis result](docs/images/release-2026-09-25-log-analysis.png) | ![Generated pipeline with security scan](docs/images/release-2026-09-25-pipeline-gates.png) |
 
 ### Additional Interfaces
 
@@ -170,7 +170,7 @@ GEMINI_API_KEY=
 
 ### Run Locally
 
-### Using Docker Compose
+#### Using Docker Compose
 
 ```bash
 cp infra/docker/.env.example infra/docker/.env
@@ -178,7 +178,7 @@ cp infra/docker/.env.example infra/docker/.env
 docker compose --env-file infra/docker/.env -f infra/docker/docker-compose.yml up --build -d
 ```
 
-### Bare-Metal Execution
+#### Bare-Metal Execution
 
 Backend:
 ```bash
@@ -249,13 +249,9 @@ npm run build
 
 The repository includes GitHub Actions (`.github/workflows/ci.yml`) and GitLab CI (`.gitlab-ci.yml`) definitions. Pipelines enforce Trivy vulnerability scanning, ESLint validation, Playwright E2E tests, and Java unit testing prior to container publishing.
 
-The captured GitHub Actions run below completed backend tests, frontend checks, repository scanning, container publishing, image scanning, and Kubernetes deployment successfully. It is included as deployment evidence, not as a claim that an always-on public environment is currently exposed.
+The captured GitHub Actions run below shows successful backend tests, frontend checks, repository scanning, container publishing, image scanning, and a completed deployment job. A green deployment job alone does not confirm a cluster rollout: the workflow skips its apply step when cluster credentials are absent.
 
 ![GitHub Actions CI/CD pipeline completed successfully](docs/images/github-actions-pipeline-success-manual.png)
-
-The generator’s pipeline-security gates are also visible in the product capture below.
-
-![Generated CI pipeline with blocking security scan](docs/images/release-2026-09-25-pipeline-gates.png)
 
 ### Kubernetes
 
@@ -271,10 +267,9 @@ kubectl -n forgeops rollout status deployment/frontend
 
 ### One-Time AWS Demo Evidence
 
-The EC2 material below records a one-time, operator-led demo deployment. It should not be interpreted as a permanent public production endpoint; stop the instance after the demonstration to avoid unnecessary AWS charges.
+The EC2 material below records a one-time, operator-led demo deployment. The Compose screenshot predates the current loopback-only port bindings. This is historical evidence, not a permanent public endpoint; stop the instance after the demonstration to avoid unnecessary AWS charges.
 
 ![AWS EC2 instance launch completed successfully](docs/images/aws-ec2-launch-success-manual.png)
-![Successful SSH session to the Ubuntu EC2 host](docs/images/aws-ssh-session-manual.png)
 ![Initial Docker Compose services running on EC2](docs/images/aws-compose-services-manual.png)
 
 ## API Documentation

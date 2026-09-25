@@ -201,7 +201,7 @@ class TemplateGeneratorServiceTest {
             GenerateTemplateRequest request = buildRequest("TERRAFORM", "AWS");
             request.setCustomPrompt("Add DynamoDB table for session storage with PAY_PER_REQUEST billing");
 
-            String aiCode = "# AI Generated Terraform with DynamoDB\nresource \"aws_dynamodb_table\" ...";
+            String aiCode = "# Terraform with DynamoDB\nresource \"aws_dynamodb_table\" ...";
             when(geminiAiService.isConfigured()).thenReturn(true);
             when(geminiAiService.generateDevOpsResponse(anyString())).thenReturn(aiCode);
             when(templateRepository.save(any(GeneratedTemplate.class))).thenAnswer(inv -> inv.getArgument(0));
