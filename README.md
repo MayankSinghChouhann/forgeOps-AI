@@ -547,6 +547,7 @@ The project was deliberately split into reviewable, reversible feature branches:
 - [#28 — frontend runtime image remediation](https://github.com/MayankSinghChouhann/forgeOps-AI/pull/28)
 - [#29 — unauthenticated Kubernetes health probes](https://github.com/MayankSinghChouhann/forgeOps-AI/pull/29)
 - [#30 — fail-closed generated pipeline security gates](https://github.com/MayankSinghChouhann/forgeOps-AI/pull/30)
+- [#31 — professional README and original AWS evidence](https://github.com/MayankSinghChouhann/forgeOps-AI/pull/31)
 
 ## Repository layout
 
