@@ -20,8 +20,10 @@ FROM eclipse-temurin:21-jre-alpine AS runner
 
 WORKDIR /app
 
-# Security Best Practice: Create non-root user & group
-RUN addgroup -S spring && adduser -S spring -G spring
+# Upgrade the affected runtime package before dropping root privileges.
+RUN apk upgrade --no-cache libexpat \
+    && addgroup -S spring \
+    && adduser -S spring -G spring
 
 # Copy compiled jar from builder stage
 COPY --from=builder --chown=spring:spring /app/target/*.jar app.jar
