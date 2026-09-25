@@ -18,10 +18,9 @@ async function mockApi(page: Page) {
   await page.route((url) => url.pathname.startsWith('/api/'), async (route) => {
     const path = new URL(route.request().url()).pathname
 
-    if (path === '/api/auth/login') {
+    if (path === '/api/auth/login' || path === '/api/auth/refresh') {
       return route.fulfill({ json: {
         accessToken: 'header.payload.signature',
-        refreshToken: 'refresh-token',
         tokenType: 'Bearer',
         email: 'engineer@forgeops.ai',
       } })
@@ -70,11 +69,13 @@ async function mockApi(page: Page) {
 }
 
 async function seedAuthenticatedSession(page: Page) {
-  await page.addInitScript(() => {
-    localStorage.setItem('accessToken', 'header.payload.signature')
-    localStorage.setItem('refreshToken', 'refresh-token')
-    localStorage.setItem('userEmail', 'engineer@forgeops.ai')
-  })
+  await page.context().addCookies([{
+    name: 'forgeops_refresh',
+    value: 'refresh-token',
+    url: 'http://127.0.0.1:4173/api/auth',
+    httpOnly: true,
+    sameSite: 'Strict',
+  }])
 }
 
 test.beforeEach(async ({ page }) => {

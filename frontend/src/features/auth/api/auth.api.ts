@@ -1,5 +1,5 @@
 import apiClient from '@/lib/axios'
-import type { LoginRequest, RegisterRequest, AuthResponse, TokenRefreshRequest } from '../types/auth.types'
+import type { LoginRequest, RegisterRequest, AuthResponse } from '../types/auth.types'
 
 /**
  * Auth API module — all calls to the Spring Boot /api/auth/* endpoints.
@@ -17,7 +17,8 @@ import type { LoginRequest, RegisterRequest, AuthResponse, TokenRefreshRequest }
 export const authApi = {
   /**
    * Authenticate a user with email and password.
-   * Returns JWT access token, refresh token, and user email on success.
+   * Returns a short-lived JWT access token and user email on success.
+   * The rotated refresh token is delivered only as an HttpOnly cookie.
    */
   login: async (data: LoginRequest): Promise<AuthResponse> => {
     const response = await apiClient.post<AuthResponse>('/auth/login', data)
@@ -37,12 +38,12 @@ export const authApi = {
    * Exchange a valid refresh token for a new access token.
    * Used to silently refresh sessions before the access token expires.
    */
-  refreshToken: async (data: TokenRefreshRequest): Promise<AuthResponse> => {
-    const response = await apiClient.post<AuthResponse>('/auth/refresh', data)
+  refreshToken: async (): Promise<AuthResponse> => {
+    const response = await apiClient.post<AuthResponse>('/auth/refresh')
     return response.data
   },
 
-  logout: async (data: TokenRefreshRequest): Promise<void> => {
-    await apiClient.post('/auth/logout', data)
+  logout: async (): Promise<void> => {
+    await apiClient.post('/auth/logout')
   },
 }

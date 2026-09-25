@@ -1,6 +1,7 @@
 import * as React from 'react'
 import { useNavigate } from 'react-router-dom'
 import { authApi } from '../api/auth.api'
+import { clearAccessToken, getAccessToken, setAccessToken } from '../tokenStore'
 import type { AuthUser, LoginRequest, RegisterRequest } from '../types/auth.types'
 
 // ─── Context Shape ────────────────────────────────────────────────────────────
@@ -23,31 +24,12 @@ interface AuthContextValue {
  */
 export const AuthContext = React.createContext<AuthContextValue | undefined>(undefined)
 
-// ─── Storage Helpers ──────────────────────────────────────────────────────────
-
-const TOKEN_KEYS = {
-  ACCESS: 'accessToken',
-  REFRESH: 'refreshToken',
-  EMAIL: 'userEmail',
-} as const
-
-function saveSession(accessToken: string, refreshToken: string, email: string) {
-  localStorage.setItem(TOKEN_KEYS.ACCESS, accessToken)
-  localStorage.setItem(TOKEN_KEYS.REFRESH, refreshToken)
-  localStorage.setItem(TOKEN_KEYS.EMAIL, email)
-}
-
 function clearSession() {
-  localStorage.removeItem(TOKEN_KEYS.ACCESS)
-  localStorage.removeItem(TOKEN_KEYS.REFRESH)
-  localStorage.removeItem(TOKEN_KEYS.EMAIL)
-}
-
-function getStoredUser(): AuthUser | null {
-  const email = localStorage.getItem(TOKEN_KEYS.EMAIL)
-  const token = localStorage.getItem(TOKEN_KEYS.ACCESS)
-  if (email && token) return { email }
-  return null
+  clearAccessToken()
+  // Remove tokens left by versions released before refresh cookies were adopted.
+  localStorage.removeItem('accessToken')
+  localStorage.removeItem('refreshToken')
+  localStorage.removeItem('userEmail')
 }
 
 function getTokenExpiry(accessToken: string): number | null {
@@ -67,8 +49,8 @@ function getTokenExpiry(accessToken: string): number | null {
 /**
  * AuthProvider manages the global authentication state.
  *
- * On mount, it restores the user session from localStorage so the user
- * stays logged in after a page refresh. It provides login, register,
+ * On mount, it restores the user session through the HttpOnly refresh cookie.
+ * It provides login, register,
  * and logout actions to all child components via AuthContext.
  *
  * Wrap the root of the application with this provider.
@@ -78,27 +60,26 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [user, setUser] = React.useState<AuthUser | null>(null)
   const [isLoading, setIsLoading] = React.useState(true)
 
-  // Restore session from localStorage on initial mount
-  React.useEffect(() => {
-    const storedUser = getStoredUser()
-    if (storedUser) {
-      setUser(storedUser)
-    }
-    setIsLoading(false)
-  }, [])
-
   const refreshSession = React.useCallback(async () => {
-    const refreshToken = localStorage.getItem(TOKEN_KEYS.REFRESH)
-    if (!refreshToken) throw new Error('Refresh token is unavailable')
-    const response = await authApi.refreshToken({ refreshToken })
-    saveSession(response.accessToken, response.refreshToken, response.email)
+    const response = await authApi.refreshToken()
+    setAccessToken(response.accessToken)
     setUser({ email: response.email })
     return response.accessToken
   }, [])
 
   React.useEffect(() => {
+    clearSession()
+    refreshSession()
+      .catch(() => {
+        clearSession()
+        setUser(null)
+      })
+      .finally(() => setIsLoading(false))
+  }, [refreshSession])
+
+  React.useEffect(() => {
     if (!user) return
-    const accessToken = localStorage.getItem(TOKEN_KEYS.ACCESS)
+    const accessToken = getAccessToken()
     if (!accessToken) return
     const expiresAt = getTokenExpiry(accessToken)
     if (!expiresAt) return
@@ -116,12 +97,12 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
   /**
    * Authenticate with email + password.
-   * On success: saves tokens to localStorage, updates user state,
+   * On success: keeps the access token in memory, updates user state,
    * and navigates to the dashboard.
    */
   const login = React.useCallback(async (data: LoginRequest) => {
     const response = await authApi.login(data)
-    saveSession(response.accessToken, response.refreshToken, response.email)
+    setAccessToken(response.accessToken)
     setUser({ email: response.email })
     navigate('/dashboard/overview')
   }, [navigate])
@@ -138,16 +119,13 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   }, [login])
 
   /**
-   * Log the user out by clearing localStorage and redirecting to login.
+   * Log the user out by revoking the cookie-backed session and clearing memory.
    */
   const logout = React.useCallback(async () => {
-    const refreshToken = localStorage.getItem(TOKEN_KEYS.REFRESH)
-    if (refreshToken) {
-      try {
-        await authApi.logout({ refreshToken })
-      } catch {
-        // Local logout must still succeed if the token is already invalid.
-      }
+    try {
+      await authApi.logout()
+    } catch {
+      // Local logout must still succeed if the cookie is already invalid.
     }
     clearSession()
     setUser(null)

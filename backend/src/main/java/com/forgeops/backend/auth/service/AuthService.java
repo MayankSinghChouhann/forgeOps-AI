@@ -3,7 +3,6 @@ package com.forgeops.backend.auth.service;
 import com.forgeops.backend.auth.dto.AuthResponse;
 import com.forgeops.backend.auth.dto.LoginRequest;
 import com.forgeops.backend.auth.dto.RegisterRequest;
-import com.forgeops.backend.auth.dto.TokenRefreshRequest;
 import com.forgeops.backend.auth.entity.RefreshToken;
 import com.forgeops.backend.auth.entity.User;
 import com.forgeops.backend.auth.repository.RefreshTokenRepository;
@@ -13,6 +12,7 @@ import com.forgeops.backend.common.exception.BusinessRuleViolationException;
 import com.forgeops.backend.common.exception.ResourceNotFoundException;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.security.authentication.AuthenticationManager;
+import org.springframework.security.authentication.BadCredentialsException;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
@@ -59,7 +59,7 @@ public class AuthService {
     }
 
     @Transactional
-    public AuthResponse authenticateUser(LoginRequest loginRequest) {
+    public AuthSession authenticateUser(LoginRequest loginRequest) {
         Authentication authentication = authenticationManager.authenticate(
                 new UsernamePasswordAuthenticationToken(loginRequest.email(), loginRequest.password())
         );
@@ -73,7 +73,7 @@ public class AuthService {
 
         IssuedRefreshToken refreshToken = createRefreshToken(user);
 
-        return new AuthResponse(jwt, refreshToken.rawToken(), userDetails.getUsername());
+        return new AuthSession(new AuthResponse(jwt, userDetails.getUsername()), refreshToken.rawToken());
     }
 
     @Transactional
@@ -91,29 +91,30 @@ public class AuthService {
         return new IssuedRefreshToken(rawToken);
     }
 
-    public AuthResponse refreshToken(TokenRefreshRequest request) {
-        String requestRefreshToken = request.refreshToken();
-
-        return refreshTokenRepository.findByTokenHash(hashToken(requestRefreshToken))
+    @Transactional
+    public AuthSession refreshToken(String rawRefreshToken) {
+        return refreshTokenRepository.findByTokenHash(hashToken(rawRefreshToken))
                 .map(this::verifyExpiration)
                 .map(RefreshToken::getUser)
                 .map(user -> {
                     String token = jwtUtil.generateTokenFromUsername(user.getEmail());
                     IssuedRefreshToken rotatedToken = createRefreshToken(user);
-                    return new AuthResponse(token, rotatedToken.rawToken(), user.getEmail());
+                    return new AuthSession(
+                            new AuthResponse(token, user.getEmail()),
+                            rotatedToken.rawToken());
                 })
-                .orElseThrow(() -> new ResourceNotFoundException("Refresh token", "tokenHash", "[redacted]"));
+                .orElseThrow(() -> new BadCredentialsException("Refresh session is invalid or expired."));
     }
 
     @Transactional
-    public void logout(TokenRefreshRequest request) {
-        refreshTokenRepository.deleteByTokenHash(hashToken(request.refreshToken()));
+    public void logout(String rawRefreshToken) {
+        refreshTokenRepository.deleteByTokenHash(hashToken(rawRefreshToken));
     }
 
     private RefreshToken verifyExpiration(RefreshToken token) {
         if (token.isRevoked() || token.getExpiresAt().isBefore(LocalDateTime.now())) {
             refreshTokenRepository.delete(token);
-            throw new BusinessRuleViolationException("Refresh token is expired or revoked. Please sign in again.");
+            throw new BadCredentialsException("Refresh session is invalid or expired.");
         }
         return token;
     }
@@ -129,4 +130,6 @@ public class AuthService {
     }
 
     private record IssuedRefreshToken(String rawToken) {}
+
+    public record AuthSession(AuthResponse response, String refreshToken) {}
 }

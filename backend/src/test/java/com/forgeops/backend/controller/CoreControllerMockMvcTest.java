@@ -46,6 +46,7 @@ import static org.mockito.Mockito.when;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.header;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 import static org.springframework.test.web.servlet.setup.MockMvcBuilders.standaloneSetup;
 
@@ -67,7 +68,7 @@ class CoreControllerMockMvcTest {
     @BeforeEach
     void setUp() {
         mockMvc = standaloneSetup(
-                new AuthController(authService),
+                new AuthController(authService, false, 86400000L),
                 new AssistantController(assistantService, aiTaskExecutor),
                 new AnalyzerController(logAnalyzerService, currentUserService),
                 new GeneratorController(templateGeneratorService, currentUserService),
@@ -79,7 +80,7 @@ class CoreControllerMockMvcTest {
     @Test
     void authControllerReturnsTokensForValidLogin() throws Exception {
         when(authService.authenticateUser(any())).thenReturn(
-                new AuthResponse("access-token", "refresh-token", EMAIL));
+                new AuthService.AuthSession(new AuthResponse("access-token", EMAIL), "refresh-token"));
 
         mockMvc.perform(post("/api/auth/login")
                         .contentType(MediaType.APPLICATION_JSON)
@@ -88,7 +89,13 @@ class CoreControllerMockMvcTest {
                                 """))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.accessToken").value("access-token"))
-                .andExpect(jsonPath("$.tokenType").value("Bearer"));
+                .andExpect(jsonPath("$.tokenType").value("Bearer"))
+                .andExpect(jsonPath("$.refreshToken").doesNotExist())
+                .andExpect(header().string("Set-Cookie", org.hamcrest.Matchers.allOf(
+                        org.hamcrest.Matchers.containsString("forgeops_refresh=refresh-token"),
+                        org.hamcrest.Matchers.containsString("Path=/api/auth"),
+                        org.hamcrest.Matchers.containsString("HttpOnly"),
+                        org.hamcrest.Matchers.containsString("SameSite=Strict"))));
     }
 
     @Test
