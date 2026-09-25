@@ -68,13 +68,23 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   }, [])
 
   React.useEffect(() => {
+    let cancelled = false
     clearSession()
-    refreshSession()
+    void authApi.refreshToken()
+      .then((response) => {
+        if (cancelled) return
+        setAccessToken(response.accessToken)
+        setUser({ email: response.email })
+      })
       .catch(() => {
+        if (cancelled) return
         clearSession()
         setUser(null)
       })
-      .finally(() => setIsLoading(false))
+      .finally(() => {
+        if (!cancelled) setIsLoading(false)
+      })
+    return () => { cancelled = true }
   }, [refreshSession])
 
   React.useEffect(() => {

@@ -19,11 +19,16 @@ async function mockApi(page: Page) {
     const path = new URL(route.request().url()).pathname
 
     if (path === '/api/auth/login' || path === '/api/auth/refresh') {
-      return route.fulfill({ json: {
-        accessToken: 'header.payload.signature',
-        tokenType: 'Bearer',
-        email: 'engineer@forgeops.ai',
-      } })
+      return route.fulfill({
+        headers: {
+          'Set-Cookie': 'forgeops_refresh=refresh-token; Path=/api/auth; HttpOnly; SameSite=Strict',
+        },
+        json: {
+          accessToken: 'header.payload.signature',
+          tokenType: 'Bearer',
+          email: 'engineer@forgeops.ai',
+        },
+      })
     }
     if (path === '/api/dashboard/metrics') {
       return route.fulfill({ json: dashboardMetrics })
@@ -72,7 +77,7 @@ async function seedAuthenticatedSession(page: Page) {
   await page.context().addCookies([{
     name: 'forgeops_refresh',
     value: 'refresh-token',
-    url: 'http://127.0.0.1:4173/api/auth',
+    url: 'http://127.0.0.1:3000/api/auth',
     httpOnly: true,
     sameSite: 'Strict',
   }])
@@ -93,6 +98,14 @@ test('user can authenticate and reach live overview', async ({ page }) => {
   await expect(page.getByRole('heading', { name: 'Overview' })).toBeVisible()
   await expect(page.getByText('Live infrastructure and application telemetry.')).toBeVisible()
   await expect(page.getByText('256 MB')).toBeVisible()
+  expect(await page.evaluate(() => [
+    localStorage.getItem('accessToken'),
+    localStorage.getItem('refreshToken'),
+    localStorage.getItem('userEmail'),
+  ])).toEqual([null, null, null])
+  const refreshCookie = (await page.context().cookies()).find((cookie) => cookie.name === 'forgeops_refresh')
+  expect(refreshCookie?.httpOnly).toBe(true)
+  expect(refreshCookie?.sameSite).toBe('Strict')
 })
 
 test('user can analyze a CI failure', async ({ page }) => {

@@ -81,6 +81,8 @@ jobs:
           severity: HIGH,CRITICAL
           ignore-unfixed: true
           exit-code: "1"
+      - name: Validate Docker Compose production configuration
+        run: docker compose --env-file infra/docker/.env.example -f infra/docker/docker-compose.yml config --quiet
 
   publish:
     name: Publish container images
