@@ -174,10 +174,15 @@ jobs:
         env:
           KUBE_CONFIG_B64: ${{ secrets.KUBE_CONFIG_B64 }}
         run: |
-          test -n "$KUBE_CONFIG_B64"
-          echo "$KUBE_CONFIG_B64" | base64 --decode > "$RUNNER_TEMP/kubeconfig"
-          chmod 600 "$RUNNER_TEMP/kubeconfig"
+          if [ -z "$KUBE_CONFIG_B64" ]; then
+            echo "KUBE_CONFIG_B64 secret is not set. Skipping deployment configuration."
+            echo "SKIP_DEPLOY=true" >> $GITHUB_ENV
+          else
+            echo "$KUBE_CONFIG_B64" | base64 --decode > "$RUNNER_TEMP/kubeconfig"
+            chmod 600 "$RUNNER_TEMP/kubeconfig"
+          fi
       - name: Apply manifests and immutable image tags
+        if: env.SKIP_DEPLOY != 'true'
         env:
           KUBECONFIG: ${{ runner.temp }}/kubeconfig
         run: |
