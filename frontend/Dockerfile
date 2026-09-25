@@ -19,7 +19,7 @@ RUN npm run build
 # ==========================================
 # STAGE 2: Production Runtime (Nginx Alpine)
 # ==========================================
-FROM nginx:1.27-alpine AS runner
+FROM nginx:1.30.5-alpine3.24 AS runner
 
 # Remove default Nginx configuration
 RUN rm -rf /etc/nginx/conf.d/*
@@ -32,7 +32,8 @@ COPY --from=builder /app/dist /usr/share/nginx/html
 
 # Prepare runtime paths before dropping root privileges. The packaged Nginx
 # configuration writes its PID under /run, which is not writable by nginx.
-RUN sed -i 's|pid        /run/nginx.pid;|pid        /tmp/nginx.pid;|' /etc/nginx/nginx.conf \
+RUN apk upgrade --no-cache \
+  && sed -i 's|pid        /run/nginx.pid;|pid        /tmp/nginx.pid;|' /etc/nginx/nginx.conf \
   && chown -R nginx:nginx /var/cache/nginx /usr/share/nginx/html /etc/nginx/conf.d
 
 USER nginx
