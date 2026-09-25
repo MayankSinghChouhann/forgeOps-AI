@@ -6,15 +6,26 @@ import org.springframework.boot.webmvc.test.autoconfigure.AutoConfigureMockMvc;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.context.TestPropertySource;
+import org.springframework.context.annotation.Import;
+import org.springframework.http.ResponseEntity;
+import org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors;
+import org.springframework.stereotype.Controller;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.ResponseBody;
+
+import java.util.concurrent.Callable;
 
 import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.httpBasic;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.asyncDispatch;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.content;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.request;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 @SpringBootTest
 @AutoConfigureMockMvc
+@Import(BackendApplicationTests.AsyncProbeController.class)
 @TestPropertySource(properties = {
 		"forgeops.metrics.password=metrics-secret",
 		"management.endpoints.web.exposure.include=health,info,prometheus"
@@ -56,6 +67,27 @@ class BackendApplicationTests {
 					.with(httpBasic("forgeops-monitor", "metrics-secret")))
 				.andExpect(status().isOk())
 				.andExpect(content().string(org.hamcrest.Matchers.containsString("jvm_memory_used_bytes")));
+	}
+
+	@Test
+	void authenticatedAsyncContinuationIsNotReauthorized() throws Exception {
+		var result = mockMvc.perform(get("/api/test/async-probe")
+				.with(SecurityMockMvcRequestPostProcessors.user("engineer@forgeops.ai").roles("USER")))
+				.andExpect(request().asyncStarted())
+				.andReturn();
+
+		mockMvc.perform(asyncDispatch(result))
+				.andExpect(status().isOk())
+				.andExpect(content().string("stream-complete"));
+	}
+
+	@Controller
+	static class AsyncProbeController {
+		@GetMapping("/api/test/async-probe")
+		@ResponseBody
+		Callable<ResponseEntity<String>> asyncProbe() {
+			return () -> ResponseEntity.ok("stream-complete");
+		}
 	}
 
 }

@@ -26,9 +26,7 @@ function lazyPage(page: React.ReactNode) {
 
 /**
  * Root application component.
- *
- * All features (1 through 8) are fully wired to real backend endpoints.
- * Zero placeholders or dummy mocks.
+ * Routes the authenticated dashboard and public auth flows.
  */
 function App() {
   return (

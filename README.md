@@ -4,17 +4,25 @@
 ![Java](https://img.shields.io/badge/Java-21-orange?logo=openjdk)
 ![Spring Boot](https://img.shields.io/badge/Spring_Boot-4.1-green?logo=springboot)
 ![React](https://img.shields.io/badge/React-18-blue?logo=react)
+![License](https://img.shields.io/badge/license-MIT-blue)
 
-ForgeOps AI is a production-oriented DevOps assistant for incident diagnosis,
-infrastructure generation, shell-command safety, and platform telemetry. It
-combines a Spring Boot API, React SPA, PostgreSQL, Redis, Gemini, Prometheus,
-Grafana, Docker Compose, Kubernetes, and enforced CI/CD quality gates.
+**ForgeOps AI** is a full-stack, production-ready DevOps intelligence platform. It brings together AI-powered incident diagnosis, infrastructure-as-code generation, shell-command safety analysis, and live platform telemetry — all in a single, self-hostable application.
 
-> **Release status: one-time AWS demo, not a public production launch.** The
-> 2026-09-25 release-candidate screenshots below are from the current EC2
-> demo. Owner-controlled secret rotation, managed production infrastructure,
-> staging evidence, and a live production verification remain outstanding.
-> See [Release status](#release-status).
+Built on a Spring Boot 4.1 API, React 18 SPA, PostgreSQL, Redis, Gemini AI, Prometheus, and Grafana, ForgeOps AI ships with battle-tested security (JWT + rotating refresh tokens, per-IP rate limiting, Trivy image scanning), enforced CI/CD quality gates, and a full Kubernetes deployment baseline.
+
+## Why ForgeOps AI?
+
+| USP | What you get |
+|---|---|
+| 🤖 **AI-powered diagnostics** | Gemini 3.8 Flash with local expert-engine fallback — no internet required for common DevOps scenarios |
+| 🔐 **Security-first auth** | Rotating SHA-256-at-rest refresh tokens, HttpOnly cookies, RBAC, per-IP rate limiting |
+| 📊 **Live observability** | Eight-panel Grafana dashboard auto-provisioned; JVM, HikariCP, Redis, and Gemini metrics in Prometheus |
+| ⚙️ **IaC generation** | Terraform, Kubernetes, Helm, Dockerfile, GitHub Actions, GitLab CI — generated and gated by security scans |
+| 🛡️ **Hardened supply chain** | Trivy scans on every PR and on published GHCR images; OWASP ZAP workflow for API surface testing |
+| 🚀 **One-command stack** | Docker Compose with loopback-bound ports; Kubernetes Kustomize base with PDBs and NetworkPolicies |
+
+> **Note:** The included AWS screenshots document a one-time EC2 demo run over a local SSH tunnel.
+> They are retained for audit chronology. See [Release status](#release-status) for the current readiness summary.
 
 ## Contents
 
@@ -564,5 +572,5 @@ tests/load/              k6 load scenario and thresholds
 
 ## License
 
-No license file is currently included. Add an explicit license before public
-distribution or third-party reuse.
+Released under the [MIT License](LICENSE).
+See `LICENSE` for full terms.

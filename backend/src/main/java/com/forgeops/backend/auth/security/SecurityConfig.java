@@ -18,6 +18,7 @@ import org.springframework.web.cors.CorsConfiguration;
 import org.springframework.web.cors.CorsConfigurationSource;
 import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
 import org.springframework.beans.factory.annotation.Value;
+import jakarta.servlet.DispatcherType;
 
 import java.util.List;
 
@@ -79,6 +80,11 @@ public class SecurityConfig {
                 .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
                 .authorizeHttpRequests(auth ->
                     auth
+                        // SSE requests are authenticated on the initial dispatch. When
+                        // Spring resumes the response asynchronously, the JWT filter
+                        // intentionally does not re-run, so this continuation must not
+                        // be authorized a second time after the response is committed.
+                        .dispatcherTypeMatchers(DispatcherType.ASYNC).permitAll()
                         // Auth endpoints are public — needed for login/register
                         .requestMatchers("/api/auth/**").permitAll()
                         // API documentation is public; operations still enforce their own JWT rules.
