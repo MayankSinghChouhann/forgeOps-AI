@@ -11,11 +11,11 @@ infrastructure generation, shell-command safety, and platform telemetry. It
 combines a Spring Boot API, React SPA, PostgreSQL, Redis, Gemini, Prometheus,
 Grafana, Docker Compose, Kubernetes, and enforced CI/CD quality gates.
 
-> **Release status: not yet production-ready or publicly launched.** The AWS
-> Mumbai screenshots below document a one-time demo on 2026-09-24, not the
-> current release. Core repository hardening and CI gates have since advanced;
-> AWS architecture, owner-controlled credentials, staging evidence, and a live
-> production verification are still outstanding. See [Release status](#release-status).
+> **Release status: one-time AWS demo, not a public production launch.** The
+> 2026-09-25 release-candidate screenshots below are from the current EC2
+> demo. Owner-controlled secret rotation, managed production infrastructure,
+> staging evidence, and a live production verification remain outstanding.
+> See [Release status](#release-status).
 
 ## Capabilities
 
@@ -61,6 +61,33 @@ Shared frontend primitives include:
 
 The responsive E2E suite checks every primary route and verifies containment at
 1440 px, 1366 px, 1024 px, and 390 px viewport widths.
+
+## AWS release-candidate demo (2026-09-25)
+
+These screenshots were captured from the real Docker Compose application on
+the existing AWS Mumbai EC2 instance using an encrypted SSH tunnel to
+`http://localhost:13000`. The deployed backend and frontend images were both
+built from commit `809b5de2ab468e7e01991bdf6fbc81a791dc3f25` and passed
+the main-branch image vulnerability gates before deployment. Frontend and API
+ports remained bound to EC2 loopback; this was **not a public HTTPS launch**.
+The temporary screenshot account used a generated password that is not shown
+or stored in this repository. The application's "Production" workspace label
+in these images is a UI environment label, not evidence of public exposure or
+a 24/7 production deployment.
+
+![Live ForgeOps sign-in page](docs/images/release-2026-09-25-login.png)
+
+![Authenticated live operations dashboard](docs/images/release-2026-09-25-dashboard.png)
+
+![Live log analysis result](docs/images/release-2026-09-25-log-analysis.png)
+
+![Generated CI pipeline with blocking security scan](docs/images/release-2026-09-25-pipeline-gates.png)
+
+Smoke checks covered sign-in/registration, the authenticated dashboard, log
+analysis, CI/CD generation, `/actuator/health/liveness`, and
+`/actuator/health/readiness`. The database was backed up before the image
+update; Docker volumes were preserved for rollback. None of these checks
+replaces staging DAST/load testing, a restore drill, or production TLS checks.
 
 ## AWS demo evidence (historical)
 
@@ -414,7 +441,8 @@ claimed here.
 | Repository | Implemented | Session-cookie hardening, loopback-safe Compose defaults, image scanning before gated deployment, K8s availability/network policies, and CI validation are merged. |
 | Staging | Not verified | No current staging endpoint, DAST/k6 report, backup-restore proof, or rollback drill is attached. |
 | Production | Not launched | No approved production architecture/domain/TLS, managed data services, owner-rotated secrets, or live smoke-test evidence is configured. |
-| Historical evidence | Demo only | The screenshots above are from the 2026-09-24 one-time AWS demo; replace/add screenshots after a verified current release. |
+| Current demo evidence | One-time EC2 | The 2026-09-25 screenshots above show the verified immutable release-candidate images over a local SSH tunnel, not a public deployment. |
+| Historical evidence | Demo only | The 2026-09-24 screenshots are kept separately as historical UI evidence. |
 
 Required before a production launch:
 
@@ -434,15 +462,13 @@ Required before a production launch:
 - Run isolated staging DAST and load tests, verify database restore and app
   rollback, then deploy one immutable SHA and validate TLS, health probes,
   authentication/session refresh, dashboards, and alerts.
-- After the live release is verified, capture fresh sanitized screenshots and
-  add them here. Do not present the historical demo images above as proof of
-  the production build.
+- After any future public release, capture fresh sanitized production evidence;
+  neither set of demo screenshots proves a production launch.
 
-The AWS demo's EC2 instance was shut down after the one-time session. Confirm its
-current state and remove any no-longer-needed resources in the AWS console;
-stopping an instance does not necessarily stop charges for attached storage,
-static IPs, load balancers, or other services. No AWS resources were provisioned
-or changed during this production-readiness work.
+The one-time EC2 session should be stopped after screenshots are collected.
+Confirm the instance state in AWS Console; stopping it does not necessarily stop
+charges for attached storage, static IPs, load balancers, or other services.
+No new AWS infrastructure was provisioned in this release-candidate work.
 
 ## Implementation PR ledger
 
@@ -467,6 +493,13 @@ The project was deliberately split into reviewable, reversible feature branches:
 - [#21 — scan release images before deployment](https://github.com/MayankSinghChouhann/forgeOps-AI/pull/21)
 - [#22 — production runtime guards and CI validation](https://github.com/MayankSinghChouhann/forgeOps-AI/pull/22)
 - [#23 — Kubernetes availability and data network policies](https://github.com/MayankSinghChouhann/forgeOps-AI/pull/23)
+- [#24 — release-readiness guide and current demo evidence](https://github.com/MayankSinghChouhann/forgeOps-AI/pull/24)
+- [#25 — pin Trivy action for reliable scanning](https://github.com/MayankSinghChouhann/forgeOps-AI/pull/25)
+- [#26 — backend image vulnerability remediation](https://github.com/MayankSinghChouhann/forgeOps-AI/pull/26)
+- [#27 — immutable Compose image references](https://github.com/MayankSinghChouhann/forgeOps-AI/pull/27)
+- [#28 — frontend runtime image remediation](https://github.com/MayankSinghChouhann/forgeOps-AI/pull/28)
+- [#29 — unauthenticated Kubernetes health probes](https://github.com/MayankSinghChouhann/forgeOps-AI/pull/29)
+- [#30 — fail-closed generated pipeline security gates](https://github.com/MayankSinghChouhann/forgeOps-AI/pull/30)
 
 ## Repository layout
 
