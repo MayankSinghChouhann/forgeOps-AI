@@ -302,6 +302,19 @@ spec:
     }
 
     private String buildGitLabCiPipeline(String serviceName, GenerateTemplateRequest req) {
+        String runtime = req.getRuntime() == null ? "java" : req.getRuntime().toLowerCase(Locale.ROOT);
+        String testImage = switch (runtime) {
+            case "node" -> "node:22-alpine";
+            case "go" -> "golang:1.22-alpine";
+            case "python" -> "python:3.12-slim";
+            default -> "maven:3.9.6-eclipse-temurin-21-alpine";
+        };
+        String testCommand = switch (runtime) {
+            case "node" -> "npm ci && npm test -- --run";
+            case "go" -> "go test ./...";
+            case "python" -> "pip install -r requirements.txt && pytest";
+            default -> "mvn -B clean test";
+        };
         return String.format("""
 # ==============================================================================
 # ForgeOps AI — Production GitLab CI/CD Pipeline
@@ -323,16 +336,9 @@ variables:
 # --- STAGE 1: Unit & Integration Tests ---
 unit-tests:
   stage: test
-  image: maven:3.9.6-eclipse-temurin-21-alpine
-  cache:
-    key: maven-$CI_COMMIT_REF_SLUG
-    paths:
-      - .m2/repository
+  image: %s
   script:
-    - mvn clean test -Dmaven.repo.local=.m2/repository
-  artifacts:
-    reports:
-      junit: target/surefire-reports/*.xml
+    - %s
 
 # --- STAGE 2: Container Image Build & Push ---
 docker-build:
@@ -357,8 +363,10 @@ container-security-scan:
     name: aquasec/trivy:latest
     entrypoint: [""]
   script:
-    - trivy image --severity HIGH,CRITICAL --exit-code 0 $IMAGE_TAG
-  allow_failure: true
+    - TRIVY_USERNAME="$CI_REGISTRY_USER" TRIVY_PASSWORD="$CI_REGISTRY_PASSWORD" trivy image --severity HIGH,CRITICAL --exit-code 1 "$IMAGE_TAG"
+  only:
+    - main
+    - develop
 
 # --- STAGE 4: Kubernetes Rollout Deployment ---
 deploy-production:
@@ -366,20 +374,57 @@ deploy-production:
   image: dtzar/helm-kubectl:latest
   environment:
     name: production
-    url: https://%s.forgeops.ai
+    url: $PRODUCTION_URL
+  before_script:
+    - test -n "$KUBE_CONFIG_B64"
+    - echo "$KUBE_CONFIG_B64" | base64 -d > kubeconfig
+    - chmod 600 kubeconfig
+    - export KUBECONFIG="$CI_PROJECT_DIR/kubeconfig"
   script:
-    - kubectl config set-cluster k8s --server="$KUBE_URL" --insecure-skip-tls-verify=true
-    - kubectl config set-credentials admin --token="$KUBE_TOKEN"
-    - kubectl config set-context default --cluster=k8s --user=admin
-    - kubectl config use-context default
     - kubectl set image deployment/%s app=$IMAGE_TAG -n production
     - kubectl rollout status deployment/%s -n production --timeout=120s
+  after_script:
+    - rm -f kubeconfig
   only:
     - main
-""", serviceName, serviceName, serviceName, serviceName);
+""", serviceName, testImage, testCommand, serviceName, serviceName);
     }
 
     private String buildGitHubActionsPipeline(String serviceName, GenerateTemplateRequest req) {
+        String runtime = req.getRuntime() == null ? "java" : req.getRuntime().toLowerCase(Locale.ROOT);
+        String testSteps = switch (runtime) {
+            case "node" -> """
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: npm
+      - name: Run Unit Tests
+        run: npm ci && npm test -- --run
+""";
+            case "go" -> """
+      - uses: actions/setup-go@v5
+        with:
+          go-version: '1.22'
+      - name: Run Unit Tests
+        run: go test ./...
+""";
+            case "python" -> """
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Run Unit Tests
+        run: pip install -r requirements.txt && pytest
+""";
+            default -> """
+      - uses: actions/setup-java@v4
+        with:
+          java-version: '21'
+          distribution: 'temurin'
+          cache: maven
+      - name: Run Unit Tests
+        run: mvn -B clean test
+""";
+        };
         return String.format("""
 # ==============================================================================
 # ForgeOps AI — GitHub Actions CI/CD Workflow
@@ -402,18 +447,12 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-      - name: Set up JDK 21
-        uses: actions/setup-java@v4
-        with:
-          java-version: '21'
-          distribution: 'temurin'
-          cache: maven
-      - name: Run Unit Tests
-        run: mvn -B clean test
+%s
 
   build-and-push:
     name: Build & Push Image
     needs: test
+    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
     runs-on: ubuntu-latest
     permissions:
       contents: read
@@ -437,10 +476,32 @@ jobs:
           cache-from: type=gha
           cache-to: type=gha,mode=max
 
+  security-scan:
+    name: Block HIGH/CRITICAL image vulnerabilities
+    needs: build-and-push
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      packages: read
+    steps:
+      - name: Log in to GitHub Container Registry
+        uses: docker/login-action@v3
+        with:
+          registry: ${{ env.REGISTRY }}
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+      - name: Trivy image scan
+        uses: aquasecurity/trivy-action@ed142fd0673e97e23eac54620cfb913e5ce36c25 # v0.36.0
+        with:
+          image-ref: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:${{ github.sha }}
+          severity: HIGH,CRITICAL
+          ignore-unfixed: true
+          exit-code: '1'
+
   deploy:
     name: Deploy to Kubernetes
-    needs: build-and-push
-    if: github.ref == 'refs/heads/main'
+    needs: security-scan
+    if: github.event_name == 'push' && github.ref == 'refs/heads/main' && vars.ENABLE_K8S_DEPLOY == 'true'
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
@@ -453,7 +514,7 @@ jobs:
         run: |
           kubectl set image deployment/%s app=${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:${{ github.sha }} -n production
           kubectl rollout status deployment/%s -n production --timeout=120s
-""", serviceName, serviceName, serviceName);
+""", serviceName, testSteps, serviceName, serviceName);
     }
 
     private String buildMultiStageDockerfile(String runtime) {

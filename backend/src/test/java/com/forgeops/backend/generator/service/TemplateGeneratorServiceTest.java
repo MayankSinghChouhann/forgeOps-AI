@@ -134,6 +134,9 @@ class TemplateGeneratorServiceTest {
             String code = response.getCodeContent();
             assertThat(code).contains("security");
             assertThat(code).contains("trivy"); // Container vulnerability scanner
+            assertThat(code).contains("--exit-code 1", "TRIVY_USERNAME", "TRIVY_PASSWORD");
+            assertThat(code).doesNotContain("allow_failure: true", "insecure-skip-tls-verify");
+            assertThat(code).contains("KUBE_CONFIG_B64", "chmod 600 kubeconfig");
         }
 
         @Test
@@ -146,7 +149,27 @@ class TemplateGeneratorServiceTest {
 
             assertThat(response.getCodeContent())
                     .contains("ghcr.io")
-                    .contains("GITHUB_TOKEN");
+                    .contains("GITHUB_TOKEN")
+                    .contains("security-scan:", "needs: security-scan", "exit-code: '1'")
+                    .contains("vars.ENABLE_K8S_DEPLOY == 'true'");
+        }
+
+        @ParameterizedTest
+        @CsvSource({
+                "java, mvn -B clean test",
+                "node, npm ci && npm test -- --run",
+                "go, go test ./...",
+                "python, pip install -r requirements.txt && pytest"
+        })
+        @DisplayName("CI/CD templates use the requested runtime's test command")
+        void generateTemplate_GivenRuntime_UsesMatchingTests(String runtime, String testCommand) {
+            when(templateRepository.save(any(GeneratedTemplate.class))).thenAnswer(inv -> inv.getArgument(0));
+            for (String type : new String[] {"GITLAB_CI", "GITHUB_ACTIONS"}) {
+                GenerateTemplateRequest request = buildRequest(type, "GENERIC");
+                request.setRuntime(runtime);
+                assertThat(templateGeneratorService.generateTemplate(1L, request).getCodeContent())
+                        .contains(testCommand);
+            }
         }
 
         @Test
