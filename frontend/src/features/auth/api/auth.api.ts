@@ -1,6 +1,8 @@
 import apiClient from '@/lib/axios'
 import type { LoginRequest, RegisterRequest, AuthResponse } from '../types/auth.types'
 
+let refreshInFlight: Promise<AuthResponse> | null = null
+
 /**
  * Auth API module — all calls to the Spring Boot /api/auth/* endpoints.
  *
@@ -39,8 +41,12 @@ export const authApi = {
    * Used to silently refresh sessions before the access token expires.
    */
   refreshToken: async (): Promise<AuthResponse> => {
-    const response = await apiClient.post<AuthResponse>('/auth/refresh')
-    return response.data
+    if (!refreshInFlight) {
+      refreshInFlight = apiClient.post<AuthResponse>('/auth/refresh')
+        .then((response) => response.data)
+        .finally(() => { refreshInFlight = null })
+    }
+    return refreshInFlight
   },
 
   logout: async (): Promise<void> => {

@@ -68,7 +68,7 @@ class CoreControllerMockMvcTest {
     @BeforeEach
     void setUp() {
         mockMvc = standaloneSetup(
-                new AuthController(authService, false, 86400000L),
+                new AuthController(authService, true, 86400000L),
                 new AssistantController(assistantService, aiTaskExecutor),
                 new AnalyzerController(logAnalyzerService, currentUserService),
                 new GeneratorController(templateGeneratorService, currentUserService),
@@ -95,6 +95,7 @@ class CoreControllerMockMvcTest {
                         org.hamcrest.Matchers.containsString("forgeops_refresh=refresh-token"),
                         org.hamcrest.Matchers.containsString("Path=/api/auth"),
                         org.hamcrest.Matchers.containsString("HttpOnly"),
+                        org.hamcrest.Matchers.containsString("Secure"),
                         org.hamcrest.Matchers.containsString("SameSite=Strict"))));
     }
 
