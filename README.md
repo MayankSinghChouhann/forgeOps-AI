@@ -8,14 +8,28 @@ ForgeOps-AI serves as an operational hub for DevOps and Platform Engineering tea
 
 Intended users include DevOps engineers, system administrators, and site reliability engineers (SREs).
 
-## Key Features
+> Screenshot provenance: every image in `docs/images/` is an original, manually captured project or deployment artifact. No image in this README was AI-generated or synthetically recreated.
 
-- **Infrastructure-as-Code Generation**: Generates configurations for Terraform, Kubernetes, Helm, Dockerfile, GitHub Actions, and GitLab CI.
-- **Log Diagnostics**: Analyzes Jenkins, Docker, and Kubernetes logs, retaining RCA history.
-- **Command Safety Analysis**: Evaluates shell commands for destructive patterns prior to execution.
-- **Platform Observability**: Exposes JVM, HikariCP, Redis, PostgreSQL, and LLM integration metrics via Prometheus and Grafana.
-- **Authentication**: JWT-based authentication using rotating refresh tokens, SHA-256 persistence, server-side logout, and role-based access control.
-- **Responsive Workspace**: Implements a dark-mode interface with a centralized design system, responsive navigation, and status indicators.
+## Contents
+
+- [Capabilities](#capabilities)
+- [Architecture](#system-architecture)
+- [Product tour](#product-tour)
+- [Local setup](#local-setup)
+- [Validation](#validation)
+- [Delivery and deployment](#delivery-and-deployment)
+- [Security](#security)
+
+## Capabilities
+
+| Area | What it provides |
+| --- | --- |
+| Infrastructure generation | Reviewable Terraform, Kubernetes, Helm, Dockerfile, GitHub Actions, and GitLab CI templates. |
+| Incident diagnostics | Analysis workflows for Jenkins, Docker, and Kubernetes logs with retained RCA history. |
+| Command safety | Shell-command risk assessment before an operator runs a change. |
+| Observability | JVM, HikariCP, Redis, PostgreSQL, and AI-integration metrics through Prometheus and Grafana. |
+| Identity and access | JWT access tokens, rotating refresh tokens, server-side logout, and role-based access control. |
+| Operator experience | Responsive dark-mode workspace with shared design-system components and environment status. |
 
 ## System Architecture
 
@@ -93,19 +107,27 @@ forgeOps-AI/
 4. **Delivery**: Results are returned to the client. Long-running operations utilize Server-Sent Events (SSE) to stream chunks to the React frontend, updating the UI dynamically.
 5. **Observability**: Metrics from the request cycle are scraped by Prometheus and visualized in Grafana.
 
-## Application Interfaces
+## Product Tour
 
-![Live ForgeOps sign-in page](docs/images/release-2026-09-25-login.png)
-![Authenticated live operations dashboard](docs/images/release-2026-09-25-dashboard.png)
-![Live log analysis result](docs/images/release-2026-09-25-log-analysis.png)
-![ForgeOps live operations overview](docs/images/dashboard-overview.png)
-![ForgeOps log analysis workspace](docs/images/log-analyzer.png)
-![ForgeOps CI/CD workflow generator](docs/images/cicd-generator.png)
-![ForgeOps infrastructure generator](docs/images/infrastructure-generator.png)
-![ForgeOps API playground](docs/images/api-playground.png)
-![ForgeOps mobile navigation drawer](docs/images/mobile-navigation.png)
+### Authentication and Operations
 
-## Getting Started
+| Sign-in | Operations dashboard |
+| --- | --- |
+| ![Live ForgeOps sign-in page](docs/images/release-2026-09-25-login.png) | ![Authenticated live operations dashboard](docs/images/release-2026-09-25-dashboard.png) |
+
+### Investigation and Automation
+
+| Log analysis | CI/CD generator | Infrastructure generator |
+| --- | --- | --- |
+| ![Live log analysis result](docs/images/release-2026-09-25-log-analysis.png) | ![ForgeOps CI/CD workflow generator](docs/images/cicd-generator.png) | ![ForgeOps infrastructure generator](docs/images/infrastructure-generator.png) |
+
+### Additional Interfaces
+
+| API playground | Responsive navigation |
+| --- | --- |
+| ![ForgeOps API playground](docs/images/api-playground.png) | ![ForgeOps mobile navigation drawer](docs/images/mobile-navigation.png) |
+
+## Local Setup
 
 ### Prerequisites
 
@@ -128,7 +150,7 @@ npm ci
 cd ..
 ```
 
-## Environment Configuration
+### Environment Configuration
 
 Configuration is managed via environment variables. Create `.env` files based on the provided templates. Never commit populated `.env` files containing actual secrets.
 
@@ -146,7 +168,7 @@ GRAFANA_ADMIN_PASSWORD=
 GEMINI_API_KEY=
 ```
 
-## Running Locally
+### Run Locally
 
 ### Using Docker Compose
 
@@ -175,7 +197,7 @@ cp .env.example .env.local
 npm run dev
 ```
 
-## Testing
+## Validation
 
 ### Backend Unit and Integration Tests
 
@@ -206,7 +228,7 @@ Load testing is performed via k6 targeting 500 virtual users.
 k6 run -e BASE_URL=http://localhost:8080 -e ACCESS_TOKEN='<jwt>' tests/load/forgeops.js
 ```
 
-## Build
+### Build
 
 To compile the production artifacts:
 
@@ -221,14 +243,19 @@ cd frontend
 npm run build
 ```
 
-## Deployment
+## Delivery and Deployment
 
 ### CI/CD Pipelines
 
 The repository includes GitHub Actions (`.github/workflows/ci.yml`) and GitLab CI (`.gitlab-ci.yml`) definitions. Pipelines enforce Trivy vulnerability scanning, ESLint validation, Playwright E2E tests, and Java unit testing prior to container publishing.
 
+The captured GitHub Actions run below completed backend tests, frontend checks, repository scanning, container publishing, image scanning, and Kubernetes deployment successfully. It is included as deployment evidence, not as a claim that an always-on public environment is currently exposed.
+
+![GitHub Actions CI/CD pipeline completed successfully](docs/images/github-actions-pipeline-success-manual.png)
+
+The generator’s pipeline-security gates are also visible in the product capture below.
+
 ![Generated CI pipeline with blocking security scan](docs/images/release-2026-09-25-pipeline-gates.png)
-![GitHub Actions CI/CD Pipeline Success](docs/images/github-actions-pipeline-success.png)
 
 ### Kubernetes
 
@@ -242,7 +269,9 @@ kubectl -n forgeops rollout status deployment/frontend
 
 *Note: For production, externalize the PostgreSQL and Redis instances to managed services and supply credentials via a Kubernetes Secret or native cloud secret manager.*
 
-### Historical AWS Deployment Evidence
+### One-Time AWS Demo Evidence
+
+The EC2 material below records a one-time, operator-led demo deployment. It should not be interpreted as a permanent public production endpoint; stop the instance after the demonstration to avoid unnecessary AWS charges.
 
 ![AWS EC2 instance launch completed successfully](docs/images/aws-ec2-launch-success-manual.png)
 ![Successful SSH session to the Ubuntu EC2 host](docs/images/aws-ssh-session-manual.png)
