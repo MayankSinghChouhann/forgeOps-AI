@@ -375,6 +375,8 @@ controller contracts, OpenAPI, secured metrics, and PostgreSQL/Flyway. The
 Testcontainers test skips only when Docker is unavailable; GitHub CI runs it
 against a real PostgreSQL container.
 
+![GitHub Actions CI/CD Pipeline Success](docs/images/github-actions-vercel-success.png)
+
 Frontend:
 
 ```bash
