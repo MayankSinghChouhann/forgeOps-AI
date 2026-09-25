@@ -8,6 +8,8 @@ resources:
   - backend.yaml
   - frontend.yaml
   - ingress.yaml
+  - availability.yaml
+  - network-policies.yaml
 labels:
   - pairs:
       app.kubernetes.io/managed-by: kustomize
