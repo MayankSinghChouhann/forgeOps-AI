@@ -11,10 +11,11 @@ infrastructure generation, shell-command safety, and platform telemetry. It
 combines a Spring Boot API, React SPA, PostgreSQL, Redis, Gemini, Prometheus,
 Grafana, Docker Compose, Kubernetes, and enforced CI/CD quality gates.
 
-> Repository implementation status: **36 of 40 audit tasks complete, 1 partial,
-> 3 require owner/production access**. A one-time AWS Mumbai demo deployment was
-> verified on 2026-09-24; it is not a production release. See
-> [Release status](#release-status) for the exact remaining work.
+> **Release status: one-time AWS demo, not a public production launch.** The
+> 2026-09-25 release-candidate screenshots below are from the current EC2
+> demo. Owner-controlled secret rotation, managed production infrastructure,
+> staging evidence, and a live production verification remain outstanding.
+> See [Release status](#release-status).
 
 ## Capabilities
 
@@ -61,10 +62,39 @@ Shared frontend primitives include:
 The responsive E2E suite checks every primary route and verifies containment at
 1440 px, 1366 px, 1024 px, and 390 px viewport widths.
 
-## AWS demo evidence
+## AWS release-candidate demo (2026-09-25)
+
+These screenshots were captured from the real Docker Compose application on
+the existing AWS Mumbai EC2 instance using an encrypted SSH tunnel to
+`http://localhost:13000`. The deployed backend and frontend images were both
+built from commit `809b5de2ab468e7e01991bdf6fbc81a791dc3f25` and passed
+the main-branch image vulnerability gates before deployment. Frontend and API
+ports remained bound to EC2 loopback; this was **not a public HTTPS launch**.
+The temporary screenshot account used a generated password that is not shown
+or stored in this repository. The application's "Production" workspace label
+in these images is a UI environment label, not evidence of public exposure or
+a 24/7 production deployment.
+
+![Live ForgeOps sign-in page](docs/images/release-2026-09-25-login.png)
+
+![Authenticated live operations dashboard](docs/images/release-2026-09-25-dashboard.png)
+
+![Live log analysis result](docs/images/release-2026-09-25-log-analysis.png)
+
+![Generated CI pipeline with blocking security scan](docs/images/release-2026-09-25-pipeline-gates.png)
+
+Smoke checks covered sign-in/registration, the authenticated dashboard, log
+analysis, CI/CD generation, `/actuator/health/liveness`, and
+`/actuator/health/readiness`. The database was backed up before the image
+update; Docker volumes were preserved for rollback. None of these checks
+replaces staging DAST/load testing, a restore drill, or production TLS checks.
+
+## AWS demo evidence (historical)
 
 The following sanitized screenshots were captured from the one-time Docker
-Compose demo environment in AWS Mumbai on 2026-09-24. They contain no login
+Compose demo environment in AWS Mumbai on 2026-09-24. These are historical UI
+evidence from before the latest security/runtime changes, not a current release
+smoke test. They contain no login
 passwords, secrets, private-key material, or monitoring credentials. This is
 verification evidence only, not a claim of a production deployment.
 
@@ -245,16 +275,19 @@ commit a populated `.env` file.
 | Probes | `/actuator/health/liveness`, `/actuator/health/readiness` |
 | Metrics | `/actuator/prometheus` with monitoring Basic credentials |
 
-Access and refresh tokens are currently stored in browser `localStorage`.
-Refresh tokens are rotated and stored only as SHA-256 hashes in PostgreSQL. The
-frontend refreshes proactively before access-token expiry and falls back to one
-coordinated refresh after a 401. For a public internet deployment, migrating the
-refresh token to a Secure, HttpOnly, SameSite cookie is recommended defense in
-depth against token theft through an XSS defect.
+Access JWTs are held in module memory (not persistent browser storage). Rotating
+refresh tokens are sent only in a `Secure`, `HttpOnly`, `SameSite=Strict` cookie
+in production and stored as SHA-256 hashes in PostgreSQL. The frontend refreshes
+proactively before access-token expiry and deduplicates concurrent refreshes
+after a 401. The local Compose example intentionally disables the `Secure`
+cookie flag for plain-HTTP localhost only; production must set
+`FORGEOPS_REFRESH_COOKIE_SECURE=true` and configure the exact HTTPS origin.
 
 Auth and AI mutation routes have per-IP rate limits. This implementation is
 in-process, so a multi-replica production deployment should enforce an
 additional distributed limit at the ingress/API gateway.
+For an AWS public endpoint, add an AWS WAF/API-gateway distributed rate limit;
+the application limiter alone is not sufficient when scaling to multiple pods.
 
 ## Observability
 
@@ -322,16 +355,24 @@ OWASP ZAP is available as a manually triggered isolated API scan.
 ## Kubernetes deployment
 
 The Kustomize base in `infra/k8s` includes namespace, ConfigMap, PostgreSQL,
-Redis, backend, frontend, HPA, Services, and TLS ingress resources. Images run
-as non-root with dropped capabilities, resource requests/limits, probes, and
-rolling updates.
+Redis, backend, frontend, HPA, Services, PDBs, NetworkPolicies, and TLS ingress
+resources. Images run as non-root with dropped capabilities, resource
+requests/limits, probes, topology spread, and rolling updates. The bundled
+PostgreSQL/Redis manifests are a convenience baseline, not production-grade
+managed data services or a backup/HA design. Do not use this base as a public
+production deployment until the database/cache are moved to managed services,
+credentials are supplied through the cloud secret manager, and the ingress/DNS/
+TLS values have been replaced. NetworkPolicies require a supporting CNI;
+Metrics Server is required for HPA metrics, and the PDBs need multiple healthy
+replicas to protect during disruption.
 
 Before deployment:
 
 1. Replace `forgeops.example.com` in the ConfigMap and ingress.
 2. Configure the `forgeops-tls` secret and an ingress controller.
 3. Create `forgeops-secrets` as documented in `infra/k8s/README.md`.
-4. Prefer managed PostgreSQL/Redis and a cloud secret manager in production.
+4. For production, configure managed PostgreSQL/Redis, verified backups, and
+   cloud-managed secrets; the included in-cluster data services are not HA.
 
 Validate and apply:
 
@@ -388,26 +429,46 @@ history cleanup; rewriting history alone does not revoke a leaked credential.
 
 ## Release status
 
-Repository-scoped engineering is complete and all merged feature PRs passed CI.
-The audit's 40-task roadmap currently stands at:
+Repository checks pass on the latest merged application baseline, but this does
+not mean the service is ready for public production traffic. A main-branch CI
+release run must also finish publishing and scanning the exact immutable images
+before deployment. The prior audit's 40-task count was recorded before the
+latest hardening PRs and is not a current readiness score; no percentage is
+claimed here.
 
-| State | Count | Details |
-|---|---:|---|
-| Complete | 36 | Application, migrations, security, AI, frontend, tests, CI/CD, K8s, observability |
-| Partial | 1 | Task 40: OpenAPI and ZAP workflow complete; staging/production execution pending |
-| External | 3 | Gemini rotation, production JWT rotation/secret-manager entry, coordinated Git history purge |
+| Area | Status | Details |
+|---|---|---|
+| Repository | Implemented | Session-cookie hardening, loopback-safe Compose defaults, image scanning before gated deployment, K8s availability/network policies, and CI validation are merged. |
+| Staging | Not verified | No current staging endpoint, DAST/k6 report, backup-restore proof, or rollback drill is attached. |
+| Production | Not launched | No approved production architecture/domain/TLS, managed data services, owner-rotated secrets, or live smoke-test evidence is configured. |
+| Current demo evidence | One-time EC2 | The 2026-09-25 screenshots above show the verified immutable release-candidate images over a local SSH tunnel, not a public deployment. |
+| Historical evidence | Demo only | The 2026-09-24 screenshots are kept separately as historical UI evidence. |
 
-Operational actions still requiring repository-owner or environment access:
+Required before a production launch:
 
-- Rotate all credentials that existed before the audit.
-- Run the coordinated history rewrite after rotation.
-- Configure staging secrets/DNS/TLS/cluster credentials and execute ZAP + k6.
-- Promote the verified SHA to production, validate probes/dashboards, and perform
-  a rollback drill.
+- Choose the AWS target architecture and approve its ongoing costs. The CI
+  deployment workflow targets Kubernetes/EKS; the earlier one-time EC2 demo is
+  a separate Docker Compose setup. Do not enable the deployment gate until the
+  selected path is actually configured.
+- Provide the production domain, HTTPS certificate/ingress, network restrictions,
+  and health-check routing. For EKS, configure the cluster context and the
+  repository's gated `ENABLE_K8S_DEPLOY` / `KUBE_CONFIG_B64` settings.
+- Provision managed PostgreSQL and Redis, backup/restore, monitoring/alerts, and
+  cloud secret-manager integration; provide only newly rotated secrets through
+  the approved secret store, never in Git or chat.
+- Rotate credentials that existed before the audit. After rotation, coordinate
+  the destructive Git history cleanup described below; it invalidates existing
+  clones and PR SHAs, so it must not be done casually.
+- Run isolated staging DAST and load tests, verify database restore and app
+  rollback, then deploy one immutable SHA and validate TLS, health probes,
+  authentication/session refresh, dashboards, and alerts.
+- After any future public release, capture fresh sanitized production evidence;
+  neither set of demo screenshots proves a production launch.
 
-Accordingly, the repository implementation is approximately **95% complete**;
-end-to-end production release readiness is approximately **85%** until those
-external operations are performed and evidenced.
+The one-time EC2 session should be stopped after screenshots are collected.
+Confirm the instance state in AWS Console; stopping it does not necessarily stop
+charges for attached storage, static IPs, load balancers, or other services.
+No new AWS infrastructure was provisioned in this release-candidate work.
 
 ## Implementation PR ledger
 
@@ -427,6 +488,18 @@ The project was deliberately split into reviewable, reversible feature branches:
 - [#16 — production operations and release guide](https://github.com/MayankSinghChouhann/forgeOps-AI/pull/16)
 - [#17 — non-root Nginx runtime fix](https://github.com/MayankSinghChouhann/forgeOps-AI/pull/17)
 - [#18 — enterprise DevOps frontend design system](https://github.com/MayankSinghChouhann/forgeOps-AI/pull/18)
+- [#19 — verified AWS demo UI evidence](https://github.com/MayankSinghChouhann/forgeOps-AI/pull/19)
+- [#20 — secure refresh-cookie sessions](https://github.com/MayankSinghChouhann/forgeOps-AI/pull/20)
+- [#21 — scan release images before deployment](https://github.com/MayankSinghChouhann/forgeOps-AI/pull/21)
+- [#22 — production runtime guards and CI validation](https://github.com/MayankSinghChouhann/forgeOps-AI/pull/22)
+- [#23 — Kubernetes availability and data network policies](https://github.com/MayankSinghChouhann/forgeOps-AI/pull/23)
+- [#24 — release-readiness guide and current demo evidence](https://github.com/MayankSinghChouhann/forgeOps-AI/pull/24)
+- [#25 — pin Trivy action for reliable scanning](https://github.com/MayankSinghChouhann/forgeOps-AI/pull/25)
+- [#26 — backend image vulnerability remediation](https://github.com/MayankSinghChouhann/forgeOps-AI/pull/26)
+- [#27 — immutable Compose image references](https://github.com/MayankSinghChouhann/forgeOps-AI/pull/27)
+- [#28 — frontend runtime image remediation](https://github.com/MayankSinghChouhann/forgeOps-AI/pull/28)
+- [#29 — unauthenticated Kubernetes health probes](https://github.com/MayankSinghChouhann/forgeOps-AI/pull/29)
+- [#30 — fail-closed generated pipeline security gates](https://github.com/MayankSinghChouhann/forgeOps-AI/pull/30)
 
 ## Repository layout
 
