@@ -263,6 +263,12 @@ The captured GitHub Actions run below shows successful backend tests, frontend c
 
 ![GitHub Actions CI/CD pipeline completed successfully](docs/images/github-actions-pipeline-success-manual.png)
 
+### Docker Compose
+
+The local Compose stack runs the ForgeOps backend, React frontend, PostgreSQL, Redis, Prometheus, and Grafana services together. The status capture below was taken from the running Docker Engine.
+
+![Live ForgeOps Docker Compose service status](docs/images/docker-compose-status.png)
+
 ### Kubernetes
 
 A Kustomize base is provided for Kubernetes deployment. This includes manifests for namespaces, ConfigMaps, Deployments, HorizontalPodAutoscalers (HPA), Services, PodDisruptionBudgets (PDB), NetworkPolicies, and Ingress.
