@@ -10,6 +10,7 @@ import jakarta.validation.constraints.Min;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.security.core.userdetails.UserDetails;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
@@ -31,6 +32,7 @@ public class GeneratorController {
     }
 
     @PostMapping("/generate")
+    @PreAuthorize("hasAuthority('TEMPLATE_GENERATE')")
     public ResponseEntity<TemplateResponse> generateTemplate(
             @AuthenticationPrincipal UserDetails userDetails,
             @Valid @RequestBody GenerateTemplateRequest request) {
@@ -40,6 +42,7 @@ public class GeneratorController {
     }
 
     @GetMapping("/history")
+    @PreAuthorize("hasAuthority('DASHBOARD_READ')")
     public ResponseEntity<List<TemplateResponse>> getHistory(
             @AuthenticationPrincipal UserDetails userDetails,
             @RequestParam(defaultValue = "0") @Min(0) int page,
@@ -50,6 +53,7 @@ public class GeneratorController {
     }
 
     @GetMapping("/{id}")
+    @PreAuthorize("hasAuthority('DASHBOARD_READ')")
     public ResponseEntity<TemplateResponse> getTemplateById(
             @AuthenticationPrincipal UserDetails userDetails, @PathVariable UUID id) {
         Long userId = currentUserService.requireId(userDetails.getUsername());

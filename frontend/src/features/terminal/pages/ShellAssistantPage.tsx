@@ -4,12 +4,13 @@ import { terminalApi } from "../api/terminal.api"
 import { CommandExplanationResponse, GeneratedCommandResponse } from "../types/terminal.types"
 import { PageHeader } from "@/components/ui/PageHeader"
 import { StatusIndicator } from "@/components/ui/StatusIndicator"
+import { Link } from "react-router-dom"
 
 const SAMPLE_COMMANDS = [
   { label: "rm -rf /", cmd: "rm -rf / --no-preserve-root", level: "DANGEROUS" },
   { label: "docker prune", cmd: "docker system prune -a --volumes", level: "CAUTION" },
-  { label: "Find large files", cmd: "find / -type f -size +100M -exec ls -lh {} \\;", level: "SAFE" },
-  { label: "Active TCP ports", cmd: "ss -tulpn | grep LISTEN", level: "SAFE" },
+  { label: "Find large files", cmd: "find / -type f -size +100M -exec ls -lh {} \\;", level: "CAUTION" },
+  { label: "Active TCP ports", cmd: "ss -tulpn | grep LISTEN", level: "CAUTION" },
 ]
 
 function FormattedContent({ content }: { content: string }) {
@@ -360,6 +361,10 @@ export function ShellAssistantPage() {
                 {generatedOutput.safetyLevel}: {generatedOutput.riskExplanation}
               </div>
               <FormattedContent content={generatedOutput.result} />
+              <div className="flex flex-wrap items-center justify-between gap-3 rounded-md border border-border bg-elevated px-3 py-2 text-xs">
+                <span className="text-text-muted">Workflow status: <strong className="text-text-primary">{generatedOutput.operationStatus.replace(/_/g, " ")}</strong> · Correlation {generatedOutput.correlationId}</span>
+                <Link className="font-medium text-accent hover:underline" to="/dashboard/operations">Review operation</Link>
+              </div>
             </div>
           )}
         </div>

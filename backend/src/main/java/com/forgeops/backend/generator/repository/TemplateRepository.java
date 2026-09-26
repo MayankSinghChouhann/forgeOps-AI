@@ -14,5 +14,7 @@ public interface TemplateRepository extends JpaRepository<GeneratedTemplate, UUI
     List<GeneratedTemplate> findByUserIdOrderByCreatedAtDesc(Long userId, Pageable pageable);
     Optional<GeneratedTemplate> findByIdAndUserId(UUID id, Long userId);
     List<GeneratedTemplate> findTop8ByOrderByCreatedAtDesc();
+    List<GeneratedTemplate> findTop8ByUserIdOrderByCreatedAtDesc(Long userId);
+    long countByUserId(Long userId);
     List<GeneratedTemplate> findByTemplateTypeOrderByCreatedAtDesc(String templateType);
 }

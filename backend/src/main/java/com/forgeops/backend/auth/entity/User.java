@@ -22,7 +22,7 @@ public class User {
 
     @Enumerated(EnumType.STRING)
     @Column(nullable = false, length = 20)
-    private UserRole role = UserRole.USER;
+    private UserRole role = UserRole.VIEWER;
 
     @CreationTimestamp
     @Column(name = "created_at", nullable = false, updatable = false)

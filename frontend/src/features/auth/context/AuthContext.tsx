@@ -2,7 +2,7 @@ import * as React from 'react'
 import { useNavigate } from 'react-router-dom'
 import { authApi } from '../api/auth.api'
 import { clearAccessToken, getAccessToken, setAccessToken } from '../tokenStore'
-import type { AuthUser, LoginRequest, RegisterRequest } from '../types/auth.types'
+import type { AuthUser, LoginRequest, Permission, RegisterRequest } from '../types/auth.types'
 
 // ─── Context Shape ────────────────────────────────────────────────────────────
 
@@ -13,6 +13,7 @@ interface AuthContextValue {
   login: (data: LoginRequest) => Promise<void>
   register: (data: RegisterRequest) => Promise<void>
   logout: () => Promise<void>
+  hasPermission: (permission: Permission) => boolean
 }
 
 // ─── Context Creation ─────────────────────────────────────────────────────────
@@ -63,7 +64,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const refreshSession = React.useCallback(async () => {
     const response = await authApi.refreshToken()
     setAccessToken(response.accessToken)
-    setUser({ email: response.email })
+    setUser({ email: response.email, role: response.role, permissions: response.permissions })
     return response.accessToken
   }, [])
 
@@ -74,7 +75,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       .then((response) => {
         if (cancelled) return
         setAccessToken(response.accessToken)
-        setUser({ email: response.email })
+        setUser({ email: response.email, role: response.role, permissions: response.permissions })
       })
       .catch(() => {
         if (cancelled) return
@@ -113,7 +114,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const login = React.useCallback(async (data: LoginRequest) => {
     const response = await authApi.login(data)
     setAccessToken(response.accessToken)
-    setUser({ email: response.email })
+    setUser({ email: response.email, role: response.role, permissions: response.permissions })
     navigate('/dashboard/overview')
   }, [navigate])
 
@@ -142,6 +143,11 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     navigate('/login')
   }, [navigate])
 
+  const hasPermission = React.useCallback(
+    (permission: Permission) => user?.permissions.includes(permission) ?? false,
+    [user],
+  )
+
   const value: AuthContextValue = {
     user,
     isAuthenticated: user !== null,
@@ -149,6 +155,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     login,
     register,
     logout,
+    hasPermission,
   }
 
   return (

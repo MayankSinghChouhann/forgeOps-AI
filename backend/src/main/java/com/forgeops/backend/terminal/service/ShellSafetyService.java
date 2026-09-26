@@ -51,6 +51,14 @@ public class ShellSafetyService {
             riskExplanation = "⚠️ CAUTION: This command alters system-wide network configuration, kills multiple processes, or irreversibly prunes data/containers.";
             safeAlternative = "Run with dry-run flag or preview targets first (e.g. `docker system df` before pruning).";
         }
+        // 3. Treat shell composition and infrastructure mutation as at least medium risk.
+        // AI text is untrusted input; commands outside the explicit read-only allowlist
+        // always require a human approval before ForgeOps releases an execution handoff.
+        else if (containsShellComposition(lower) || isInfrastructureMutation(lower) || !isReadOnlyCommand(lower)) {
+            safetyLevel = "CAUTION";
+            riskExplanation = "⚠️ CAUTION: This command can mutate a host or infrastructure, or composes multiple shell operations. Review every target and argument before execution.";
+            safeAlternative = "Prefer a read-only inspection or dry-run command first, then request approval for the exact reviewed command.";
+        }
 
         String summary = generateCommandSummary(trimmed, safetyLevel);
 
@@ -168,5 +176,29 @@ public class ShellSafetyService {
 #### 🔍 Execution Breakdown:
 The command evaluates the requested flags and applies them to the specified targets in the user space.
 """, command, safetyLevel);
+    }
+
+    private boolean containsShellComposition(String command) {
+        return command.contains(";") || command.contains("&&") || command.contains("||")
+                || command.contains("|") || command.contains("`") || command.contains("$(")
+                || command.contains(">") || command.contains("<(") || command.contains("\n");
+    }
+
+    private boolean isInfrastructureMutation(String command) {
+        return command.matches(".*\\b(sudo|rm|mv|cp|chmod|chown|kill|pkill|systemctl|service|reboot|shutdown)\\b.*")
+                || command.matches(".*\\bkubectl\\s+(apply|delete|patch|replace|scale|rollout|exec)\\b.*")
+                || command.matches(".*\\bterraform\\s+(apply|destroy|import|taint)\\b.*")
+                || command.matches(".*\\bhelm\\s+(install|upgrade|uninstall|rollback)\\b.*")
+                || command.matches(".*\\bdocker\\s+(run|exec|rm|rmi|stop|kill|compose\\s+up)\\b.*")
+                || command.matches(".*\\b(git\\s+push|curl\\s+.*-x?post|wget\\s+)\\b.*");
+    }
+
+    private boolean isReadOnlyCommand(String command) {
+        if (command.isBlank()) return true;
+        return command.matches("^(ls|pwd|whoami|id|date|uptime|df|du|free|ps|top|cat|head|tail|less|more|grep|awk|sed -n|find|stat|ss|netstat|dig|nslookup|journalctl)(\\s|$).*")
+                || command.matches("^docker\\s+(ps|images|inspect|logs|stats|version|info)(\\s|$).*")
+                || command.matches("^kubectl\\s+(get|describe|logs|top|version|cluster-info|api-resources)(\\s|$).*")
+                || command.matches("^git\\s+(status|log|diff|show|branch|remote)(\\s|$).*")
+                || command.matches("^terraform\\s+(plan|show|validate|fmt)(\\s|$).*");
     }
 }

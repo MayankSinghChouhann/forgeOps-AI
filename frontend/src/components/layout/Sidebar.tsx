@@ -1,22 +1,27 @@
 import { NavLink } from "react-router-dom"
-import { LayoutDashboard, Bot, FileText, Box, Server, GitMerge, Hexagon, Code2, Settings, ChevronsUpDown, X } from "lucide-react"
+import { LayoutDashboard, Bot, FileText, Box, Server, GitMerge, Hexagon, Code2, Settings, ChevronsUpDown, X, ShieldCheck, ScrollText } from "lucide-react"
 import { cn } from "@/lib/utils"
 import { StatusIndicator } from "@/components/ui/StatusIndicator"
+import { useAuth } from "@/features/auth/hooks/useAuth"
+import type { Permission } from "@/features/auth/types/auth.types"
 
-const navItems = [
-  { name: "Overview", href: "/dashboard/overview", icon: LayoutDashboard },
-  { name: "AI Assistant", href: "/dashboard/assistant", icon: Bot },
-  { name: "Log Analyzer", href: "/dashboard/log-analyzer", icon: FileText },
-  { name: "Docker", href: "/dashboard/docker", icon: Box },
-  { name: "Kubernetes", href: "/dashboard/kubernetes", icon: Server },
-  { name: "CI/CD", href: "/dashboard/cicd", icon: GitMerge },
-  { name: "Infrastructure", href: "/dashboard/infrastructure", icon: Hexagon },
-  { name: "API Playground", href: "/dashboard/api-playground", icon: Code2 },
+const navItems: Array<{ name: string; href: string; icon: typeof LayoutDashboard; permission: Permission }> = [
+  { name: "Overview", href: "/dashboard/overview", icon: LayoutDashboard, permission: "DASHBOARD_READ" },
+  { name: "AI Assistant", href: "/dashboard/assistant", icon: Bot, permission: "AI_USE" },
+  { name: "Log Analyzer", href: "/dashboard/log-analyzer", icon: FileText, permission: "ANALYSIS_RUN" },
+  { name: "Docker", href: "/dashboard/docker", icon: Box, permission: "ANALYSIS_RUN" },
+  { name: "Kubernetes", href: "/dashboard/kubernetes", icon: Server, permission: "ANALYSIS_RUN" },
+  { name: "CI/CD", href: "/dashboard/cicd", icon: GitMerge, permission: "TEMPLATE_GENERATE" },
+  { name: "Infrastructure", href: "/dashboard/infrastructure", icon: Hexagon, permission: "TEMPLATE_GENERATE" },
+  { name: "API Playground", href: "/dashboard/api-playground", icon: Code2, permission: "COMMAND_RECOMMEND" },
+  { name: "Operations", href: "/dashboard/operations", icon: ShieldCheck, permission: "OPERATION_READ" },
+  { name: "Audit trail", href: "/dashboard/audit", icon: ScrollText, permission: "AUDIT_READ" },
 ]
 
 interface SidebarProps { open: boolean; onClose: () => void }
 
 export function Sidebar({ open, onClose }: SidebarProps) {
+  const { hasPermission, user } = useAuth()
   return (
     <>
       {open && <button type="button" aria-label="Close navigation" className="fixed inset-0 z-30 bg-black/60 lg:hidden" onClick={onClose} />}
@@ -33,7 +38,7 @@ export function Sidebar({ open, onClose }: SidebarProps) {
         <nav className="flex-1 overflow-y-auto px-3 py-4">
           <p className="mb-2 px-3 text-xs font-medium text-text-muted">Workspace</p>
           <div className="space-y-1">
-            {navItems.map((item) => (
+            {navItems.filter((item) => hasPermission(item.permission)).map((item) => (
               <NavLink key={item.name} to={item.href} onClick={onClose} className={({ isActive }) => cn("flex h-9 items-center gap-3 rounded-md px-3 text-sm font-medium transition-colors", isActive ? "bg-surface-hover text-text-primary" : "text-text-muted hover:bg-surface-hover/70 hover:text-text-primary")}>
                 {({ isActive }) => <><item.icon className={cn("h-4 w-4 shrink-0", isActive ? "text-accent" : "text-text-muted")} aria-hidden="true" /><span>{item.name}</span></>}
               </NavLink>
@@ -42,7 +47,7 @@ export function Sidebar({ open, onClose }: SidebarProps) {
         </nav>
         <div className="border-t border-border p-3">
           <NavLink to="/dashboard/settings" onClick={onClose} className={({ isActive }) => cn("flex h-9 items-center gap-3 rounded-md px-3 text-sm font-medium transition-colors", isActive ? "bg-surface-hover text-text-primary" : "text-text-muted hover:bg-surface-hover/70 hover:text-text-primary")}><Settings className="h-4 w-4" aria-hidden="true" />Settings</NavLink>
-          <p className="px-3 pt-3 text-xs text-text-muted">ForgeOps v0.1.0-beta</p>
+          <p className="px-3 pt-3 text-xs text-text-muted">{user?.role ?? "Unknown role"} · ForgeOps v0.1.0-beta</p>
         </div>
       </aside>
     </>

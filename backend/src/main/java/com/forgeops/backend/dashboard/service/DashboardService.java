@@ -5,6 +5,9 @@ import com.forgeops.backend.analyzer.repository.AnalysisRepository;
 import com.forgeops.backend.assistant.entity.ChatSession;
 import com.forgeops.backend.assistant.repository.ChatSessionRepository;
 import com.forgeops.backend.auth.repository.UserRepository;
+import com.forgeops.backend.auth.entity.User;
+import com.forgeops.backend.auth.entity.UserRole;
+import com.forgeops.backend.auth.service.CurrentUserService;
 import com.forgeops.backend.dashboard.dto.DashboardMetricsResponse;
 import com.forgeops.backend.dashboard.dto.DashboardMetricsResponse.*;
 import com.forgeops.backend.generator.entity.GeneratedTemplate;
@@ -36,6 +39,7 @@ public class DashboardService {
     private final GeminiAiService geminiAiService;
     private final ObjectProvider<DashboardCacheService> dashboardCacheProvider;
     private final RedisStatusService redisStatusService;
+    private final CurrentUserService currentUserService;
 
     public DashboardService(UserRepository userRepository,
                             AnalysisRepository analysisRepository,
@@ -44,7 +48,8 @@ public class DashboardService {
                             DataSource dataSource,
                             GeminiAiService geminiAiService,
                             ObjectProvider<DashboardCacheService> dashboardCacheProvider,
-                            RedisStatusService redisStatusService) {
+                            RedisStatusService redisStatusService,
+                            CurrentUserService currentUserService) {
         this.userRepository = userRepository;
         this.analysisRepository = analysisRepository;
         this.sessionRepository = sessionRepository;
@@ -53,22 +58,25 @@ public class DashboardService {
         this.geminiAiService = geminiAiService;
         this.dashboardCacheProvider = dashboardCacheProvider;
         this.redisStatusService = redisStatusService;
+        this.currentUserService = currentUserService;
     }
 
     @Transactional(readOnly = true)
-    public DashboardMetricsResponse getLiveMetrics() {
-        DashboardCacheService cache = dashboardCacheProvider.getIfAvailable();
+    public DashboardMetricsResponse getLiveMetrics(String actorEmail) {
+        User actor = currentUserService.requireByEmail(actorEmail);
+        DashboardCacheService cache = actor.getRole() == UserRole.ADMIN
+                ? dashboardCacheProvider.getIfAvailable() : null;
         if (cache != null) {
             DashboardMetricsResponse cached = cache.get().orElse(null);
             if (cached != null) return cached;
         }
 
-        DashboardMetricsResponse metrics = computeLiveMetrics();
+        DashboardMetricsResponse metrics = computeLiveMetrics(actor);
         if (cache != null) cache.put(metrics);
         return metrics;
     }
 
-    private DashboardMetricsResponse computeLiveMetrics() {
+    private DashboardMetricsResponse computeLiveMetrics(User actor) {
         // 1. JVM Memory
         Runtime runtime = Runtime.getRuntime();
         long totalMB = runtime.totalMemory() / (1024 * 1024);
@@ -81,15 +89,16 @@ public class DashboardService {
         // 2. CPU & OS
         OperatingSystemMXBean osBean = ManagementFactory.getOperatingSystemMXBean();
         int cores = osBean.getAvailableProcessors();
-        double loadAvg = osBean.getSystemLoadAverage();
-        int loadPercent = (loadAvg >= 0 && cores > 0) ? (int) Math.min(100, (loadAvg / cores) * 100) : 28;
+        double rawLoadAvg = osBean.getSystemLoadAverage();
+        Double loadAvg = rawLoadAvg >= 0 ? rawLoadAvg : null;
+        Integer loadPercent = (loadAvg != null && cores > 0) ? (int) Math.min(100, (loadAvg / cores) * 100) : null;
         CpuStats cpuStats = new CpuStats(cores, loadAvg, loadPercent);
 
         // 3. HikariCP Database Connection Pool
-        int activeConn = 1;
-        int idleConn = 9;
-        int totalPool = 10;
-        String poolName = "HikariPool-1";
+        Integer activeConn = null;
+        Integer idleConn = null;
+        Integer totalPool = null;
+        String poolName = dataSource.getClass().getSimpleName();
 
         if (dataSource instanceof HikariDataSource hikari) {
             HikariPoolMXBean poolMxBean = hikari.getHikariPoolMXBean();
@@ -103,16 +112,18 @@ public class DashboardService {
         DatabaseStats dbStats = new DatabaseStats(activeConn, idleConn, totalPool, poolName);
 
         // 4. Platform Database Counts
-        long totalUsers = userRepository.count();
-        long totalAnalyses = analysisRepository.count();
-        long totalSessions = sessionRepository.count();
-        long totalTemplates = templateRepository.count();
+        boolean admin = actor.getRole() == UserRole.ADMIN;
+        long totalUsers = admin ? userRepository.count() : 1;
+        long totalAnalyses = admin ? analysisRepository.count() : analysisRepository.countByUserId(actor.getId());
+        long totalSessions = admin ? sessionRepository.count() : sessionRepository.countByUser(actor);
+        long totalTemplates = admin ? templateRepository.count() : templateRepository.countByUserId(actor.getId());
         PlatformCounters counters = new PlatformCounters(totalUsers, totalAnalyses, totalSessions, totalTemplates);
 
         // 5. Recent Chronological Activities
         List<ActivityEvent> activities = new ArrayList<>();
 
-        List<AnalysisRecord> latestAnalyses = analysisRepository.findTop8ByOrderByCreatedAtDesc();
+        List<AnalysisRecord> latestAnalyses = admin ? analysisRepository.findTop8ByOrderByCreatedAtDesc()
+                : analysisRepository.findTop8ByUserIdOrderByCreatedAtDesc(actor.getId());
         for (AnalysisRecord a : latestAnalyses) {
             activities.add(new ActivityEvent(
                     "ANALYZER",
@@ -123,7 +134,8 @@ public class DashboardService {
             ));
         }
 
-        List<GeneratedTemplate> latestTemplates = templateRepository.findTop8ByOrderByCreatedAtDesc();
+        List<GeneratedTemplate> latestTemplates = admin ? templateRepository.findTop8ByOrderByCreatedAtDesc()
+                : templateRepository.findTop8ByUserIdOrderByCreatedAtDesc(actor.getId());
         for (GeneratedTemplate t : latestTemplates) {
             activities.add(new ActivityEvent(
                     "GENERATOR",
@@ -134,7 +146,8 @@ public class DashboardService {
             ));
         }
 
-        List<ChatSession> latestSessions = sessionRepository.findTop8ByOrderByCreatedAtDesc();
+        List<ChatSession> latestSessions = admin ? sessionRepository.findTop8ByOrderByCreatedAtDesc()
+                : sessionRepository.findTop8ByUserOrderByCreatedAtDesc(actor);
         for (ChatSession s : latestSessions) {
             activities.add(new ActivityEvent(
                     "ASSISTANT",
@@ -157,8 +170,10 @@ public class DashboardService {
 
         List<ServiceHealth> services = new ArrayList<>();
         services.add(new ServiceHealth("forgeops-backend", "Spring Boot / Java 21", "ONLINE", "HTTP :8080"));
-        services.add(new ServiceHealth("forgeops-postgres", "PostgreSQL", totalPool > 0 ? "ONLINE" : "DEGRADED",
-                poolName + " (" + totalPool + " connections)"));
+        services.add(new ServiceHealth("forgeops-postgres", "PostgreSQL",
+                totalPool != null && totalPool > 0 ? "ONLINE" : "UNKNOWN",
+                totalPool == null ? poolName + " (pool telemetry unavailable)"
+                        : poolName + " (" + totalPool + " connections)"));
         redisStatusService.currentStatus().ifPresent(services::add);
         services.add(new ServiceHealth("gemini-ai", "Google Gemini",
                 geminiAiService.isConfigured() ? "CONNECTED" : "FALLBACK",

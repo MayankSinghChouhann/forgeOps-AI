@@ -36,7 +36,7 @@ export function OverviewPage() {
   const serviceTone = (status: string): StatusTone => {
     if (["ONLINE", "CONNECTED"].includes(status)) return "healthy"
     if (status === "FALLBACK") return "warning"
-    if (status === "DEGRADED") return "warning"
+    if (["DEGRADED", "UNKNOWN"].includes(status)) return "warning"
     return "failed"
   }
 
@@ -79,15 +79,15 @@ export function OverviewPage() {
         <MetricCard
           label="CPU"
           value={metrics ? `${metrics.cpu.availableCores} cores` : "—"}
-          detail={metrics ? `${metrics.cpu.estimatedLoadPercent}% load` : undefined}
-          progress={metrics?.cpu.estimatedLoadPercent}
-          footer={<StatusIndicator status="healthy" label="Normal" />}
+          detail={metrics ? metrics.cpu.estimatedLoadPercent == null ? "Load unavailable" : `${metrics.cpu.estimatedLoadPercent}% load` : undefined}
+          progress={metrics?.cpu.estimatedLoadPercent ?? undefined}
+          footer={<StatusIndicator status={metrics?.cpu.estimatedLoadPercent == null ? "warning" : "healthy"} label={metrics?.cpu.estimatedLoadPercent == null ? "Unavailable" : "Measured"} />}
         />
         <MetricCard
           label="Database connections"
-          value={metrics ? `${metrics.database.activeConnections} active` : "—"}
-          detail={metrics ? `${metrics.database.idleConnections} idle` : undefined}
-          footer={metrics ? `${metrics.database.totalPoolSize} total · ${metrics.database.poolName}` : "Loading pool status"}
+          value={metrics ? metrics.database.activeConnections == null ? "Unavailable" : `${metrics.database.activeConnections} active` : "—"}
+          detail={metrics && metrics.database.idleConnections != null ? `${metrics.database.idleConnections} idle` : undefined}
+          footer={metrics ? `${metrics.database.totalPoolSize ?? "—"} total · ${metrics.database.poolName}` : "Loading pool status"}
         />
         <MetricCard
           label="Diagnostics"

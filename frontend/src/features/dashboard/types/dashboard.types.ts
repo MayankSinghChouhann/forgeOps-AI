@@ -7,14 +7,14 @@ export interface MemoryStats {
 
 export interface CpuStats {
   availableCores: number
-  systemLoadAverage: number
-  estimatedLoadPercent: number
+  systemLoadAverage: number | null
+  estimatedLoadPercent: number | null
 }
 
 export interface DatabaseStats {
-  activeConnections: number
-  idleConnections: number
-  totalPoolSize: number
+  activeConnections: number | null
+  idleConnections: number | null
+  totalPoolSize: number | null
   poolName: string
 }
 
@@ -47,6 +47,6 @@ export interface DashboardMetricsResponse {
 export interface ServiceHealth {
   name: string
   type: string
-  status: "ONLINE" | "CONNECTED" | "FALLBACK" | "DEGRADED" | "OFFLINE"
+  status: "ONLINE" | "CONNECTED" | "FALLBACK" | "DEGRADED" | "OFFLINE" | "UNKNOWN"
   detail: string
 }
