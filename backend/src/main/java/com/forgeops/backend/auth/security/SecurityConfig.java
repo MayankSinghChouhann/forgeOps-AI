@@ -19,6 +19,7 @@ import org.springframework.web.cors.CorsConfigurationSource;
 import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
 import org.springframework.beans.factory.annotation.Value;
 import jakarta.servlet.DispatcherType;
+import com.forgeops.backend.audit.service.ApiAuditFilter;
 
 import java.util.List;
 
@@ -32,6 +33,7 @@ public class SecurityConfig {
     private final JwtAuthenticationFilter jwtAuthenticationFilter;
     private final MetricsAuthenticationFilter metricsAuthenticationFilter;
     private final RateLimitFilter rateLimitFilter;
+    private final ApiAuditFilter apiAuditFilter;
     private final List<String> allowedOrigins;
 
     public SecurityConfig(UserDetailsServiceImpl userDetailsService,
@@ -39,12 +41,14 @@ public class SecurityConfig {
                           JwtAuthenticationFilter jwtAuthenticationFilter,
                           MetricsAuthenticationFilter metricsAuthenticationFilter,
                           RateLimitFilter rateLimitFilter,
+                          ApiAuditFilter apiAuditFilter,
                           @Value("${forgeops.security.allowed-origins}") List<String> allowedOrigins) {
         this.userDetailsService = userDetailsService;
         this.unauthorizedHandler = unauthorizedHandler;
         this.jwtAuthenticationFilter = jwtAuthenticationFilter;
         this.metricsAuthenticationFilter = metricsAuthenticationFilter;
         this.rateLimitFilter = rateLimitFilter;
+        this.apiAuditFilter = apiAuditFilter;
         this.allowedOrigins = allowedOrigins;
     }
 
@@ -54,6 +58,7 @@ public class SecurityConfig {
         configuration.setAllowedOrigins(allowedOrigins);
         configuration.setAllowedMethods(List.of("GET", "POST", "PUT", "DELETE", "OPTIONS", "PATCH"));
         configuration.setAllowedHeaders(List.of("*"));
+        configuration.setExposedHeaders(List.of("X-Correlation-ID"));
         configuration.setAllowCredentials(true);
         UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();
         source.registerCorsConfiguration("/**", configuration);
@@ -100,6 +105,7 @@ public class SecurityConfig {
         http.addFilterBefore(rateLimitFilter, UsernamePasswordAuthenticationFilter.class);
         http.addFilterBefore(metricsAuthenticationFilter, UsernamePasswordAuthenticationFilter.class);
         http.addFilterBefore(jwtAuthenticationFilter, UsernamePasswordAuthenticationFilter.class);
+        http.addFilterAfter(apiAuditFilter, JwtAuthenticationFilter.class);
         
         return http.build();
     }

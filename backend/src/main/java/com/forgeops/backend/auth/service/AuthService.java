@@ -8,6 +8,7 @@ import com.forgeops.backend.auth.entity.User;
 import com.forgeops.backend.auth.repository.RefreshTokenRepository;
 import com.forgeops.backend.auth.repository.UserRepository;
 import com.forgeops.backend.auth.security.JwtUtil;
+import com.forgeops.backend.auth.security.RolePermissions;
 import com.forgeops.backend.common.exception.BusinessRuleViolationException;
 import com.forgeops.backend.common.exception.ResourceNotFoundException;
 import org.springframework.beans.factory.annotation.Value;
@@ -26,6 +27,7 @@ import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
 import java.util.Base64;
 import java.util.UUID;
+import java.util.Locale;
 
 @Service
 public class AuthService {
@@ -50,18 +52,19 @@ public class AuthService {
 
     @Transactional
     public void registerUser(RegisterRequest registerRequest) {
-        if (userRepository.existsByEmail(registerRequest.email())) {
-            throw new BusinessRuleViolationException("Email address is already registered: " + registerRequest.email());
+        String email = canonicalEmail(registerRequest.email());
+        if (userRepository.existsByEmail(email)) {
+            throw new BusinessRuleViolationException("Email address is already registered: " + email);
         }
 
-        User user = new User(registerRequest.email(), passwordEncoder.encode(registerRequest.password()));
+        User user = new User(email, passwordEncoder.encode(registerRequest.password()));
         userRepository.save(user);
     }
 
     @Transactional
     public AuthSession authenticateUser(LoginRequest loginRequest) {
         Authentication authentication = authenticationManager.authenticate(
-                new UsernamePasswordAuthenticationToken(loginRequest.email(), loginRequest.password())
+                new UsernamePasswordAuthenticationToken(canonicalEmail(loginRequest.email()), loginRequest.password())
         );
 
         SecurityContextHolder.getContext().setAuthentication(authentication);
@@ -73,7 +76,8 @@ public class AuthService {
 
         IssuedRefreshToken refreshToken = createRefreshToken(user);
 
-        return new AuthSession(new AuthResponse(jwt, userDetails.getUsername()), refreshToken.rawToken());
+        return new AuthSession(new AuthResponse(jwt, userDetails.getUsername(), user.getRole(),
+                RolePermissions.forRole(user.getRole())), refreshToken.rawToken());
     }
 
     @Transactional
@@ -100,7 +104,8 @@ public class AuthService {
                     String token = jwtUtil.generateTokenFromUsername(user.getEmail());
                     IssuedRefreshToken rotatedToken = createRefreshToken(user);
                     return new AuthSession(
-                            new AuthResponse(token, user.getEmail()),
+                            new AuthResponse(token, user.getEmail(), user.getRole(),
+                                    RolePermissions.forRole(user.getRole())),
                             rotatedToken.rawToken());
                 })
                 .orElseThrow(() -> new BadCredentialsException("Refresh session is invalid or expired."));
@@ -127,6 +132,10 @@ public class AuthService {
         } catch (NoSuchAlgorithmException e) {
             throw new IllegalStateException("SHA-256 is unavailable", e);
         }
+    }
+
+    private String canonicalEmail(String email) {
+        return email.trim().toLowerCase(Locale.ROOT);
     }
 
     private record IssuedRefreshToken(String rawToken) {}

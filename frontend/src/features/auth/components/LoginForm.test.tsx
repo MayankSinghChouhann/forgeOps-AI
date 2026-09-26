@@ -20,6 +20,7 @@ describe('LoginForm', () => {
           login,
           register: vi.fn(),
           logout: vi.fn(),
+          hasPermission: vi.fn(() => false),
         }}>
           <LoginForm />
         </AuthContext.Provider>

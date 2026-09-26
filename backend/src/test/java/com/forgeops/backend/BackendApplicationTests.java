@@ -12,6 +12,7 @@ import org.springframework.security.test.web.servlet.request.SecurityMockMvcRequ
 import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.ResponseBody;
+import org.springframework.security.core.authority.SimpleGrantedAuthority;
 
 import java.util.concurrent.Callable;
 
@@ -79,6 +80,26 @@ class BackendApplicationTests {
 		mockMvc.perform(asyncDispatch(result))
 				.andExpect(status().isOk())
 				.andExpect(content().string("stream-complete"));
+	}
+
+	@Test
+	void evaluationMetricsRequireExplicitPermission() throws Exception {
+		mockMvc.perform(get("/api/evaluation/metrics")
+				.with(SecurityMockMvcRequestPostProcessors.user("operator@forgeops.ai").roles("OPERATOR")))
+				.andExpect(status().isForbidden());
+
+		mockMvc.perform(get("/api/evaluation/metrics")
+				.with(SecurityMockMvcRequestPostProcessors.user("approver@forgeops.ai")
+						.authorities(new SimpleGrantedAuthority("EVALUATION_READ"))))
+				.andExpect(status().isOk())
+				.andExpect(jsonPath("$.totalRecommendations").isNumber());
+	}
+
+	@Test
+	void auditTrailRejectsUsersWithoutAuditPermission() throws Exception {
+		mockMvc.perform(get("/api/audit")
+				.with(SecurityMockMvcRequestPostProcessors.user("operator@forgeops.ai").roles("OPERATOR")))
+				.andExpect(status().isForbidden());
 	}
 
 	@Controller

@@ -16,6 +16,9 @@ import com.forgeops.backend.generator.service.TemplateGeneratorService;
 import com.forgeops.backend.terminal.controller.TerminalController;
 import com.forgeops.backend.terminal.dto.CommandExplanationResponse;
 import com.forgeops.backend.terminal.service.ShellSafetyService;
+import com.forgeops.backend.operation.service.OperationService;
+import com.forgeops.backend.auth.entity.UserRole;
+import com.forgeops.backend.auth.security.RolePermissions;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -62,6 +65,7 @@ class CoreControllerMockMvcTest {
     @Mock private ShellSafetyService shellSafetyService;
     @Mock private CurrentUserService currentUserService;
     @Mock private TaskExecutor aiTaskExecutor;
+    @Mock private OperationService operationService;
 
     private MockMvc mockMvc;
 
@@ -72,7 +76,7 @@ class CoreControllerMockMvcTest {
                 new AssistantController(assistantService, aiTaskExecutor),
                 new AnalyzerController(logAnalyzerService, currentUserService),
                 new GeneratorController(templateGeneratorService, currentUserService),
-                new TerminalController(shellSafetyService))
+                new TerminalController(shellSafetyService, operationService))
                 .setCustomArgumentResolvers(new FixedPrincipalResolver())
                 .build();
     }
@@ -80,7 +84,8 @@ class CoreControllerMockMvcTest {
     @Test
     void authControllerReturnsTokensForValidLogin() throws Exception {
         when(authService.authenticateUser(any())).thenReturn(
-                new AuthService.AuthSession(new AuthResponse("access-token", EMAIL), "refresh-token"));
+                new AuthService.AuthSession(new AuthResponse("access-token", EMAIL, UserRole.OPERATOR,
+                        RolePermissions.forRole(UserRole.OPERATOR)), "refresh-token"));
 
         mockMvc.perform(post("/api/auth/login")
                         .contentType(MediaType.APPLICATION_JSON)
@@ -158,7 +163,7 @@ class CoreControllerMockMvcTest {
     private static final class FixedPrincipalResolver implements HandlerMethodArgumentResolver {
         private final UserDetails principal = User.withUsername(EMAIL)
                 .password("not-used")
-                .roles("USER")
+                .roles("OPERATOR")
                 .build();
 
         @Override

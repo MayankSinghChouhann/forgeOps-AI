@@ -27,6 +27,8 @@ async function mockApi(page: Page) {
           accessToken: 'header.payload.signature',
           tokenType: 'Bearer',
           email: 'engineer@forgeops.ai',
+          role: 'OPERATOR',
+          permissions: ['DASHBOARD_READ', 'AI_USE', 'ANALYSIS_RUN', 'TEMPLATE_GENERATE', 'COMMAND_RECOMMEND', 'OPERATION_READ', 'OPERATION_EXECUTE'],
         },
       })
     }

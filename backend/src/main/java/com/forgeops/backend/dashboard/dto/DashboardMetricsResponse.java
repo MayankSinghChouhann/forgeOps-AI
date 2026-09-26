@@ -80,38 +80,38 @@ public class DashboardMetricsResponse {
 
     public static class CpuStats {
         private int availableCores;
-        private double systemLoadAverage;
-        private int estimatedLoadPercent;
+        private Double systemLoadAverage;
+        private Integer estimatedLoadPercent;
 
         public CpuStats() {}
-        public CpuStats(int availableCores, double systemLoadAverage, int estimatedLoadPercent) {
+        public CpuStats(int availableCores, Double systemLoadAverage, Integer estimatedLoadPercent) {
             this.availableCores = availableCores;
             this.systemLoadAverage = systemLoadAverage;
             this.estimatedLoadPercent = estimatedLoadPercent;
         }
 
         public int getAvailableCores() { return availableCores; }
-        public double getSystemLoadAverage() { return systemLoadAverage; }
-        public int getEstimatedLoadPercent() { return estimatedLoadPercent; }
+        public Double getSystemLoadAverage() { return systemLoadAverage; }
+        public Integer getEstimatedLoadPercent() { return estimatedLoadPercent; }
     }
 
     public static class DatabaseStats {
-        private int activeConnections;
-        private int idleConnections;
-        private int totalPoolSize;
+        private Integer activeConnections;
+        private Integer idleConnections;
+        private Integer totalPoolSize;
         private String poolName;
 
         public DatabaseStats() {}
-        public DatabaseStats(int activeConnections, int idleConnections, int totalPoolSize, String poolName) {
+        public DatabaseStats(Integer activeConnections, Integer idleConnections, Integer totalPoolSize, String poolName) {
             this.activeConnections = activeConnections;
             this.idleConnections = idleConnections;
             this.totalPoolSize = totalPoolSize;
             this.poolName = poolName;
         }
 
-        public int getActiveConnections() { return activeConnections; }
-        public int getIdleConnections() { return idleConnections; }
-        public int getTotalPoolSize() { return totalPoolSize; }
+        public Integer getActiveConnections() { return activeConnections; }
+        public Integer getIdleConnections() { return idleConnections; }
+        public Integer getTotalPoolSize() { return totalPoolSize; }
         public String getPoolName() { return poolName; }
     }
 

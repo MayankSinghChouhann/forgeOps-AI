@@ -15,4 +15,6 @@ public interface ChatSessionRepository extends JpaRepository<ChatSession, UUID> 
     List<ChatSession> findAllByUserOrderByUpdatedAtDesc(User user, Pageable pageable);
     Optional<ChatSession> findByIdAndUser(UUID id, User user);
     List<ChatSession> findTop8ByOrderByCreatedAtDesc();
+    List<ChatSession> findTop8ByUserOrderByCreatedAtDesc(User user);
+    long countByUser(User user);
 }

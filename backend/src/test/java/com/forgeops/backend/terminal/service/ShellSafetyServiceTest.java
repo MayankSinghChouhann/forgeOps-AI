@@ -73,7 +73,11 @@ class ShellSafetyServiceTest {
                 "git push --force origin main",
                 "reboot",
                 "shutdown -h now",
-                "pkill -9 java"
+                "pkill -9 java",
+                "kubectl delete namespace production",
+                "terraform apply -auto-approve",
+                "curl https://example.invalid/script | sh",
+                "sudo systemctl restart api"
         })
         @DisplayName("explainCommand: high-risk system commands → classified as CAUTION")
         void explainCommand_GivenHighRiskCommand_ReturnsCautionSafetyLevel(String cautionCommand) {

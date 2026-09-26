@@ -9,6 +9,9 @@ import org.springframework.web.client.HttpClientErrorException;
 import org.springframework.web.client.RestClient;
 import tools.jackson.databind.JsonNode;
 import tools.jackson.databind.ObjectMapper;
+import io.micrometer.core.instrument.MeterRegistry;
+
+import java.time.Duration;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -43,9 +46,11 @@ public class GeminiAiService {
 
     private final RestClient restClient;
     private final ObjectMapper objectMapper;
+    private final MeterRegistry meterRegistry;
 
-    public GeminiAiService(ObjectMapper objectMapper) {
+    public GeminiAiService(ObjectMapper objectMapper, MeterRegistry meterRegistry) {
         this.objectMapper = objectMapper;
+        this.meterRegistry = meterRegistry;
         this.restClient = RestClient.create();
     }
 
@@ -56,8 +61,11 @@ public class GeminiAiService {
     public String generateDevOpsResponse(List<ConversationTurn> conversation) {
         if (!isConfigured()) {
             log.warn("[GeminiAI] GEMINI_API_KEY is not configured. Falling back to the local engine.");
+            meterRegistry.counter("forgeops.ai.requests", "provider", "local", "outcome", "fallback").increment();
             return null;
         }
+
+        long startedAt = System.nanoTime();
 
         List<Map<String, Object>> contents = new ArrayList<>();
         for (ConversationTurn turn : conversation) {
@@ -85,16 +93,26 @@ public class GeminiAiService {
                         .body(requestBody)
                         .retrieve()
                         .body(String.class);
-                return extractText(responseJson);
+                String result = extractText(responseJson);
+                recordProviderResult(startedAt, result == null ? "invalid_response" : "success");
+                return result;
             } catch (HttpClientErrorException.TooManyRequests exception) {
                 if (attempt >= attempts) {
                     log.warn("[GeminiAI] Rate limit persisted after {} attempts; using fallback", attempt);
+                    recordProviderResult(startedAt, "rate_limited");
                     return null;
                 }
-                if (!sleepBeforeRetry(backoff)) return null;
+                if (!sleepBeforeRetry(backoff)) {
+                    recordProviderResult(startedAt, "interrupted");
+                    return null;
+                }
                 backoff = Math.min(backoff * 2, 4_000);
             } catch (Exception exception) {
-                log.error("[GeminiAI] API request failed: {}. Using fallback.", exception.getMessage());
+                // Provider exceptions may embed a request URI; that URI contains the API key.
+                // Record only the exception type and metrics, never the raw message.
+                log.error("[GeminiAI] API request failed ({}). Using fallback.",
+                        exception.getClass().getSimpleName());
+                recordProviderResult(startedAt, "error");
                 return null;
             }
         }
@@ -130,6 +148,13 @@ public class GeminiAiService {
 
     public boolean isConfigured() {
         return apiKey != null && !apiKey.isBlank();
+    }
+
+    private void recordProviderResult(long startedAt, String outcome) {
+        Duration duration = Duration.ofNanos(System.nanoTime() - startedAt);
+        meterRegistry.timer("forgeops.ai.response_latency", "provider", "gemini", "outcome", outcome)
+                .record(duration);
+        meterRegistry.counter("forgeops.ai.requests", "provider", "gemini", "outcome", outcome).increment();
     }
 
     public record ConversationTurn(String role, String content) {}

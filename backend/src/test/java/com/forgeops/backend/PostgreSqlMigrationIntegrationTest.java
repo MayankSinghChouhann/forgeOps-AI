@@ -44,13 +44,13 @@ class PostgreSqlMigrationIntegrationTest {
                 FROM information_schema.tables
                 WHERE table_schema = 'public'
                   AND table_name IN ('users', 'refresh_tokens', 'chat_sessions', 'chat_messages',
-                                     'analysis_records', 'generated_templates')
+                                     'analysis_records', 'generated_templates', 'operation_requests', 'audit_events')
                 """, Integer.class);
 
         Integer successfulMigrations = jdbcTemplate.queryForObject(
                 "SELECT COUNT(*) FROM flyway_schema_history WHERE success = true", Integer.class);
 
-        assertThat(tableCount).isEqualTo(6);
-        assertThat(successfulMigrations).isGreaterThanOrEqualTo(8);
+        assertThat(tableCount).isEqualTo(8);
+        assertThat(successfulMigrations).isGreaterThanOrEqualTo(10);
     }
 }

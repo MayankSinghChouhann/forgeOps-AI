@@ -14,5 +14,7 @@ public interface AnalysisRepository extends JpaRepository<AnalysisRecord, UUID> 
     List<AnalysisRecord> findByUserIdOrderByCreatedAtDesc(Long userId, Pageable pageable);
     Optional<AnalysisRecord> findByIdAndUserId(UUID id, Long userId);
     List<AnalysisRecord> findTop8ByOrderByCreatedAtDesc();
+    List<AnalysisRecord> findTop8ByUserIdOrderByCreatedAtDesc(Long userId);
+    long countByUserId(Long userId);
     List<AnalysisRecord> findByTargetTypeOrderByCreatedAtDesc(String targetType);
 }

@@ -25,4 +25,7 @@ export interface GeneratedCommandResponse {
   safetyLevel: "SAFE" | "CAUTION" | "DANGEROUS"
   riskExplanation: string
   safeAlternative?: string
+  operationId: string
+  operationStatus: "PENDING_APPROVAL" | "APPROVED" | "REJECTED" | "EXECUTING" | "SUCCEEDED" | "FAILED" | "EXPIRED"
+  correlationId: string
 }

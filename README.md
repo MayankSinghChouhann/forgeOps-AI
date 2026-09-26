@@ -1,6 +1,6 @@
 # ForgeOps-AI
 
-ForgeOps-AI is a full-stack DevOps intelligence platform designed to provide automated infrastructure-as-code generation, log analysis, and shell command safety verification. It unifies operations, security scanning, and platform observability into a self-hostable ecosystem.
+ForgeOps-AI is a full-stack DevOps decision-support platform for infrastructure-as-code generation, log analysis, and shell-command safety review. It provides reviewable recommendations; it does not autonomously run AI-generated commands or deploy infrastructure.
 
 ## Overview
 
@@ -26,7 +26,8 @@ The screenshots below are original captures of the application, CI pipeline, and
 | --- | --- |
 | Infrastructure generation | Reviewable Terraform, Kubernetes, Helm, Dockerfile, GitHub Actions, and GitLab CI templates. |
 | Incident diagnostics | Analysis workflows for Jenkins, Docker, and Kubernetes logs with retained RCA history. |
-| Command safety | Shell-command risk assessment before an operator runs a change. |
+| Command safety | Shell-command risk assessment, approval records, and idempotent external-execution handoffs. |
+| Governance | Server-side RBAC, append-only audit events, correlation IDs, and human approval for medium/high-risk recommendations. |
 | Observability | JVM, HikariCP, Redis, PostgreSQL, and AI-integration metrics through Prometheus and Grafana. |
 | Identity and access | JWT access tokens, rotating refresh tokens, server-side logout, and role-based access control. |
 | Operator experience | Responsive dark-mode workspace with shared design-system components and environment status. |
@@ -41,6 +42,8 @@ flowchart TD
     API -->|JDBC| DB[(PostgreSQL 16)]
     API -->|TCP| Cache[(Redis 7)]
     API -->|HTTPS| LLM[Gemini REST API]
+    API -->|Append-only events| Audit[(Audit trail)]
+    API -->|Approval state| Ops[(Operation workflow)]
     API -->|Metrics| Prom[Prometheus]
     Prom -->|Data Source| Grafana[Grafana Dashboard]
 ```
@@ -102,10 +105,10 @@ forgeOps-AI/
 ## How It Works
 
 1. **User Authentication**: The client authenticates via the `/api/auth/login` endpoint. A short-lived JWT is issued in memory, while a secure, HttpOnly refresh token is stored in the browser and hashed in PostgreSQL.
-2. **Request Processing**: User requests (e.g., log analysis or IaC generation) are sent to the Spring Boot backend. Rate limits and RBAC are enforced at the controller level.
-3. **Execution**: The backend constructs an isolated context and queries the Gemini API. If the API is unavailable or unconfigured, the system falls back to a local rules engine.
-4. **Delivery**: Results are returned to the client. Long-running operations utilize Server-Sent Events (SSE) to stream chunks to the React frontend, updating the UI dynamically.
-5. **Observability**: Metrics from the request cycle are scraped by Prometheus and visualized in Grafana.
+2. **Authorization**: Spring Security reloads the account on each JWT-authenticated request and enforces explicit permissions at controller methods. The frontend only mirrors those permissions for usability.
+3. **AI processing**: The backend queries Gemini when configured and otherwise uses local rule engines. Provider output is treated as untrusted recommendation text.
+4. **Approval and execution boundary**: command recommendations are risk classified. Medium/high-risk operations remain `PENDING_APPROVAL` until a different `APPROVER` or `ADMIN` decides. ForgeOps never invokes a shell. An approved operator can open an idempotent external/manual execution handoff and report its real result.
+5. **Traceability**: a correlation ID links recommendation, decision, handoff, result, and audit events. Prometheus exposes request, AI, approval, and execution measurements.
 
 ## Product Tour
 
@@ -166,6 +169,7 @@ REDIS_PASSWORD=
 FORGEOPS_METRICS_PASSWORD=
 GRAFANA_ADMIN_PASSWORD=
 GEMINI_API_KEY=
+FORGEOPS_APPROVAL_TTL=24h
 ```
 
 ### Run Locally
@@ -274,7 +278,7 @@ The EC2 material below records a one-time, operator-led demo deployment. The Com
 
 ## API Documentation
 
-The REST API documentation is generated automatically via OpenAPI. When the backend is running locally, it can be accessed at:
+The REST API documentation is generated automatically via OpenAPI in development. It is disabled by the `prod` profile.
 
 - Swagger UI: `http://localhost:8080/swagger-ui.html`
 - OpenAPI JSON: `http://localhost:8080/v3/api-docs`
@@ -282,10 +286,16 @@ The REST API documentation is generated automatically via OpenAPI. When the back
 ## Security
 
 - **Authentication**: JWTs are stored in memory. Refresh tokens are persisted as SHA-256 hashes and transmitted via `HttpOnly`, `Secure`, and `SameSite=Strict` cookies.
-- **Authorization**: Role-Based Access Control (RBAC) enforces `USER` and `ADMIN` boundaries at the controller and method levels.
+- **Authorization**: `ADMIN`, `OPERATOR`, `APPROVER`, and `VIEWER` roles map to explicit server-side permissions. New self-registered accounts are least-privilege viewers; an administrator must grant operational access.
+- **Approval separation**: requesters cannot approve their own medium/high-risk operation. Pessimistic row locking, expiry, state-transition validation, and idempotency keys prevent duplicate or replayed execution handoffs.
+- **Audit**: mutating APIs and domain lifecycle events are written to a searchable audit table. Sensitive metadata keys are redacted before persistence; PostgreSQL rejects audit-row updates and deletes.
+- **AI boundary**: model output is never passed to `Runtime.exec`, `ProcessBuilder`, or a shell. The execution handoff is explicitly external/manual.
+- **Measured evaluation**: Micrometer records API and AI latency/errors. Database-derived metrics report acceptance/rejection, approval turnaround, execution outcomes, and execution latency; empty datasets return no value rather than invented numbers.
 - **Rate Limiting**: Per-IP rate limiting is applied to authentication and LLM invocation endpoints.
 - **Dependency Scanning**: Trivy is integrated into the CI/CD pipeline to block deployments of images with HIGH or CRITICAL vulnerabilities.
 - **Container Hardening**: Docker images drop unnecessary capabilities, run as non-root users, and enforce read-only filesystems where possible.
+
+The detailed permission matrix, workflow transitions, audit model, metric names, and production limitations are documented in [Security and operations architecture](docs/SECURITY_ARCHITECTURE.md).
 
 ## License
 

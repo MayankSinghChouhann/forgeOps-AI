@@ -13,6 +13,7 @@ import org.springframework.http.MediaType;
 import org.springframework.core.task.TaskExecutor;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.security.core.userdetails.UserDetails;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.servlet.mvc.method.annotation.SseEmitter;
 import org.springframework.beans.factory.annotation.Qualifier;
@@ -37,6 +38,7 @@ public class AssistantController {
     }
 
     @GetMapping("/sessions")
+    @PreAuthorize("hasAuthority('AI_USE')")
     public ResponseEntity<List<ChatSessionResponse>> getUserSessions(
             @AuthenticationPrincipal UserDetails userDetails,
             @RequestParam(defaultValue = "0") @Min(0) int page,
@@ -47,6 +49,7 @@ public class AssistantController {
     }
 
     @PostMapping("/sessions")
+    @PreAuthorize("hasAuthority('AI_USE')")
     public ResponseEntity<ChatSessionResponse> createSession(@AuthenticationPrincipal UserDetails userDetails,
                                                              @Valid @RequestBody CreateSessionRequest request) {
         ChatSessionResponse session = assistantService.createSession(userDetails.getUsername(), request);
@@ -54,6 +57,7 @@ public class AssistantController {
     }
 
     @GetMapping("/sessions/{sessionId}/messages")
+    @PreAuthorize("hasAuthority('AI_USE')")
     public ResponseEntity<List<ChatMessageResponse>> getSessionMessages(@AuthenticationPrincipal UserDetails userDetails,
                                                                         @PathVariable UUID sessionId,
                                                                         @RequestParam(defaultValue = "0") @Min(0) int page,
@@ -64,6 +68,7 @@ public class AssistantController {
     }
 
     @PostMapping("/chat")
+    @PreAuthorize("hasAuthority('AI_USE')")
     public ResponseEntity<ChatMessageResponse> sendMessage(@AuthenticationPrincipal UserDetails userDetails,
                                                            @Valid @RequestBody SendMessageRequest request) {
         ChatMessageResponse response = assistantService.sendMessage(userDetails.getUsername(), request);
@@ -71,6 +76,7 @@ public class AssistantController {
     }
 
     @PostMapping(value = "/chat/stream", produces = MediaType.TEXT_EVENT_STREAM_VALUE)
+    @PreAuthorize("hasAuthority('AI_USE')")
     public SseEmitter streamMessage(@AuthenticationPrincipal UserDetails userDetails,
                                     @Valid @RequestBody SendMessageRequest request) {
         SseEmitter emitter = new SseEmitter(120_000L);
@@ -88,6 +94,7 @@ public class AssistantController {
     }
 
     @DeleteMapping("/sessions/{sessionId}")
+    @PreAuthorize("hasAuthority('AI_USE')")
     public ResponseEntity<Void> deleteSession(@AuthenticationPrincipal UserDetails userDetails,
                                               @PathVariable UUID sessionId) {
         assistantService.deleteSession(userDetails.getUsername(), sessionId);
