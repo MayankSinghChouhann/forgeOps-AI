@@ -130,6 +130,12 @@ forgeOps-AI/
 | --- | --- |
 | ![ForgeOps API playground](docs/images/api-playground.png) | ![ForgeOps mobile navigation drawer](docs/images/mobile-navigation.png) |
 
+### Live Observability
+
+The Docker Compose `observability` profile provisions this Grafana dashboard and its Prometheus data source. This capture shows Prometheus scraping the running ForgeOps backend, including HTTP throughput and p95 latency, JVM heap, database-pool activity, uptime, threads, and CPU utilization.
+
+![Live ForgeOps Grafana dashboard backed by Prometheus metrics](docs/images/grafana-overview.png)
+
 ## Local Setup
 
 ### Prerequisites
