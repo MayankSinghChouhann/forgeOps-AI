@@ -1,0 +1,4 @@
+2026-09-25T07:19:03.2029975Z ##[group]Run docker compose --env-file infra/docker/.env.example -f infra/docker/docker-compose.yml config --quiet
+2026-09-25T07:19:03.2030603Z docker compose --env-file infra/docker/.env.example -f infra/docker/docker-compose.yml config --quiet
+2026-09-25T07:19:11.3336514Z env file /home/runner/work/forgeOps-AI/forgeOps-AI/infra/docker/.env not found: stat /home/runner/work/forgeOps-AI/forgeOps-AI/infra/docker/.env: no such file or directory
+2026-09-25T07:19:11.3417780Z ##[error]Process completed with exit code 1.

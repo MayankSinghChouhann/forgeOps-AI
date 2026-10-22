@@ -2,6 +2,7 @@ import { NavLink } from "react-router-dom"
 import { LayoutDashboard, Bot, FileText, Box, Server, GitMerge, Hexagon, Code2, Settings, ChevronsUpDown, X, ShieldCheck, ScrollText } from "lucide-react"
 import { cn } from "@/lib/utils"
 import { StatusIndicator } from "@/components/ui/StatusIndicator"
+import { BrandMark } from "@/components/ui/BrandMark"
 import { useAuth } from "@/features/auth/hooks/useAuth"
 import type { Permission } from "@/features/auth/types/auth.types"
 
@@ -27,7 +28,7 @@ export function Sidebar({ open, onClose }: SidebarProps) {
       {open && <button type="button" aria-label="Close navigation" className="fixed inset-0 z-30 bg-black/60 lg:hidden" onClick={onClose} />}
       <aside aria-label="Primary navigation" className={cn("fixed inset-y-0 left-0 z-40 flex w-64 shrink-0 flex-col border-r border-border bg-surface transition-transform duration-150 lg:static lg:translate-x-0", open ? "translate-x-0" : "-translate-x-full")}>
         <div className="flex h-16 items-center gap-3 border-b border-border px-4">
-          <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-md bg-accent text-sm font-bold text-white" aria-hidden="true">F</div>
+          <BrandMark />
           <button type="button" className="flex min-w-0 flex-1 items-center justify-between rounded-md text-left" aria-label="Select workspace">
             <span className="min-w-0"><span className="block truncate text-sm font-semibold">ForgeOps</span><span className="block truncate text-xs text-text-muted">forgeops-ai-core</span></span>
             <ChevronsUpDown className="h-4 w-4 text-text-muted" aria-hidden="true" />
